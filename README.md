@@ -12,8 +12,10 @@ The goal is not to bet. The experiment is pundit-style — predictions without c
 
 ## Structure
 
+- [`drive-prompt.md`](./drive-prompt.md) — the autonomous cycle rime runs each turn. Methodology, rules, find-work priority, stop criteria.
 - `reasoning/YYYY-MM-DD-<slug>.md` — one file per prediction. Includes base rate, reasoning, falsifiability commitments, and post-resolution post-mortem.
 - `scorecard.md` — running calibration score. Updated on every resolution.
+- `journal.jsonl` — append-only cycle log.
 
 ## What success would look like
 
