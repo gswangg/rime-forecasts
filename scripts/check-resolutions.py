@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 check-resolutions.py — scan all reasoning/*.md for their underlying Manifold
-markets, query the Manifold API for current status, and print a summary.
+markets (plus Polymarket shadow prices where applicable), query the APIs for
+current status, and print a summary.
 
 Usage:
     ./scripts/check-resolutions.py              # full report
@@ -13,7 +14,6 @@ Exit code 0 always. Designed to be run during drive cycles as part of
 """
 
 import json
-import os
 import re
 import sys
 import urllib.request
@@ -23,12 +23,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REASONING_DIR = REPO_ROOT / "reasoning"
 MANIFOLD_SLUG_API = "https://api.manifold.markets/v0/slug/{slug}"
+POLYMARKET_API = "https://gamma-api.polymarket.com/markets?slug={slug}"
 
 
 def parse_reasoning_file(path: Path):
-    """Extract Manifold slug, my prediction, and market price from a reasoning file."""
+    """Extract Manifold slug, my prediction, market price, and any Polymarket shadow."""
     text = path.read_text()
-    # Manifold URL: **Manifold URL**: https://manifold.markets/<user>/<slug>
     url_match = re.search(r"\*\*Manifold URL\*\*:\s*(https://manifold\.markets/[^\s]+)", text)
     if not url_match:
         return None
@@ -41,12 +41,15 @@ def parse_reasoning_file(path: Path):
     my_pred_match = re.search(r"\*\*Prediction\*\*:\s*(\d+(?:\.\d+)?)%", text)
     my_pred = float(my_pred_match.group(1)) / 100 if my_pred_match else None
 
-    # Market price at writing — try both "Manifold price at writing" and "Market price at writing"
     mkt_match = re.search(r"\*\*(?:Manifold price|Market price) at writing\*\*:\s*(\d+(?:\.\d+)?)%", text)
     mkt_pred = float(mkt_match.group(1)) / 100 if mkt_match else None
 
-    # Title from first # heading
-    title_match = re.search(r"^#\s+(.+?)(?:\s*—|$)", text, re.MULTILINE)
+    poly_slug = None
+    poly_match = re.search(r"polymarket\.com/event/([a-zA-Z0-9-]+)", text)
+    if poly_match:
+        poly_slug = poly_match.group(1)
+
+    title_match = re.search(r"^#\s+(.+?)(?:\s*[\u2014-]|$)", text, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else slug
 
     return {
@@ -56,11 +59,11 @@ def parse_reasoning_file(path: Path):
         "title": title,
         "my_prediction": my_pred,
         "market_at_writing": mkt_pred,
+        "poly_slug": poly_slug,
     }
 
 
 def fetch_manifold_status(slug: str):
-    """Query Manifold API for current status of a market by slug."""
     try:
         url = MANIFOLD_SLUG_API.format(slug=slug)
         req = urllib.request.Request(url, headers={"User-Agent": "rime-forecasts/1.0"})
@@ -80,8 +83,40 @@ def fetch_manifold_status(slug: str):
         return {"found": False, "error": str(e)[:80]}
 
 
+def fetch_polymarket_status(slug: str):
+    try:
+        url = POLYMARKET_API.format(slug=slug)
+        req = urllib.request.Request(url, headers={"User-Agent": "rime-forecasts/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        if not isinstance(data, list) or not data:
+            return {"found": False, "error": "not found"}
+        m = data[0]
+        prices_raw = m.get("outcomePrices") or m.get("outcome_prices") or "[]"
+        try:
+            prices = json.loads(prices_raw) if isinstance(prices_raw, str) else prices_raw
+        except Exception:
+            prices = []
+        yes_price = float(prices[0]) if prices else None
+        last = m.get("lastTradePrice")
+        try:
+            last = float(last) if last is not None else None
+        except Exception:
+            last = None
+        return {
+            "found": True,
+            "yes_price": yes_price,
+            "last_trade": last,
+            "closed": m.get("closed", False),
+            "end_date": m.get("endDate"),
+        }
+    except urllib.error.HTTPError as e:
+        return {"found": False, "error": f"HTTP {e.code}"}
+    except Exception as e:
+        return {"found": False, "error": str(e)[:80]}
+
+
 def brier(pred: float, outcome: float) -> float:
-    """Brier score for a single prediction. outcome is 1 for YES, 0 for NO, or a prob for partial."""
     return (pred - outcome) ** 2
 
 
@@ -95,21 +130,15 @@ def main():
         print("no reasoning files found")
         return
 
-    predictions = []
-    for f in files:
-        p = parse_reasoning_file(f)
-        if p:
-            predictions.append(p)
-
-    # Fetch status for each
+    predictions = [p for p in (parse_reasoning_file(f) for f in files) if p]
     print(f"Checking {len(predictions)} prediction(s)...\n")
+
     results = []
     for p in predictions:
-        status = fetch_manifold_status(p["slug"])
-        p["status"] = status
+        p["status"] = fetch_manifold_status(p["slug"])
+        p["poly_status"] = fetch_polymarket_status(p["poly_slug"]) if p.get("poly_slug") else None
         results.append(p)
 
-    # Report
     resolved = [r for r in results if r["status"].get("isResolved")]
     pending = [r for r in results if r["status"].get("found") and not r["status"].get("isResolved")]
     errors = [r for r in results if not r["status"].get("found")]
@@ -118,19 +147,16 @@ def main():
         print(f"=== RESOLVED ({len(resolved)}) ===")
         if resolved:
             for r in resolved:
-                res = r["status"]["resolution"]  # YES / NO / MKT / CANCEL
+                res = r["status"]["resolution"]
                 outcome = None
-                if res == "YES":
-                    outcome = 1.0
-                elif res == "NO":
-                    outcome = 0.0
-                elif res == "MKT":
-                    outcome = r["status"].get("resolutionProbability", 0.5)
+                if res == "YES": outcome = 1.0
+                elif res == "NO": outcome = 0.0
+                elif res == "MKT": outcome = r["status"].get("resolutionProbability", 0.5)
 
                 my_brier = brier(r["my_prediction"], outcome) if (outcome is not None and r["my_prediction"] is not None) else None
                 mkt_brier = brier(r["market_at_writing"], outcome) if (outcome is not None and r["market_at_writing"] is not None) else None
 
-                line = f"  {r['title'][:60]:60} | {res:6}"
+                line = f"  {r['title'][:55]:55} | {res:6}"
                 if r["my_prediction"] is not None:
                     line += f" | me={r['my_prediction']*100:5.1f}%"
                 if r["market_at_writing"] is not None:
@@ -157,15 +183,30 @@ def main():
                 drift = current - r["market_at_writing"]
             drift_str = f" drift={drift*100:+.1f}pp" if drift is not None else ""
             my_str = f"me={r['my_prediction']*100:5.1f}%" if r["my_prediction"] is not None else "me=?"
-            writing_str = f"@writing={r['market_at_writing']*100:5.1f}%" if r["market_at_writing"] is not None else "@writing=?"
-            current_str = f"current={current*100:5.1f}%" if current is not None else "current=?"
-            print(f"  {r['title'][:60]:60} | {my_str} {writing_str} {current_str}{drift_str}")
+            writing_str = f"@wr={r['market_at_writing']*100:5.1f}%" if r["market_at_writing"] is not None else "@wr=?"
+            current_str = f"now={current*100:5.1f}%" if current is not None else "now=?"
+            poly_str = ""
+            ps = r.get("poly_status")
+            if ps and ps.get("found"):
+                poly_price = ps.get("last_trade") or ps.get("yes_price")
+                if poly_price is not None:
+                    poly_str = f" poly={poly_price*100:5.1f}%"
+            print(f"  {r['title'][:55]:55} | {my_str} {writing_str} {current_str}{drift_str}{poly_str}")
         print()
 
     if errors:
         print(f"=== ERRORS ({len(errors)}) ===")
         for r in errors:
-            print(f"  {r['title'][:60]}: {r['status'].get('error', '?')}")
+            print(f"  {r['title'][:55]}: {r['status'].get('error', '?')}")
+
+    # Caveat on raw Polymarket prices
+    poly_shown = any(r.get("poly_status") and r["poly_status"].get("found") for r in results)
+    if poly_shown:
+        print()
+        print("Note: poly=X%% is the raw Polymarket lastTradePrice for the linked market.")
+        print("      It may need direction-flip (YES/NO semantics differ) or time-window")
+        print("      adjustment to compare with my prediction. See each reasoning file's")
+        print("      Cross-venue shadow section for the aligned interpretation.")
 
 
 if __name__ == "__main__":
