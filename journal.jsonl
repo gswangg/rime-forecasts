@@ -20,3 +20,9 @@
 {"ts":"2026-04-19T23:22:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 20 cadence-gate silent skip. Gate working as designed."}
 {"ts":"2026-04-19T23:24:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 21 cadence-gate silent skip."}
 {"ts":"2026-04-19T23:26:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 22 cadence-gate silent skip."}
+{"ts":"2026-04-19T23:35:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 23 full-scan skip. Re-enabled ac on after misguided ac-off. Evaluated Tottenham relegation (39%, delta 3-6pp fails 10pp), Kalshi-Nevada (30%, delta ~12pp but resolution timing uncertain — extends past close date), ChatGPT-WhatsApp (33%, blank resolution criteria + existing bot ambiguity). No v2-clean candidate available. Pool re-saturates until calendar time passes."}
+{"ts":"2026-04-19T23:38:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 24 silent cadence-gate skip."}
+{"ts":"2026-04-19T23:41:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 25 gate skip."}
+{"ts":"2026-04-19T23:44:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 26 gate skip."}
+{"ts":"2026-04-19T23:47:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 27 gate skip."}
+{"ts":"2026-04-19T23:55:00+00:00","action":"enrich","files":["reasoning/2026-04-19-patel-fbi-director-june-30.md"],"edge_pp":null,"notes":"Cycle 28 v1-baseline enrichment (first). Added Polymarket shadow to Patel prediction retrospectively. FOUND MAJOR FINDING: Polymarket 19% YES over 257 days → ~6% adjusted to 72-day window, vs Manifold 51% exit → 45pp cross-venue divergence. My 42% exit prediction was much closer to Manifold; Polymarket suggests I was substantially miscalibrated. Flagged as honest retrospective take. Will track at resolution. Also noted: v2 dual-venue shadow would have flagged this before commit — justifies the v2 methodology."}

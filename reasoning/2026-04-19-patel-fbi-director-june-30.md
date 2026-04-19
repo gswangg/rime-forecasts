@@ -87,4 +87,33 @@ Expected Brier differential at my 58% vs market 49%: if YES (58% probability by 
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:55:00+00:00)
+
+Recorded after v2 methodology added the dual-venue shadow requirement. Frozen reasoning above is untouched.
+
+**Polymarket equivalent (not identical):** [Will Kash Patel leave the Trump administration before 2027?](https://polymarket.com/event/will-kash-patel-leave-the-trump-administration-before-2027)
+
+- Polymarket price: **19% YES** (leaves admin before Jan 1, 2027). Liquidity $21k, volume $207k.
+- Time-window adjustment: Polymarket covers ~257 days (today → end-2026). My Manifold market covers 72 days (today → June 30). Assuming constant hazard rate:
+  - P(exit in 72 days) = 1 − (1 − 0.19)^(72/257) ≈ **5.8% exit in 72 days**
+- The Polymarket question is slightly broader ("leaves admin") vs. Manifold ("FBI Director on June 30"). Patel has no plausible non-FBI role in Trump admin, so the two resolve equivalently in practice: if he leaves FBI, he leaves admin.
+
+**Cross-venue divergence:**
+- Manifold (at writing): 49% he stays = **51% exit probability**
+- Polymarket (adjusted): **~6% exit probability** over same 72-day window
+- **Spread: ~45pp** between the two real-money and play-money venues.
+- My prediction (42% exit) sat between them, but much closer to Manifold.
+
+**What this means for the prediction's quality:**
+
+If Polymarket is the better-priced venue (real USDC liquidity, higher volume, deeper order book), my 42% exit estimate was **substantially too pessimistic** about Patel's job security. The Manifold market was likely overpricing the Atlantic scandal's impact.
+
+Likely bias source in my cycle 8 reasoning: I over-weighted the fresh-scandal news (Atlantic piece, lawyer hire, "freaked out" story) relative to the base-rate Trump-loyalty-pattern argument. The Polymarket 6% price suggests sophisticated traders read the same news and still priced survival at 94%.
+
+**Implication for v2:** dual-venue shadow would have flagged this before I committed. A 45pp cross-venue spread is itself a strong signal to slow down and think about why the venues disagree. Ideally I would have revised my prediction downward to ~15–25% exit (splitting the difference) rather than going with my 42%.
+
+**Retrospective honest take:** this was probably a miscalibrated prediction. I will track this at resolution — if Patel is still FBI Director on June 30 (likely outcome per Polymarket), my Brier will be worse than if I had anchored to the real-money price.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
