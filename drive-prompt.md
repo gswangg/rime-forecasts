@@ -1,27 +1,40 @@
-# Drive prompt: rime-forecasts (validation experiment, v2)
+# Drive prompt: rime-forecasts (validation experiment, v2.5)
 
-*Spawned from `~/pi-work/mycelium/primordia/ideas/2026-04-19-rime-forecasts.md`. Purpose: test whether rime's forecasting reasoning produces **economically tradeable** calibration before any capital is committed on Kalshi.*
+*Spawned from `~/pi-work/mycelium/primordia/ideas/2026-04-19-rime-forecasts.md`. Purpose: test whether rime's forecasting reasoning produces **economically tradeable** calibration before any capital is committed.*
 
-*v2 (2026-04-19): revised after cycle 1–11 review. Key changes vs v1 — shorter resolution window, stricter edge threshold, dual-venue shadow requirement (Kalshi + Polymarket), and post-friction economics in scorecard. Rationale in journal.jsonl entry for cycle 11.*
+*Revision history:*
+- *v2 (2026-04-19 early evening): 14–45d window, 10pp edge threshold, dual-venue shadow. Rationale in journal cycle 11.*
+- *v2.1 (late evening): skip actions no longer commit (kills drain-induced git churn).*
+- *v2.2: cadence gate is one-shot after drive-prompt edit (prevents indefinite gate bypass).*
+- *v2.3: skip-fatigue stop criterion (25 consecutive gate-skips → `ac off`).*
+- *v2.5 (2026-04-20): **venue-equality principle.** Removed "Manifold-primary, Kalshi/Poly as shadow" framing — all three are equal deal-flow sources. Cross-venue arbitrage is a documentation enhancement, never a selection filter. Correcting the drift that treated "Manifold-only" as a downgrade.*
 
 ## Goal
 
-Accumulate 15–25 resolved predictions with published reasoning where the pre-friction edge is large enough that **a real-money trader on Kalshi or Polymarket could have profitably taken the same position after typical spread and slippage costs**. At resolution, score objectively:
+Accumulate 15–25 resolved predictions with published reasoning where the pre-friction edge is large enough that **a real-money trader on Kalshi or Polymarket could have profitably taken the same position after typical spread and slippage costs** (for predictions placed on those venues). At resolution, score objectively:
 
 1. **Calibration** (Brier, log loss, calibration curve) — are the numbers well-tuned?
-2. **Economic realizability** (post-friction Brier differential, net edge after 2–3pp spread on each venue) — would this have made money on a real-money venue?
-3. **Cross-venue triangulation** — when Manifold, Kalshi, and Polymarket disagree, which was closest to the eventual resolution? This is an independent signal about which venue's pricing is most trustworthy for a given market type.
+2. **Economic realizability** (post-friction Brier differential, net edge after 2–3pp spread on the venue the prediction was placed against) — would this have made money on a real-money venue?
+3. **Cross-venue arbitrage** — when the *same* question is listed on multiple venues at materially different prices, that price spread is itself a tradeable signal worth documenting. This is a distinct value-add, not a gating criterion.
 4. **Reasoning quality** — subjective review at checkpoints by Greg.
 
-This experiment remains pundit-style — no actual betting during the validation phase. The shift is that we're now validating for a **specific downstream use case** (real-money positions on Kalshi and/or Polymarket + hybrid publishing), not generic forecasting virtue.
+This experiment remains pundit-style — no actual betting during the validation phase. The shift from v1 is that we're now validating for a **specific downstream use case** (real-money positions on Kalshi and/or Polymarket + hybrid publishing), not generic forecasting virtue.
 
-### Venue roles
+### Venue equality principle
 
-- **Manifold** — primary deal-flow source (widest market universe, free public API, where we find candidates).
-- **Kalshi** — primary real-money shadow (US-regulated, clean legal path for eventual trading). USD-denominated. Good on US politics, economic data, some sports.
-- **Polymarket** — secondary real-money shadow (USDC on-chain, deeper liquidity on politics/international/crypto, legally messier but informative). Complements Kalshi on markets Kalshi doesn't list.
+All three venues are **equally valid deal-flow sources**. A prediction placed against a Manifold market, a Kalshi market, or a Polymarket market is equally good for this experiment provided it meets the niche + window + edge criteria. Do not prefer or penalize based on which venue the market lives on. Specifically:
 
-When Kalshi and Polymarket both list an equivalent market, record both — cross-venue disagreement is itself signal.
+- **Do not** skip a candidate because it exists only on one venue.
+- **Do not** prefer a candidate because it exists on multiple venues.
+- **Do** record cross-venue prices when the same question lists on multiple venues at a material spread — that spread is arbitrage-relevant data. But this is a documentation enhancement, not a selection filter.
+
+### Venue roles (informational, not gating)
+
+- **Manifold** — widest market universe, free public API. Good for AI/tech niches, lab strategy, specific product milestones, research questions.
+- **Kalshi** — US-regulated, USD-denominated. Good on US economic releases (CPI, jobs), weather, specific policy outcomes, some sports. Limited on named-individual/company questions.
+- **Polymarket** — USDC on-chain, deep liquidity on US politics, international events, crypto, sports. Broader than Kalshi on personality-specific and culture questions.
+
+A given prediction will naturally land on one or more of these based on what's listed.
 
 ## What "success" looks like
 
@@ -47,7 +60,7 @@ Any one of the below kills the idea (archive with a hard-filter lesson):
   - confidence ≥ **4/5** with a specific novel information claim,
   - OR the prediction captures a mechanism (not just a probability tweak) that is itself a testable thesis.
   - Sub-10pp "base-rate vibes" predictions should be **skipped**, not logged. They dilute the scorecard.
-- **Real-money shadow (required when possible).** For every prediction on Manifold, search **both** Kalshi and Polymarket for equivalent or closest markets. Record all three prices in the prediction file. If neither has an equivalent, note "no real-money equivalent — Manifold-only signal" and downgrade the prediction's expected usefulness. Predictions with no real-money analog are fine for calibration research but don't inform the trading thesis.
+- **Cross-venue arbitrage observation (when applicable).** When picking a candidate on one venue, do a quick check for the same question on the other two. If the same question lists elsewhere at a materially different price (≥5pp spread), record all prices in the prediction file — that spread is itself a useful observation and possibly an arbitrage opportunity. If no equivalent lists on other venues, just note "single-venue question" and move on. Single-venue predictions are equally valid.
 - **One prediction per drive cycle.** Quality over volume. Skipping is a first-class action.
 - **Diversify market types** across cycles — adoption curves, labor signals, technical-bet outcomes, model benchmarks, product metrics, policy/legal — not five model-release timing markets.
 - **Honest base rate always.** Before stating a final prediction, write down what a naive base-rate estimate would be. If my prediction is within 3pp of the base rate, state that explicitly; don't manufacture differentiation.
@@ -58,33 +71,31 @@ Any one of the below kills the idea (archive with a hard-filter lesson):
 
 Priority order:
 
-1. **Check for newly-resolved markets.** Scan `reasoning/*.md` for any whose underlying market has resolved since last cycle. For each: append a Resolution section to the reasoning file (never edit the frozen pre-resolution content), update scorecard with Brier + realized-edge-after-friction, extract generalizable lessons to scorecard's Lessons section, commit and push.
+1. **Check for newly-resolved markets.** Scan `reasoning/*.md` for any whose underlying market has resolved since last cycle (use `scripts/check-resolutions.py`). For each: append a Resolution section to the reasoning file (never edit the frozen pre-resolution content), update scorecard with Brier + realized-edge-after-friction, extract generalizable lessons to scorecard's Lessons section, commit and push.
 2. **Cadence gate.** If the most recent entry in `journal.jsonl` was within the last **18 hours** AND no new resolution appeared this cycle AND this drive-prompt.md hasn't been edited since that journal entry, **skip automatically** (silent skip per v2.1). The market universe does not refresh on sub-daily cadence and the drive-prompt caller is likely being auto-continued without human review. This prevents the cycle-9-to-11 rapid-skip pattern from v1.
 
    The drive-prompt-edit exception is **one-shot**: a methodology change resets the gate for exactly one cycle. That cycle performs a full scan; when it journals its result (predict or skip), the gate re-engages and subsequent cycles skip silently until either 18 hours pass or drive-prompt is edited again. This prevents the gate from being defeated indefinitely by a single drive-prompt edit.
-3. **Review upcoming deadlines.** Look at Manifold's closing-soon markets in the resolution window of **14–45 days** (was 60–90 in v1 — too long for capital-efficient trading). Identify candidates: objectively resolvable, crisp criterion, ≥15 bettors OR ≥$2k volume (thin markets don't generalize to Kalshi).
-4. **Pick ONE candidate and apply the edge threshold.** If the candidate's delta vs market is <10pp and confidence is <4/5, skip with a journal note listing what was evaluated. If it passes the threshold, write the prediction file and commit.
-5. **Shadow pass.** Before committing, do one pass each on:
-   - Kalshi: https://api.elections.kalshi.com/trade-api/v2/markets or web search for the question.
-   - Polymarket: https://gamma-api.polymarket.com/markets or https://polymarket.com/ web search.
-   Record Kalshi and Polymarket prices in the prediction file. Cross-venue spread (e.g., Manifold 72% / Kalshi 68% / Polymarket 75%) is itself an observation to note in reasoning.
+3. **Review upcoming deadlines across all three venues.** Scan each of Manifold, Kalshi, and Polymarket for markets closing in the **14–45 day window**. Treat all three as equal deal-flow sources per the venue-equality principle. Filter: objectively resolvable, crisp criterion, decent liquidity (Manifold: ≥15 bettors or ≥$2k volume; Kalshi/Polymarket: ≥$5k liquidity or ≥$10k volume). No preference or penalty based on which venue a market lives on.
+4. **Pick ONE candidate and apply the edge threshold.** If |my prediction − market price| < 10pp AND confidence < 4/5, skip with a journal note listing what was evaluated. If it passes, write the prediction file and commit.
+5. **Arbitrage check (documentation only, not a selection filter).** Before committing, quickly check if the same question lists on the other two venues. If yes and spread is ≥5pp, record all prices in the prediction file — the spread is itself an observation worth documenting (and potentially an arbitrage opportunity to flag for the trading graduation). If no equivalents exist elsewhere, note "single-venue question" and move on. This does NOT affect whether to take the prediction.
 
 ## Prediction file structure
 
 ```markdown
 # <Market title> — resolves <YYYY-MM-DD>
 
-**Manifold URL**: <url>
-**Kalshi URL**: <url or "no equivalent">
-**Polymarket URL**: <url or "no equivalent">
+**Primary venue**: Manifold | Kalshi | Polymarket
+**Primary URL**: <url of the market being predicted>
+**Other venues (same question, if any)**:
+- Kalshi: <url or n/a>
+- Polymarket: <url or n/a>
+- Manifold: <url or n/a>
 **Written**: <ISO timestamp>
 **Prediction**: <probability, 0-100%>
-**Manifold price at writing**: <%>
-**Kalshi price at writing**: <% or "n/a">
-**Polymarket price at writing**: <% or "n/a">
-**Edge vs Manifold**: <pp>
-**Edge vs Kalshi**: <pp or "n/a">
-**Edge vs Polymarket**: <pp or "n/a">
+**Primary venue price at writing**: <%>
+**Other venue prices at writing (aligned to YES direction)**: <list or "single-venue">
+**Edge vs primary venue**: <pp>
+**Cross-venue spread (if any)**: <pp between highest and lowest>
 **Confidence**: <1-5>
 
 ## Market question
@@ -114,12 +125,9 @@ Priority order:
 **Resolved**: <YES/NO/n%>
 **My prediction**: <%>
 **Brier contribution**: <number>
-**Realized edge vs Manifold**: <pp — positive if I beat Manifold price>
-**Realized edge vs Kalshi**: <pp or "n/a">
-**Realized edge vs Polymarket**: <pp or "n/a">
-**Post-friction edge (Kalshi)**: <pp, after 2.5pp spread>
-**Post-friction edge (Polymarket)**: <pp, after 2.5pp spread>
-**Cross-venue note**: <which venue was closest to the outcome? what does that suggest about venue trust for this market type?>
+**Realized edge vs primary venue**: <pp, positive if I beat the primary venue price>
+**Post-friction edge**: <pp, after 2.5pp spread — only relevant if primary venue was real-money>
+**Cross-venue outcome (if applicable)**: <which venue was closest to the outcome? arbitrage opportunity that existed?>
 **Post-mortem**: <did reasoning hold up? what did I miss? what generalizes?>
 ```
 
@@ -136,23 +144,19 @@ Priority order:
 
 - Predictions made: <N>
 - Resolved: <M>
-- Brier score: <avg of my predictions>
-- Naive-Manifold Brier: <avg> (the score a "trust-Manifold" strategy would get)
-- Naive-Kalshi Brier: <avg, when Kalshi shadow exists>
-- Naive-Polymarket Brier: <avg, when Polymarket shadow exists>
-- Brier advantage vs Manifold: <Δ> (positive = I beat Manifold)
-- Brier advantage vs Kalshi: <Δ, on predictions with Kalshi shadows>
-- Brier advantage vs Polymarket: <Δ, on predictions with Polymarket shadows>
+- Brier score (mine): <avg>
+- Brier score (naive primary-venue): <avg> (trust-the-market baseline, by each prediction's primary venue)
+- Brier advantage vs primary venue: <Δ> (positive = I beat the market I predicted against)
 - Post-friction Brier advantage: <Δ − 0.015> (0.015 ≈ typical 2.5pp spread translated to Brier)
 - Log loss: <avg>
 - Calibration buckets: <e.g., 3 predictions in 70-80% bucket resolved 2/3 YES>
 - Direction bias: <below-market / above-market / balanced counts>
-- Venue trust observations: <which venue's prices were most accurate on which market types?>
+- Cross-venue arbitrage observations: <summary of predictions where same question listed on multiple venues with ≥5pp spread, and which venue was closer to resolution>
 
 ## Resolved predictions
 
-| Date | Market | Me | Manifold | Kalshi | Poly | Outcome | Brier | ΔvsMf | ΔvsKa | ΔvsPm | Notes |
-|------|--------|----|----------|--------|------|---------|-------|-------|-------|-------|-------|
+| Date | Market | Venue | Me | Mkt | Outcome | Brier | ΔvsMkt | Cross-venue? | Notes |
+|------|--------|-------|----|----|---------|-------|--------|--------------|-------|
 
 ## Lessons
 
@@ -160,8 +164,8 @@ Priority order:
 
 ## Pending predictions
 
-| Written | Market | Me | Manifold | Kalshi | Poly | Resolves |
-|---------|--------|----|----------|--------|------|----------|
+| Written | Market | Venue | Me | Mkt | Cross-venue? | Resolves |
+|---------|--------|-------|----|----|--------------|----------|
 ```
 
 ## Journaling
