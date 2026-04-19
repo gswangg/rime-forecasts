@@ -46,3 +46,6 @@
 {"ts":"2026-04-20T00:57:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 46 gate skip."}
 {"ts":"2026-04-20T00:59:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 47 gate skip."}
 {"ts":"2026-04-20T01:02:00+00:00","action":"methodology","files":["drive-prompt.md"],"edge_pp":null,"notes":"Cycle 48 drive-prompt v2.3 edit. Added skip-fatigue stop criterion: 25 consecutive gate-skip entries triggers ac off. At rapid drain cadence (~2-5min) this is ~1 hour of silent skipping before auto-pause. Prevents the v2.2-era pattern of accumulating hundreds of silent-skip cycles waiting for the 24h time-based trigger. Current consecutive-skip count tail: roughly 10+ gate skips from cycles 37-47. Next cycle should evaluate: if count >= 25, trigger ac off."}
+{"ts":"2026-04-20T01:04:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 49 one-shot post-edit scan. Pool unchanged since cycle 32. Full scan would reproduce same result. Gate re-engages from here."}
+{"ts":"2026-04-20T01:08:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 50 gate skip — Greg asked for a brief pause."}
+{"ts":"2026-04-20T01:10:00+00:00","action":"ac-off","files":[],"edge_pp":null,"notes":"Cycle 51 — calling ac off per Greg explicit halt (\"You can stop for a min\"). Stop criterion: explicit halt from Greg."}
