@@ -36,3 +36,13 @@
 {"ts":"2026-04-20T00:32:00+00:00","action":"tool","files":["scripts/check-resolutions.py"],"edge_pp":null,"notes":"Cycle 36 — extended check-resolutions.py to fetch Polymarket shadow prices for markets with a recorded polymarket.com/event/<slug> in their reasoning file. Now surfaces Bayern, Messi, Patel with live Polymarket prices. Added caveat note that raw prices may need direction-flip or time-window adjustment (Patel has both: Polymarket YES=leaves vs Manifold YES=stays, and 257-day vs 72-day horizon). Future refactor: add explicit Polymarket-price-at-writing field to prediction template."}
 {"ts":"2026-04-20T00:35:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 37 gate skip."}
 {"ts":"2026-04-20T00:40:00+00:00","action":"session-report","files":["sessions/2026-04-19-session-1.md"],"edge_pp":null,"notes":"Cycle 38 — wrote session 1 report. Durable summary of what happened across cycles 1-~38 today: 9 predictions placed (8 v1 + 1 v2), v2 methodology introduced, cross-venue enrichment found 45pp Patel mispricing, check-resolutions.py built. Captures 5 key findings and 3 open questions for future sessions. Pending milestones enumerated."}
+{"ts":"2026-04-20T00:43:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 39 gate skip."}
+{"ts":"2026-04-20T00:45:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 40 gate skip."}
+{"ts":"2026-04-20T00:47:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 41 gate skip."}
+{"ts":"2026-04-20T00:49:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 42 gate skip."}
+{"ts":"2026-04-20T00:51:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 43 gate skip."}
+{"ts":"2026-04-20T00:53:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 44 gate skip."}
+{"ts":"2026-04-20T00:55:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 45 gate skip."}
+{"ts":"2026-04-20T00:57:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 46 gate skip."}
+{"ts":"2026-04-20T00:59:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 47 gate skip."}
+{"ts":"2026-04-20T01:02:00+00:00","action":"methodology","files":["drive-prompt.md"],"edge_pp":null,"notes":"Cycle 48 drive-prompt v2.3 edit. Added skip-fatigue stop criterion: 25 consecutive gate-skip entries triggers ac off. At rapid drain cadence (~2-5min) this is ~1 hour of silent skipping before auto-pause. Prevents the v2.2-era pattern of accumulating hundreds of silent-skip cycles waiting for the 24h time-based trigger. Current consecutive-skip count tail: roughly 10+ gate skips from cycles 37-47. Next cycle should evaluate: if count >= 25, trigger ac off."}

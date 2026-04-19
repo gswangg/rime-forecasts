@@ -182,6 +182,7 @@ Call `ac off` when any of:
 
 - 15+ predictions resolved AND scorecard shows clear signal (good or bad) — decision point: graduate-to-fruit, iterate with adjustments, or archive with lessons.
 - 3 consecutive drain cycles with no action (markets not meeting bar) — **and the most recent prediction is >24 hours old**. If a recent prediction exists, the cadence gate (step 2 above) should catch the rapid-skip situation without escalation.
+- **Skip fatigue: 25+ consecutive gate-skip entries in journal.jsonl.** At typical rapid drain cadence (~2-5 min apart) this corresponds to roughly an hour of silent skipping. Beyond that the cost of model invocations per drain outweighs the value of staying in the loop, and whatever market refresh we were waiting for hasn't happened. Call `ac off` and note the skip-fatigue trigger in the final commit so Greg can resume on purpose.
 - Explicit halt from Greg.
 
 ## Context to read each cycle
