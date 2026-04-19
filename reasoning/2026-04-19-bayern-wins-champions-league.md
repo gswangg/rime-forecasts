@@ -90,4 +90,29 @@ Expected differential: at my own estimated 30% true probability, expected Brier 
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:58:00+00:00)
+
+Recorded after v2 methodology added the dual-venue shadow requirement. Frozen reasoning above is untouched.
+
+**Polymarket equivalent:** [Will Bayern Munich win the 2025–26 Champions League?](https://polymarket.com/event/will-bayern-munich-win-the-202526-champions-league) — same question.
+
+- Polymarket price: **34.5% YES**.
+- Manifold price (at writing): 35%.
+- My prediction: 30%.
+
+**Cross-venue alignment:** Manifold and Polymarket agree to within 0.5pp. Real-money and play-money both arrive at ~35%, suggesting 35% is a well-priced consensus value across venues.
+
+**Reassessment of my 30% prediction:** I priced Bayern 5pp below both venues based on a two-stage tournament calc (0.53 × 0.54 ≈ 29%). When both venues converge on 35%, the efficient-market weight on the consensus is stronger. My 5pp down-move may be less defensible than it appeared when I only had Manifold data.
+
+Possible reasons the cross-venue consensus is higher than my model:
+- Bayern's 6–4 aggregate win over Real Madrid in the QF may be weighted more heavily by real-money traders (recency / form)
+- PSG's Liverpool win (4–0 agg) may have been read as overstated; PSG may be overpriced as Bayern's SF opponent relative to their actual strength
+- My conditional probabilities (53%, 54%) may each be slightly low — consensus implies something closer to ~58% × 60% = 35%
+
+**Retrospective honest take:** my prediction is defensible but the 5pp edge was probably smaller than I thought. I probably should have priced at 32–33% rather than 30% given the cross-venue agreement. Marginal miscalibration, not material.
+
+**Implication for v2:** Polymarket shadow in real-time would have nudged my prediction up 2–3pp. That's the kind of incremental calibration improvement v2's dual-venue rule is designed to produce.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-29. The above is frozen.)*

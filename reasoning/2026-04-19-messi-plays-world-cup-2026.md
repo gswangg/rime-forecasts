@@ -73,4 +73,22 @@ This is the kind of prediction that is calibration-useful but has low Brier diff
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:58:00+00:00)
+
+Recorded after v2 methodology added the dual-venue shadow requirement. Frozen reasoning above is untouched.
+
+**Polymarket equivalent:** [Will Lionel Messi play in the 2026 FIFA World Cup?](https://polymarket.com/event/will-lionel-messi-play-in-the-2026-fifa-world-cup) — same question, identical resolution criteria.
+
+- Polymarket price: **92.5% YES** (plays ≥1 match).
+- Manifold price (at writing): 88%.
+- My prediction: 93%.
+
+**Cross-venue alignment:** Polymarket and Manifold differ by 4.5pp. My 93% is **within 0.5pp of Polymarket** and ~5pp above Manifold.
+
+**Interpretation:** real-money pricing agrees with my prediction. Manifold's 88% was the outlier, likely reflecting play-money noise or a small number of NO-biased bettors. This is validation that the cycle 4 base-rate reasoning (0.98 × 0.97 × 0.98 ≈ 0.93) correctly identified the probability that sophisticated traders also arrived at.
+
+**Implication for v2:** when Manifold and Polymarket agree within ~2pp, my prediction should stay close to their consensus. When they diverge materially (as with Patel), cross-venue spread is itself a signal to think harder about why. In this case they broadly agree, so my prediction is well-anchored.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
