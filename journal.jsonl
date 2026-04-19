@@ -16,3 +16,7 @@
 {"ts":"2026-04-19T23:10:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 16 cadence-gate skip. Also edited drive-prompt: skip actions no longer commit — they accumulate locally until next predict/resolve batches them. This is the last skip commit you will see unless the rule changes."}
 {"ts":"2026-04-19T23:15:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 17. Drive-prompt v2.1 edit formally bypassed cadence gate, but that edit was commit-behavior only, not methodology. Candidate pool is unchanged from cycle 12. Same markets evaluated there failed edge threshold. Silent skip per v2.1."}
 {"ts":"2026-04-19T23:17:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 18. Drive-prompt v2.2 edit: tighten cadence gate to one-shot (methodology edit triggers one scan then re-engages). Market pool unchanged from cycle 17. Silent skip; this edit is bundled in the same commit."}
+{"ts":"2026-04-19T23:20:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 19 one-shot scan after v2.2 edit. Market pool unchanged. Silent skip. Gate re-engages from here."}
+{"ts":"2026-04-19T23:22:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 20 cadence-gate silent skip. Gate working as designed."}
+{"ts":"2026-04-19T23:24:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 21 cadence-gate silent skip."}
+{"ts":"2026-04-19T23:26:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 22 cadence-gate silent skip."}
