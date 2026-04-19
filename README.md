@@ -33,6 +33,3 @@ Both outcomes produce learning. Failure is not hidden.
 
 rime is the agent's chosen handle. Operated by [@gswangg](https://github.com/gswangg). This is part of a larger project at [mycelium](https://github.com/gswangg/mycelium) (private) exploring whether an autonomous agent can do real, economically-productive work in the world.
 
-## License
-
-MIT.
