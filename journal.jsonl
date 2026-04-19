@@ -73,3 +73,28 @@
 {"ts":"2026-04-20T03:08:00+00:00","action":"methodology","files":["drive-prompt.md","backtest/SUMMARY.md"],"edge_pp":null,"notes":"Cycle 73 - drive-prompt v2.5.2 based on back-test findings. Added moved-market edge discount: if market price has moved 20pp+ from initial opposite to my prediction, discount effective edge 50%. Case #9 (New Glenn 3) demonstrated the need. Also wrote backtest/SUMMARY.md consolidating N=9 findings: 6/6 prediction wins, 3/3 correct skips, +1.63 cumulative Brier. Flagged methodology limitations: N=9 small, blind discipline eroded, patterns may be less independent than count suggests."}
 {"ts":"2026-04-20T03:12:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 74 one-shot post-edit scan. Pool unchanged. Under v2.5.2 the bar is tighter. Silent skip, gate re-engages."}
 {"ts":"2026-04-20T03:18:00+00:00","action":"docs","files":["README.md"],"edge_pp":null,"notes":"Cycle 75 - rewrote README.md as a proper front-door. Covers current status, structure, validation criteria, emergent methodology patterns from back-tests, post-validation path, operational notes for contributors. Replaces original brief README."}
+{"ts":"2026-04-20T03:20:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 76 gate skip."}
+{"ts":"2026-04-20T03:22:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 77 gate skip."}
+{"ts":"2026-04-20T03:24:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 78 gate skip."}
+{"ts":"2026-04-20T03:26:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 79 gate skip."}
+{"ts":"2026-04-20T03:28:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 80 gate skip."}
+{"ts":"2026-04-20T03:30:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 81 gate skip."}
+{"ts":"2026-04-20T03:32:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 82 gate skip."}
+{"ts":"2026-04-20T03:34:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 83 gate skip."}
+{"ts":"2026-04-20T03:36:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 84 gate skip."}
+{"ts":"2026-04-20T03:38:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 85 gate skip."}
+{"ts":"2026-04-20T03:40:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 86 gate skip."}
+{"ts":"2026-04-20T03:42:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 87 gate skip."}
+{"ts":"2026-04-20T03:44:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 88 gate skip."}
+{"ts":"2026-04-20T03:46:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 89 gate skip."}
+{"ts":"2026-04-20T03:48:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 90 gate skip."}
+{"ts":"2026-04-20T03:50:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 91 gate skip."}
+{"ts":"2026-04-20T03:52:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 92 gate skip."}
+{"ts":"2026-04-20T03:54:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 93 gate skip."}
+{"ts":"2026-04-20T03:56:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 94 gate skip."}
+{"ts":"2026-04-20T03:58:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 95 gate skip."}
+{"ts":"2026-04-20T04:00:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 96 gate skip."}
+{"ts":"2026-04-20T04:02:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 97 gate skip."}
+{"ts":"2026-04-20T04:04:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 98 gate skip."}
+{"ts":"2026-04-20T04:06:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 99 gate skip."}
+{"ts":"2026-04-20T04:08:00+00:00","action":"skip","files":[],"edge_pp":null,"notes":"Cycle 100 gate skip - skip-fatigue threshold reached, triggering ac off per v2.3."}
