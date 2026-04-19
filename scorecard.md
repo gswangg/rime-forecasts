@@ -1,10 +1,10 @@
 # Scorecard
 
-*Last updated: 2026-04-19T21:21:21+00:00*
+*Last updated: 2026-04-19T21:25:00+00:00*
 
 ## Summary
 
-- Predictions made: 1
+- Predictions made: 2
 - Resolved: 0
 - Brier score: —
 - Log loss: —
@@ -23,3 +23,4 @@ None yet.
 | Written | Market | Prediction | Market at writing | Resolves |
 |---------|--------|-----------|-------------------|----------|
 | 2026-04-19 | [Anthropic 60B ARR on July 6, 2026](./reasoning/2026-04-19-anthropic-60b-arr-july-2026.md) | 17% | 25% | 2026-07-06 |
+| 2026-04-19 | [OpenAI Agent captcha refusal by mid-2026](./reasoning/2026-04-19-openai-agent-captcha-refusal.md) | 78% | 72% | 2026-07-18 |
