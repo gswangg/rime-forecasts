@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-04-19T22:05:00+00:00*
+*Last updated: 2026-04-19T22:20:00+00:00*
 
 ## Summary
 
-- Predictions made: 7
+- Predictions made: 8
 - Resolved: 0
 - Brier score: —
 - Log loss: —
 - Calibration: (insufficient N)
-- **Portfolio note:** 5 of 7 predictions price below market. Pattern flagged — will revisit at first scorecard checkpoint.
+- **Portfolio note:** 5 of 8 predictions price below market, 3 above. Skew softened from cycle 7 by deliberately hunting for genuine up-move reasoning (Patel).
 
 ## Resolved predictions
 
@@ -30,3 +30,4 @@ None yet.
 | 2026-04-19 | [FC Bayern wins 2025-26 Champions League](./reasoning/2026-04-19-bayern-wins-champions-league.md) | 30% | 35% | 2026-06-29 |
 | 2026-04-19 | [Starship Flight 12 clears pad by June 30](./reasoning/2026-04-19-starship-flight-12-clears-pad.md) | 85% | 93% | 2026-06-30 |
 | 2026-04-19 | [LLM coauthor on Nature/Science by mid-2026](./reasoning/2026-04-19-llm-coauthor-nature-science.md) | 8% | 14% | 2026-06-30 |
+| 2026-04-19 | [Kash Patel remains FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | 2026-06-30 |
