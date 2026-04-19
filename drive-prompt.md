@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v2.5.1)
+# Drive prompt: rime-forecasts (validation experiment, v2.5.2)
 
 *Spawned from `~/pi-work/mycelium/primordia/ideas/2026-04-19-rime-forecasts.md`. Purpose: test whether rime's forecasting reasoning produces **economically tradeable** calibration before any capital is committed.*
 
@@ -9,6 +9,7 @@
 - *v2.3: skip-fatigue stop criterion (25 consecutive gate-skips → `ac off`).*
 - *v2.5 (2026-04-20): **venue-equality principle.** Removed "Manifold-primary, Kalshi/Poly as shadow" framing — all three are equal deal-flow sources. Cross-venue arbitrage is a documentation enhancement, never a selection filter. Correcting the drift that treated "Manifold-only" as a downgrade.*
 - *v2.5.1 (2026-04-20): **edge + confidence gate tightened.** Closed a hole in the v2 edge rule: a 10pp+ edge with confidence 2/5 could technically predict under the old OR-language. Back-test #4 (Intel \$63) showed this is bad discipline — low-confidence threshold-edge calls lose on average. New rule: predict if `(edge ≥ 10pp AND confidence ≥ 3/5)` OR `(confidence ≥ 4/5 with novel information)`.*
+- *v2.5.2 (2026-04-20): **discount edge against sharply-moved markets.** When market price has moved ≥20pp from its initial/creation level in the direction opposite my prediction, discount the effective edge by 50%. Rationale from back-test #9 (New Glenn 3 reuse): large price moves encode real information bettors acted on; fighting them with generic base-rate reasoning is dangerous. Case #9 was an "ugly win" — technically beat market Brier but was on wrong side of outcome, worse than naive 50/50.*
 
 ## Goal
 
@@ -62,6 +63,8 @@ Any one of the below kills the idea (archive with a hard-filter lesson):
   - OR the prediction captures a mechanism (not just a probability tweak) that is itself a testable thesis with confidence ≥ **3/5**.
 
   Low-confidence threshold-edge calls (e.g., 10pp edge at confidence 2/5) should be **skipped**. The v2.5.1 tightening was triggered by back-test #4 (Intel \$63) which showed that a marginal-edge low-confidence prediction loses on average. Sub-10pp "base-rate vibes" predictions are still always skipped, not logged — they dilute the scorecard.
+
+- **Moved-market edge discount (v2.5.2).** Before applying the edge threshold, compute the market's *price movement* from its initial/creation level. If the current price differs by ≥20pp from the initial price AND that difference is in the direction opposite my prediction, **discount the effective edge by 50%**. A 20pp move implies bettors received real information and acted on it; fighting that with generic base-rate priors is risky. Back-test #9 (New Glenn 3) demonstrates: the market moved 53% → 19% over 2 months, I reasoned 30% from generic base rate, my prediction "technically won" vs market but was on the wrong side of the YES outcome. The discount would have flipped that prediction to a skip.
 - **Cross-venue arbitrage observation (when applicable).** When picking a candidate on one venue, do a quick check for the same question on the other two. If the same question lists elsewhere at a materially different price (≥5pp spread), record all prices in the prediction file — that spread is itself a useful observation and possibly an arbitrage opportunity. If no equivalent lists on other venues, just note "single-venue question" and move on. Single-venue predictions are equally valid.
 - **One prediction per drive cycle.** Quality over volume. Skipping is a first-class action.
 - **Diversify market types** across cycles — adoption curves, labor signals, technical-bet outcomes, model benchmarks, product metrics, policy/legal — not five model-release timing markets.
