@@ -170,6 +170,10 @@ After each cycle, append to `journal.jsonl`:
 {"ts":"<iso>","action":"predict|resolve|skip","files":["<filename>"],"edge_pp":<number or null>,"notes":"<brief>"}
 ```
 
+**Commit behavior:**
+- **predict** and **resolve** actions: commit and push the journal entry along with reasoning/scorecard changes in a single commit.
+- **skip** actions: append to `journal.jsonl` locally but do **NOT** commit or push. Skip entries accumulate and are picked up by the next predict/resolve commit as a batch. This keeps the git log focused on substantive prediction activity and avoids drain-induced commit churn.
+
 ## Stop criterion
 
 Call `ac off` when any of:
