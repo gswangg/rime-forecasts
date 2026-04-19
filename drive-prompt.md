@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v2.5)
+# Drive prompt: rime-forecasts (validation experiment, v2.5.1)
 
 *Spawned from `~/pi-work/mycelium/primordia/ideas/2026-04-19-rime-forecasts.md`. Purpose: test whether rime's forecasting reasoning produces **economically tradeable** calibration before any capital is committed.*
 
@@ -8,6 +8,7 @@
 - *v2.2: cadence gate is one-shot after drive-prompt edit (prevents indefinite gate bypass).*
 - *v2.3: skip-fatigue stop criterion (25 consecutive gate-skips → `ac off`).*
 - *v2.5 (2026-04-20): **venue-equality principle.** Removed "Manifold-primary, Kalshi/Poly as shadow" framing — all three are equal deal-flow sources. Cross-venue arbitrage is a documentation enhancement, never a selection filter. Correcting the drift that treated "Manifold-only" as a downgrade.*
+- *v2.5.1 (2026-04-20): **edge + confidence gate tightened.** Closed a hole in the v2 edge rule: a 10pp+ edge with confidence 2/5 could technically predict under the old OR-language. Back-test #4 (Intel \$63) showed this is bad discipline — low-confidence threshold-edge calls lose on average. New rule: predict if `(edge ≥ 10pp AND confidence ≥ 3/5)` OR `(confidence ≥ 4/5 with novel information)`.*
 
 ## Goal
 
@@ -55,11 +56,12 @@ Any one of the below kills the idea (archive with a hard-filter lesson):
 - **Predict before resolution, always.** Every prediction file must include a timestamp earlier than the market's resolution. No post-hoc writing.
 - **Publish to the public GitHub repo** at `gswangg/rime-forecasts` on every commit. No private-then-publish games.
 - **Cover the reasoning, not just the number.** Required sections: market question (with resolution criteria), base rate, where you differ and why, falsifiability commitment, confidence.
-- **Edge threshold.** Only predict if **either**:
-  - |my prediction − market price| ≥ **10pp**, OR
+- **Edge threshold (v2.5.1).** Only predict if **one** of:
+  - (|my prediction − market price| ≥ **10pp**) AND (confidence ≥ **3/5**), OR
   - confidence ≥ **4/5** with a specific novel information claim,
-  - OR the prediction captures a mechanism (not just a probability tweak) that is itself a testable thesis.
-  - Sub-10pp "base-rate vibes" predictions should be **skipped**, not logged. They dilute the scorecard.
+  - OR the prediction captures a mechanism (not just a probability tweak) that is itself a testable thesis with confidence ≥ **3/5**.
+
+  Low-confidence threshold-edge calls (e.g., 10pp edge at confidence 2/5) should be **skipped**. The v2.5.1 tightening was triggered by back-test #4 (Intel \$63) which showed that a marginal-edge low-confidence prediction loses on average. Sub-10pp "base-rate vibes" predictions are still always skipped, not logged — they dilute the scorecard.
 - **Cross-venue arbitrage observation (when applicable).** When picking a candidate on one venue, do a quick check for the same question on the other two. If the same question lists elsewhere at a materially different price (≥5pp spread), record all prices in the prediction file — that spread is itself a useful observation and possibly an arbitrage opportunity. If no equivalent lists on other venues, just note "single-venue question" and move on. Single-venue predictions are equally valid.
 - **One prediction per drive cycle.** Quality over volume. Skipping is a first-class action.
 - **Diversify market types** across cycles — adoption curves, labor signals, technical-bet outcomes, model benchmarks, product metrics, policy/legal — not five model-release timing markets.
