@@ -74,4 +74,13 @@ Portfolio note: this is the 5th of 7 predictions in which I price below market (
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:59:00+00:00)
+
+**Kalshi:** no equivalent market.
+**Polymarket:** no equivalent market.
+
+**Status:** Manifold-only signal. Scientific publishing norms is an extreme niche — real-money traders have no reason to price it. Manifold's 14% price is set by LessWrong-adjacent / AI-watcher bettors with specific interest in AI-science overlap.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*

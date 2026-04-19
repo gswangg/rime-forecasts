@@ -60,4 +60,13 @@ This is a calibration-honest prediction: small edge, small stake.
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:59:00+00:00)
+
+**Kalshi:** no equivalent market found.
+**Polymarket:** no equivalent market found (searched for "captcha" across 4500+ markets — zero hits).
+
+**Status:** Manifold-only signal. AI-agent-behavior questions (specifically about refusal mechanics) are a Manifold niche. Real-money venues price AI *milestones* (capabilities, releases) but not *product policies*. This is a pattern to note — policy-persistence markets are harder to monetize because real-money traders don't value them as signals.
+
+---
+
 *(Resolution section added below after market resolves on 2026-07-18. The above is frozen.)*

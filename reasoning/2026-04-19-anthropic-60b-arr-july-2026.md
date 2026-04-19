@@ -62,4 +62,14 @@ Conversely, evidence that strengthens my NO:
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:59:00+00:00)
+
+**Kalshi:** searched events API; Kalshi has "Will OpenAI or Anthropic IPO first?" but no equivalent market on Anthropic revenue milestones. No equivalent found.
+
+**Polymarket:** searched gamma API across 4500+ active markets. No equivalent market on Anthropic ARR thresholds. Related markets (OpenAI / Anthropic IPO, GPT-6 release) exist but ask different questions.
+
+**Status:** Manifold-only signal. Anthropic-specific revenue milestones are a niche Manifold has captured but real-money venues have not priced directly. Calibration-useful but not tradeable at present.
+
+---
+
 *(Resolution section added below after market resolves on 2026-07-06. The above is frozen.)*

@@ -89,4 +89,25 @@ If Flight 12 actually slips or has a pad failure, my Brier substantially beats m
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:59:00+00:00)
+
+**Kalshi:** no SpaceX/Starship markets in active events.
+
+**Polymarket:** three related Flight 12 markets exist but **ask different questions** than pad-clearance:
+- [Chopsticks catch Superheavy booster](https://polymarket.com/event/...) — 1.65% YES, endDate 2026-01-31 (past, likely stale/NA)
+- [Superheavy explodes](https://polymarket.com/event/...) — 2.5% YES
+- [Starship successful splashdown](https://polymarket.com/event/...) — 3% YES
+
+These markets all had end dates of 2026-01-31 (~3 months past) which strongly suggests they resolved NO or were extended because F12 did not launch in the original expected window. That itself is information: **the real-money consensus in January-February 2026 expected F12 to launch and resolve by end of January**, and the delay past that window is what has led to the ~3% residual prices.
+
+Trying to back out an implied pad-clearance probability from these:
+- 3% successful splashdown implies 97% NO — but NO includes both "F12 fails after launch" and "F12 doesn't launch in time." Since the original Polymarket deadline has passed, most of that NO weight is from "didn't launch in time," not from launch failure.
+- Doesn't give me useful evidence about pad clearance conditional on F12 launching soon.
+
+**Status:** Manifold-only useful signal for my specific question. Polymarket's related markets are stale and the deadlines don't align with my June 30 resolution.
+
+**Implication for trading:** if Polymarket listed a new Flight 12 pad-clearance market aligned with June 30 deadline, that would be the cleaner signal. Until then, my 85% remains anchored to Manifold's thin 93%.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*

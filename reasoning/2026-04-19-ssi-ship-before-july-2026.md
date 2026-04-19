@@ -73,4 +73,13 @@ Evidence that would strengthen NO (my current direction):
 
 ---
 
+## Cross-venue shadow (retrospective, added 2026-04-19T23:59:00+00:00)
+
+**Kalshi:** no equivalent market (no SSI, Sutskever, or safe-superintelligence markets in open events).
+**Polymarket:** no equivalent market. False positives on 'ssi' matching 'Russia' slug fragments.
+
+**Status:** Manifold-only signal. SSI's deliberately-opaque strategy means there's little trading interest anywhere — no narrative hooks for real-money traders. Manifold's 10% price is set by a small number of AI-watchers rather than deep liquidity.
+
+---
+
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
