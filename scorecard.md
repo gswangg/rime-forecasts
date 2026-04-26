@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-04-20T00:05:00+00:00*
+*Last updated: 2026-04-26T04:31:32+00:00*
 
 ## Summary
 
-- Predictions made: 9 (8 v1 + 1 v2)
+- Predictions made: 10 (8 v1 + 2 v2/v2.5.x)
 - Resolved: 0
 - Brier score: —
-- Naive-Manifold Brier: —
+- Naive primary-venue Brier: —
 - Log loss: —
 - Calibration: insufficient N
-- **Portfolio direction bias (at writing):** 6 below-Manifold, 3 above-Manifold.
+- **Portfolio direction bias (at writing):** 6 below primary venue, 4 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -36,6 +36,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 - **Patel FBI (big divergence):** Manifold 51% exit, Polymarket ~6% exit over same 72-day window → **45pp spread**. My prediction (42% exit) hugged Manifold. If Polymarket is the better signal, my cycle 8 call was substantially miscalibrated — should have been 15–25% exit. Likely over-weighted the Atlantic scandal relative to Trump-loyalty base rate.
 - **Messi WC (alignment):** Manifold 88%, Polymarket 92.5%. My 93% matches Polymarket within 0.5pp. Cross-venue validation of the base-rate calculation.
 - **Bayern CL (alignment):** Manifold 35%, Polymarket 34.5%. My 30% is 5pp below consensus. Probably should have been 32–33% — mild overconfidence in the down-move.
+- **Tottenham relegation (big divergence, v2.5.2):** Polymarket 32.05% vs Manifold 51%/49.5%. My 50% is close to Manifold, not Polymarket, based on current table state (Spurs 18th, two points behind West Ham with four matches left). This is the first forward prediction explicitly using cross-venue spread as a stale-price diagnostic.
 
 ### Implications for v2 candidate selection
 
@@ -64,6 +65,7 @@ None yet.
 | 2026-04-19 | [Starship F12 clears pad](./reasoning/2026-04-19-starship-flight-12-clears-pad.md) | 85% | 93% | — | ⚠️ | 2026-06-30 | v1 |
 | 2026-04-19 | [LLM coauthor Nature/Sci](./reasoning/2026-04-19-llm-coauthor-nature-science.md) | 8% | 14% | — | — | 2026-06-30 | v1 |
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
-| 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20% | — | — | 2026-05-31 | v2 |
+| 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
+| 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.

@@ -10,12 +10,12 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 
 ## Current status
 
-*As of 2026-04-20 (session 1).*
+*As of 2026-04-26 (session 2).*
 
-- **9 predictions placed**: 8 v1 baseline (mixed categories, <10pp edges), 1 v2 (WTI crude $150, 15.5pp edge). Earliest resolution 2026-05-31, latest 2026-07-18.
+- **10 predictions placed**: 8 v1 baseline (mixed categories, <10pp edges), 1 v2 Manifold prediction (WTI crude $150, 15.5pp edge), 1 v2.5.2 Polymarket-primary prediction (Tottenham relegation, 17.95pp edge). Earliest resolution 2026-05-27, latest 2026-07-18.
 - **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v2.5.2. 14–45 day resolution window, 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle (Manifold, Kalshi, Polymarket all first-class).
 - **Back-test (N=9)**: v2.5.1 methodology retrospectively tested on resolved Manifold markets. 6-for-6 prediction wins (+1.63 cumulative Brier advantage), 3-for-3 correct skips. See [`backtest/SUMMARY.md`](./backtest/SUMMARY.md).
-- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold + Polymarket, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical market prices.
+- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices.
 
 ## Structure
 
