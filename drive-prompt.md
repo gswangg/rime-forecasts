@@ -1,221 +1,220 @@
-# Drive prompt: rime-forecasts (validation experiment, v2.5.2)
+# Drive prompt: rime-forecasts (validation experiment, v3 event-driven)
 
-*Spawned from `~/pi-work/mycelium/primordia/ideas/2026-04-19-rime-forecasts.md`. Purpose: test whether rime's forecasting reasoning produces **economically tradeable** calibration before any capital is committed.*
+*Purpose: test whether rime's forecasting reasoning produces economically tradeable calibration before any capital is committed.*
 
 *Revision history:*
-- *v2 (2026-04-19 early evening): 14–45d window, 10pp edge threshold, dual-venue shadow. Rationale in journal cycle 11.*
-- *v2.1 (late evening): skip actions no longer commit (kills drain-induced git churn).*
-- *v2.2: cadence gate is one-shot after drive-prompt edit (prevents indefinite gate bypass).*
-- *v2.3: skip-fatigue stop criterion (25 consecutive gate-skips → `ac off`).*
-- *v2.5 (2026-04-20): **venue-equality principle.** Removed "Manifold-primary, Kalshi/Poly as shadow" framing — all three are equal deal-flow sources. Cross-venue arbitrage is a documentation enhancement, never a selection filter. Correcting the drift that treated "Manifold-only" as a downgrade.*
-- *v2.5.1 (2026-04-20): **edge + confidence gate tightened.** Closed a hole in the v2 edge rule: a 10pp+ edge with confidence 2/5 could technically predict under the old OR-language. Back-test #4 (Intel \$63) showed this is bad discipline — low-confidence threshold-edge calls lose on average. New rule: predict if `(edge ≥ 10pp AND confidence ≥ 3/5)` OR `(confidence ≥ 4/5 with novel information)`.*
-- *v2.5.2 (2026-04-20): **discount edge against sharply-moved markets.** When market price has moved ≥20pp from its initial/creation level in the direction opposite my prediction, discount the effective edge by 50%. Rationale from back-test #9 (New Glenn 3 reuse): large price moves encode real information bettors acted on; fighting them with generic base-rate reasoning is dangerous. Case #9 was an "ugly win" — technically beat market Brier but was on wrong side of outcome, worse than naive 50/50.*
+- *v2–v2.5.2 (2026-04-19/20): 14–45d window, venue equality, 10pp+edge with confidence gate, moved-market discount, skip-fatigue/cadence gates.*
+- *v3 (2026-04-26): event-driven architecture. Market polling moves to daemon(s); model work is triggered by `wake-pi` events. Adds CLV feedback loop (+1h/+6h/+24h/close). Avoids drain-time market scanning and idle model burn.*
 
 ## Goal
 
-Accumulate 15–25 resolved predictions with published reasoning where the pre-friction edge is large enough that **a real-money trader on Kalshi or Polymarket could have profitably taken the same position after typical spread and slippage costs** (for predictions placed on those venues). At resolution, score objectively:
+Accumulate 15–25 resolved predictions with published reasoning where the pre-friction edge is large enough that a real-money trader on Kalshi or Polymarket could have profitably taken the same position after typical spread/slippage.
 
-1. **Calibration** (Brier, log loss, calibration curve) — are the numbers well-tuned?
-2. **Economic realizability** (post-friction Brier differential, net edge after 2–3pp spread on the venue the prediction was placed against) — would this have made money on a real-money venue?
-3. **Cross-venue arbitrage** — when the *same* question is listed on multiple venues at materially different prices, that price spread is itself a tradeable signal worth documenting. This is a distinct value-add, not a gating criterion.
-4. **Reasoning quality** — subjective review at checkpoints by Greg.
+Score objectively:
 
-This experiment remains pundit-style — no actual betting during the validation phase. The shift from v1 is that we're now validating for a **specific downstream use case** (real-money positions on Kalshi and/or Polymarket + hybrid publishing), not generic forecasting virtue.
+1. calibration — Brier, log loss, calibration curve
+2. economic realizability — Brier differential and net edge after friction
+3. fast feedback — CLV at +1h/+6h/+24h/close
+4. cross-venue signal — especially Manifold vs real-money disagreement
+5. reasoning quality — Greg's subjective reread
 
-### Venue equality principle
+Still no capital allocation. Pundit validation only.
 
-All three venues are **equally valid deal-flow sources**. A prediction placed against a Manifold market, a Kalshi market, or a Polymarket market is equally good for this experiment provided it meets the niche + window + edge criteria. Do not prefer or penalize based on which venue the market lives on. Specifically:
+## Architecture shift in v3
 
-- **Do not** skip a candidate because it exists only on one venue.
-- **Do not** prefer a candidate because it exists on multiple venues.
-- **Do** record cross-venue prices when the same question lists on multiple venues at a material spread — that spread is arbitrage-relevant data. But this is a documentation enhancement, not a selection filter.
+The old loop asked the model to wake repeatedly and scan markets. That was the wrong shape: expensive, slow to validate, and prone to idle thrash.
 
-### Venue roles (informational, not gating)
+The v3 loop is event-driven:
 
-- **Manifold** — widest market universe, free public API. Good for AI/tech niches, lab strategy, specific product milestones, research questions.
-- **Kalshi** — US-regulated, USD-denominated. Good on US economic releases (CPI, jobs), weather, specific policy outcomes, some sports. Limited on named-individual/company questions.
-- **Polymarket** — USDC on-chain, deep liquidity on US politics, international events, crypto, sports. Broader than Kalshi on personality-specific and culture questions.
+```text
+scripts/polymarket-daemon.py / future venue daemons
+  -> ~/.pi/agent/wake/inbox/*.json
+  -> wake-pi exact sessionId routing
+  -> [wake:<id>] followUp
+  -> model judges/documents
+  -> wake_done / wake_fail
+```
 
-A given prediction will naturally land on one or more of these based on what's listed.
+Core docs:
 
-## What "success" looks like
+- [`automation/SPEC.md`](./automation/SPEC.md) — daemon/wake contract
+- [`clv-ledger.md`](./clv-ledger.md) — fast-feedback ledger
+- [`scorecard.md`](./scorecard.md) — final calibration ledger
 
-By N=15+ resolved predictions, **all three** must be positive:
+## Operating modes
 
-- **Calibration curve roughly diagonal** (predictions at ~70% resolve TRUE ~70% of the time, etc.).
-- **Brier score better than naive "take market price as prediction"** by a margin that exceeds typical Kalshi spread (≥0.015 better on average, translating to a real-money edge after frictions).
-- **Reasoning reads as insightful on reread** — specific, falsifiable, held up or lost instructively. Greg's subjective judgment.
+### 1. Wake-event mode
 
-Any one of the below kills the idea (archive with a hard-filter lesson):
+If the current user message starts with `[wake:<id>]`, treat it as extension-generated, not Greg.
 
-- Calibration off in a systematic direction (e.g., consistent over/under-confidence; persistent NO-bias or YES-bias).
-- Raw Brier beats market but the margin doesn't exceed expected Kalshi spread — i.e., calibrated but not tradeable.
-- Reasoning is confident-sounding noise — hedged enough to be unfalsifiable, or post-hoc rationalized.
+Steps:
 
-## Rules
+1. Read the wake event file named in the message.
+2. Inspect `type`, `payload`, and `prompt`.
+3. Process exactly that event.
+4. Update repo files only if the event produced durable information.
+5. Call `wake_done({id, outcome, notes?})` when complete, or `wake_fail({id, reason})` if blocked.
 
-- **Predict before resolution, always.** Every prediction file must include a timestamp earlier than the market's resolution. No post-hoc writing.
-- **Publish to the public GitHub repo** at `gswangg/rime-forecasts` on every commit. No private-then-publish games.
-- **Cover the reasoning, not just the number.** Required sections: market question (with resolution criteria), base rate, where you differ and why, falsifiability commitment, confidence.
-- **Edge threshold (v2.5.1).** Only predict if **one** of:
-  - (|my prediction − market price| ≥ **10pp**) AND (confidence ≥ **3/5**), OR
-  - confidence ≥ **4/5** with a specific novel information claim,
-  - OR the prediction captures a mechanism (not just a probability tweak) that is itself a testable thesis with confidence ≥ **3/5**.
+Event handling:
 
-  Low-confidence threshold-edge calls (e.g., 10pp edge at confidence 2/5) should be **skipped**. The v2.5.1 tightening was triggered by back-test #4 (Intel \$63) which showed that a marginal-edge low-confidence prediction loses on average. Sub-10pp "base-rate vibes" predictions are still always skipped, not logged — they dilute the scorecard.
+- `candidate_found`: evaluate the market against the methodology. If it clears, write a prediction file and update scorecard/journal/CLV ledger. If it does not clear, usually just `wake_done` with a skip outcome; journal only if the skip teaches something.
+- `price_moved`: update `clv-ledger.md` or reasoning notes only if the move teaches something. Otherwise acknowledge.
+- `clv_checkpoint_due`: update `clv-ledger.md` with price and signed CLV. Mark late if the checkpoint was missed and only current price is available.
+- `resolution_changed`: verify finality, append Resolution section to the reasoning file, update scorecard, commit/push.
 
-- **Moved-market edge discount (v2.5.2).** Before applying the edge threshold, compute the market's *price movement* from its initial/creation level. If the current price differs by ≥20pp from the initial price AND that difference is in the direction opposite my prediction, **discount the effective edge by 50%**. A 20pp move implies bettors received real information and acted on it; fighting that with generic base-rate priors is risky. Back-test #9 (New Glenn 3) demonstrates: the market moved 53% → 19% over 2 months, I reasoned 30% from generic base rate, my prediction "technically won" vs market but was on the wrong side of the YES outcome. The discount would have flipped that prediction to a skip.
-- **Cross-venue arbitrage observation (when applicable).** When picking a candidate on one venue, do a quick check for the same question on the other two. If the same question lists elsewhere at a materially different price (≥5pp spread), record all prices in the prediction file — that spread is itself a useful observation and possibly an arbitrage opportunity. If no equivalent lists on other venues, just note "single-venue question" and move on. Single-venue predictions are equally valid.
-- **One prediction per drive cycle.** Quality over volume. Skipping is a first-class action.
-- **Diversify market types** across cycles — adoption curves, labor signals, technical-bet outcomes, model benchmarks, product metrics, policy/legal — not five model-release timing markets.
-- **Honest base rate always.** Before stating a final prediction, write down what a naive base-rate estimate would be. If my prediction is within 3pp of the base rate, state that explicitly; don't manufacture differentiation.
-- **Score honestly at resolution.** Update `scorecard.md` with Brier contribution, realized post-friction edge (see scorecard structure), and a brief reasoning-held-up note. Losses get documented the same as wins.
-- **No capital allocation.** No Kalshi accounts, no Polymarket wallets, no Manifold play-money. Pure pundit mode until validation passes.
+### 2. Maintenance/manual mode
 
-## Find-work (executed each drain)
+If this prompt is invoked without a `[wake:<id>]` event, do not perform open-ended market scanning. Use this only for bounded maintenance:
 
-Priority order:
+1. Check `scripts/check-resolutions.py` for newly resolved existing predictions.
+2. Verify daemon health/config if asked.
+3. Improve automation/tests/docs if asked.
+4. If no concrete work exists, stop. Do **not** keep the model alive waiting for markets.
 
-1. **Check for newly-resolved markets.** Scan `reasoning/*.md` for any whose underlying market has resolved since last cycle (use `scripts/check-resolutions.py`). For each: append a Resolution section to the reasoning file (never edit the frozen pre-resolution content), update scorecard with Brier + realized-edge-after-friction, extract generalizable lessons to scorecard's Lessons section, commit and push.
-2. **Cadence gate.** If the most recent entry in `journal.jsonl` was within the last **18 hours** AND no new resolution appeared this cycle AND this drive-prompt.md hasn't been edited since that journal entry, **skip automatically** (silent skip per v2.1). The market universe does not refresh on sub-daily cadence and the drive-prompt caller is likely being auto-continued without human review. This prevents the cycle-9-to-11 rapid-skip pattern from v1.
+For long-running operation, run the daemon and let `wake-pi` wake the session.
 
-   The drive-prompt-edit exception is **one-shot**: a methodology change resets the gate for exactly one cycle. That cycle performs a full scan; when it journals its result (predict or skip), the gate re-engages and subsequent cycles skip silently until either 18 hours pass or drive-prompt is edited again. This prevents the gate from being defeated indefinitely by a single drive-prompt edit.
-3. **Review upcoming deadlines across all three venues.** Scan each of Manifold, Kalshi, and Polymarket for markets closing in the **14–45 day window**. Treat all three as equal deal-flow sources per the venue-equality principle. Filter: objectively resolvable, crisp criterion, decent liquidity (Manifold: ≥15 bettors or ≥$2k volume; Kalshi/Polymarket: ≥$5k liquidity or ≥$10k volume). No preference or penalty based on which venue a market lives on.
-4. **Pick ONE candidate and apply the edge threshold.** If |my prediction − market price| < 10pp AND confidence < 4/5, skip with a journal note listing what was evaluated. If it passes, write the prediction file and commit.
-5. **Arbitrage check (documentation only, not a selection filter).** Before committing, quickly check if the same question lists on the other two venues. If yes and spread is ≥5pp, record all prices in the prediction file — the spread is itself an observation worth documenting (and potentially an arbitrage opportunity to flag for the trading graduation). If no equivalents exist elsewhere, note "single-venue question" and move on. This does NOT affect whether to take the prediction.
+## Starting the Polymarket daemon
 
-## Prediction file structure
+Requires an explicit pi session id. No cwd/latest-session fallback.
+
+One-shot smoke:
+
+```bash
+scripts/polymarket-daemon.py --dry-run --pages 1 --page-limit 20
+scripts/polymarket-daemon.py --session-id <pi-session-id> --once
+```
+
+Background loop:
+
+```bash
+mkdir -p automation/state
+nohup scripts/polymarket-daemon.py \
+  --session-id <pi-session-id> \
+  --loop \
+  --interval-sec 900 \
+  >> automation/state/polymarket-daemon.log 2>&1 &
+```
+
+`<pi-session-id>` can be obtained explicitly from `/wake status` in the target pi session. Do not script a fallback that guesses it.
+
+## Methodology rules
+
+### Venue equality, with real-money validation priority
+
+Manifold, Kalshi, and Polymarket are all valid deal-flow sources, but the experiment's economic question is real-money tradeability. Real-money venues should drive validation when possible; Manifold remains useful for broad market discovery and cross-venue signal.
+
+Do not skip a candidate merely because it is single-venue. Do record cross-venue prices when the same question exists elsewhere.
+
+### Edge threshold
+
+Only predict if one of:
+
+- `abs(my probability − market price) ≥ 10pp` **and** confidence ≥ 3/5
+- confidence ≥ 4/5 with a specific novel information claim
+- the prediction captures a mechanism that is itself a testable thesis with confidence ≥ 3/5
+
+Low-confidence threshold-edge calls are skipped. Sub-10pp base-rate vibes are skipped.
+
+### Moved-market edge discount
+
+If current price has moved ≥20pp from initial/creation level in the direction opposite my prediction, discount effective edge by 50% before applying the threshold.
+
+Large adverse moves encode information. Fighting them with generic base-rate reasoning is dangerous.
+
+### Prediction file requirements
+
+Every prediction file must include:
 
 ```markdown
 # <Market title> — resolves <YYYY-MM-DD>
 
 **Primary venue**: Manifold | Kalshi | Polymarket
-**Primary URL**: <url of the market being predicted>
+**Primary URL**: <url>
+**Polymarket market slug**: <slug if any>
 **Other venues (same question, if any)**:
 - Kalshi: <url or n/a>
 - Polymarket: <url or n/a>
 - Manifold: <url or n/a>
 **Written**: <ISO timestamp>
-**Prediction**: <probability, 0-100%>
+**Prediction**: <%>
 **Primary venue price at writing**: <%>
 **Other venue prices at writing (aligned to YES direction)**: <list or "single-venue">
 **Edge vs primary venue**: <pp>
-**Cross-venue spread (if any)**: <pp between highest and lowest>
+**Cross-venue spread (if any)**: <pp>
 **Confidence**: <1-5>
 
 ## Market question
-
-<Exact question, including resolution criteria. Note if resolution is ambiguous or judge-panel-based — those should generally be skipped.>
-
 ## Base rate
-
-<Reference-class estimate, stated as a number before stating the final prediction.>
-
 ## Where I differ from base rate (and why)
-
-<Substantive reasoning. Identify at least one specific observation, dataset, or mechanism that the market might be underweighting or overweighting. If differing by <3pp from base rate, say so explicitly.>
-
 ## What would change my mind
-
-<Concrete falsifiable signals that would flip direction. This is the falsifiability commitment.>
-
 ## Economics at this edge
-
-<Given the stated edge and confidence, what's the approximate Kalshi EV per $1 notional AFTER a typical 2.5pp spread? Is this a trade that would actually be taken if capital were live? One-liner is fine.>
 
 ---
 
 ## Resolution (added after market resolves, never editing above)
-
-**Resolved**: <YES/NO/n%>
-**My prediction**: <%>
-**Brier contribution**: <number>
-**Realized edge vs primary venue**: <pp, positive if I beat the primary venue price>
-**Post-friction edge**: <pp, after 2.5pp spread — only relevant if primary venue was real-money>
-**Cross-venue outcome (if applicable)**: <which venue was closest to the outcome? arbitrage opportunity that existed?>
-**Post-mortem**: <did reasoning hold up? what did I miss? what generalizes?>
 ```
 
-## Scorecard structure
+Frozen pre-resolution content stays frozen.
 
-`scorecard.md` is regenerated each resolution cycle. Structure:
+## CLV update format
 
-```markdown
-# rime-forecasts scorecard
+When updating `clv-ledger.md`, use:
 
-*Last updated: <ts>*
-
-## Summary
-
-- Predictions made: <N>
-- Resolved: <M>
-- Brier score (mine): <avg>
-- Brier score (naive primary-venue): <avg> (trust-the-market baseline, by each prediction's primary venue)
-- Brier advantage vs primary venue: <Δ> (positive = I beat the market I predicted against)
-- Post-friction Brier advantage: <Δ − 0.015> (0.015 ≈ typical 2.5pp spread translated to Brier)
-- Log loss: <avg>
-- Calibration buckets: <e.g., 3 predictions in 70-80% bucket resolved 2/3 YES>
-- Direction bias: <below-market / above-market / balanced counts>
-- Cross-venue arbitrage observations: <summary of predictions where same question listed on multiple venues with ≥5pp spread, and which venue was closer to resolution>
-
-## Resolved predictions
-
-| Date | Market | Venue | Me | Mkt | Outcome | Brier | ΔvsMkt | Cross-venue? | Notes |
-|------|--------|-------|----|----|---------|-------|--------|--------------|-------|
-
-## Lessons
-
-- <generalizable insight from resolution>
-
-## Pending predictions
-
-| Written | Market | Venue | Me | Mkt | Cross-venue? | Resolves |
-|---------|--------|-------|----|----|--------------|----------|
+```text
+<price>% (<signed CLV>pp)
 ```
+
+If late:
+
+```text
+<price>% (<signed CLV>pp, late)
+```
+
+CLV is not a substitute for final scoring. It is a faster signal about whether the market moved toward the forecast before resolution.
 
 ## Journaling
 
-After each cycle, append to `journal.jsonl`:
+After substantive forecast work, append to `journal.jsonl`:
 
 ```json
-{"ts":"<iso>","action":"predict|resolve|skip","files":["<filename>"],"edge_pp":<number or null>,"notes":"<brief>"}
+{"ts":"<iso>","action":"predict|resolve|clv|skip|automation","files":["<filename>"],"edge_pp":<number or null>,"notes":"<brief>"}
 ```
 
-**Commit behavior:**
-- **predict** and **resolve** actions: commit and push the journal entry along with reasoning/scorecard changes in a single commit.
-- **skip** actions: append to `journal.jsonl` locally but do **NOT** commit or push. Skip entries accumulate and are picked up by the next predict/resolve commit as a batch. This keeps the git log focused on substantive prediction activity and avoids drain-induced commit churn.
+Commit behavior:
 
-## Stop criterion
+- prediction/resolution/automation docs/tests: commit and push
+- CLV ledger updates: commit if they add durable learning; otherwise batch with next substantive commit
+- pure no-op skips: do not commit
 
-Call `ac off` when any of:
+## Stop / pause criteria
 
-- 15+ predictions resolved AND scorecard shows clear signal (good or bad) — decision point: graduate-to-fruit, iterate with adjustments, or archive with lessons.
-- 3 consecutive drain cycles with no action (markets not meeting bar) — **and the most recent prediction is >24 hours old**. If a recent prediction exists, the cadence gate (step 2 above) should catch the rapid-skip situation without escalation.
-- **Skip fatigue: 25+ consecutive gate-skip entries in journal.jsonl.** At typical rapid drain cadence (~2-5 min apart) this corresponds to roughly an hour of silent skipping. Beyond that the cost of model invocations per drain outweighs the value of staying in the loop, and whatever market refresh we were waiting for hasn't happened. Call `ac off` and note the skip-fatigue trigger in the final commit so Greg can resume on purpose.
-- Explicit halt from Greg.
+Call `ac off` or leave `ac` disabled when:
 
-## Context to read each cycle
+- no wake event or concrete maintenance task is present
+- OAuth/model limits are near exhaustion
+- 15+ predictions are resolved and the scorecard supports a graduate/iterate/archive decision
+- Greg explicitly halts
 
-- **This file.**
-- **`reasoning/*.md`** — what's been predicted.
-- **`scorecard.md`** — current calibration state.
-- **`journal.jsonl` tail** — recent cycle actions.
+Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events.
 
-## v1 → v2 migration note
+## Context to read each substantive event
 
-The 8 predictions placed on 2026-04-19 under v1 rules stand as a **baseline batch**. Their average delta is ~7pp (which would generally fail v2's 10pp threshold), they're all in the 60-90 day resolution window, and none had Kalshi or Polymarket shadows. At first resolution wave (late June–mid July 2026), score them honestly under both v1 and v2 criteria. The v1 baseline tells us how the old methodology performs; new predictions from cycle 12+ tell us whether v2 improves the signal.
+- This file
+- The wake event payload (if any)
+- `automation/SPEC.md`
+- Relevant `reasoning/*.md`
+- `scorecard.md`
+- `clv-ledger.md`
+- `journal.jsonl` tail
 
-**Optional v1-baseline enrichment:** if time permits before v1 markets resolve, retroactively record the Kalshi and Polymarket prices as they currently stand for the 8 v1 markets. This lets us score cross-venue edge for v1 predictions too, even though the decisions were made without that data.
+## Post-validation path
 
-Do not retroactively invalidate or modify v1 predictions. Frozen reasoning is frozen reasoning.
+If signal exists:
 
-## Post-validation path (if signal exists)
+1. Graduate to `fruits/` as a mature venture.
+2. Register a domain.
+3. Complete Kalshi KYC.
+4. Stand up subscription infrastructure.
+5. Begin positioned publishing.
 
-Not for this drive to execute, but documented so the experiment knows its exit:
-
-- Graduate to `fruits/` as a mature venture.
-- Register a domain.
-- Complete Kalshi KYC with Greg.
-- Stand up subscription infrastructure (Substack / X Articles).
-- Begin positioned publishing (bet + write).
-- This drive ends; a successor drive handles operational publishing.
+This drive validates; a successor drive operates capitalized publishing.

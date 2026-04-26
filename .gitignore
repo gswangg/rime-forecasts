@@ -1,5 +1,7 @@
 .DS_Store
 node_modules/
+__pycache__/
+*.pyc
 .env
 .env.keys
 
@@ -7,3 +9,8 @@ node_modules/
 *.html
 *.json
 /tmp/
+
+# local automation runtime state / wake inboxes
+automation/state/
+automation/events/
+.pi/wake/
