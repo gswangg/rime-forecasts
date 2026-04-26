@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-04-26T04:31:32+00:00*
+*Last updated: 2026-04-26T21:21:37+00:00*
 
 ## Summary
 
-- Predictions made: 10 (8 v1 + 2 v2/v2.5.x)
+- Predictions made: 11 (8 v1 + 3 v2/v2.5.x/v3)
 - Resolved: 0
 - Brier score: —
 - Naive primary-venue Brier: —
 - Log loss: —
 - Calibration: insufficient N
-- **Portfolio direction bias (at writing):** 6 below primary venue, 4 above primary venue.
+- **Portfolio direction bias (at writing):** 7 below primary venue, 4 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -67,5 +67,6 @@ None yet.
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
+| 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | 30% | — | — | 92.4% | 2026-04-28 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.

@@ -18,6 +18,7 @@ CLV = later market YES price minus entry market YES price, aligned to the predic
 | Written | Market | Venue | Entry | +1h | +6h | +24h | Close | Notes |
 |---------|--------|-------|-------|-----|-----|------|-------|-------|
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | Polymarket | 32.05% YES | 32.05% (+0.0pp, late) | 32.05% (+0.0pp, late) | pending | pending | First Polymarket-primary forward prediction; large Manifold/Polymarket spread. Daemon backfill observed no price move at +1h/+6h event time. |
+| 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | Polymarket | 92.4% YES | pending | pending | n/a (after close) | pending | Short-horizon v3 prediction against a 92% market after official US Netflix top 10 page did not list Running Point. |
 
 ## Update rule
 
