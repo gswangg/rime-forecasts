@@ -39,6 +39,7 @@ scripts/polymarket-daemon.py / future venue daemons
 Core docs:
 
 - [`automation/SPEC.md`](./automation/SPEC.md) — daemon/wake contract
+- [`automation/LESSONS.md`](./automation/LESSONS.md) — wake-loop lessons and implemented filter changes
 - [`clv-ledger.md`](./clv-ledger.md) — fast-feedback ledger
 - [`scorecard.md`](./scorecard.md) — final calibration ledger
 
@@ -54,7 +55,8 @@ Steps:
 2. Inspect `type`, `payload`, and `prompt`.
 3. Process exactly that event.
 4. Update repo files only if the event produced durable information.
-5. Call `wake_done({id, outcome, notes?})` when complete, or `wake_fail({id, reason})` if blocked.
+5. If the event teaches a reusable filter/automation lesson, update `automation/LESSONS.md`. If the lesson is validated by repeated wakes or an obvious fail-loud bad candidate, implement the filter/test change before continuing normal operation.
+6. Call `wake_done({id, outcome, notes?})` when complete, or `wake_fail({id, reason})` if blocked.
 
 Event handling:
 
@@ -220,6 +222,7 @@ Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events.
 - This file
 - The wake event payload (if any)
 - `automation/SPEC.md`
+- `automation/LESSONS.md`
 - Relevant `reasoning/*.md`
 - `scorecard.md`
 - `clv-ledger.md`

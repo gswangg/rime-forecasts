@@ -80,7 +80,22 @@ class AutomationTests(unittest.TestCase):
         low_liquidity = normalize_market(raw_market(liquidityNum=100, volumeNum=100))
         ok, reason = candidate_filter_reason(low_liquidity, now=now)
         self.assertFalse(ok)
-        self.assertIn("liquidity", reason)
+        self.assertIn("real volume", reason)
+
+        passive_liquidity = normalize_market(raw_market(liquidityNum=75_000, volumeNum=135))
+        ok, reason = candidate_filter_reason(passive_liquidity, now=now)
+        self.assertFalse(ok)
+        self.assertIn("real volume", reason)
+
+        tail_price = normalize_market(raw_market(outcomePrices='["0.028", "0.972"]', bestBid=0.026, bestAsk=0.03))
+        ok, reason = candidate_filter_reason(tail_price, now=now)
+        self.assertFalse(ok)
+        self.assertIn("candidate band", reason)
+
+        wide_spread = normalize_market(raw_market(bestBid=0.20, bestAsk=0.40, outcomePrices='["0.30", "0.70"]'))
+        ok, reason = candidate_filter_reason(wide_spread, now=now)
+        self.assertFalse(ok)
+        self.assertIn("spread", reason)
 
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
@@ -121,6 +136,21 @@ class AutomationTests(unittest.TestCase):
         ok, reason = kalshi_candidate_filter_reason(missing_price, now=now)
         self.assertFalse(ok)
         self.assertIn("YES price", reason)
+
+        stale_last_wide_spread = normalize_kalshi_market(raw_kalshi_market(yes_bid_dollars="0.0000", yes_ask_dollars="1.0000", last_price_dollars="0.098"))
+        ok, reason = kalshi_candidate_filter_reason(stale_last_wide_spread, now=now)
+        self.assertFalse(ok)
+        self.assertIn("not actionable", reason)
+
+        near_certain = normalize_kalshi_market(raw_kalshi_market(yes_bid_dollars="0.9800", yes_ask_dollars="0.9900", last_price_dollars="0.985"))
+        ok, reason = kalshi_candidate_filter_reason(near_certain, now=now)
+        self.assertFalse(ok)
+        self.assertIn("candidate band", reason)
+
+        low_real_volume = normalize_kalshi_market(raw_kalshi_market(liquidity_dollars="10000", volume_fp="50"))
+        ok, reason = kalshi_candidate_filter_reason(low_real_volume, now=now)
+        self.assertFalse(ok)
+        self.assertIn("real volume", reason)
 
         state = kalshi_default_state()
         events = generate_kalshi_events(markets=[market], state=state, now=now, session_id="session-123")

@@ -44,6 +44,7 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 ### Automation and scripts
 
 - [`automation/SPEC.md`](./automation/SPEC.md) — event-driven automation contract: exact `sessionId` wake routing, event types, state, and agent handling rules.
+- [`automation/LESSONS.md`](./automation/LESSONS.md) — lessons from wake-driven operation and the daemon filters/tests they produced.
 - [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) — one-shot or looped Polymarket poller. Writes candidate, price-move, CLV, and resolution `wake-pi` events; requires `--session-id` or `RIME_WAKE_SESSION_ID` unless `--dry-run`.
 - [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) — one-shot or looped Kalshi poller. Writes short-horizon candidate `wake-pi` events; same explicit session-id rule.
 - [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Manifold + Polymarket status, report resolved + pending.

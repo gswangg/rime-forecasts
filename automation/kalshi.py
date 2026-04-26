@@ -144,6 +144,10 @@ def candidate_filter_reason(
     now: datetime,
     min_liquidity: float = 5_000,
     min_volume: float = 10_000,
+    min_real_volume: float = 1_000,
+    min_price: float = 0.05,
+    max_price: float = 0.95,
+    max_spread: float = 0.20,
 ) -> tuple[bool, str]:
     if not market.ticker:
         return False, "missing ticker"
@@ -153,6 +157,16 @@ def candidate_filter_reason(
         return False, "not binary"
     if market.yes_price is None:
         return False, "missing YES price"
+    if market.yes_price < min_price or market.yes_price > max_price:
+        return False, f"YES price outside candidate band ({market.yes_price:.3f})"
+    if market.yes_bid is None or market.yes_ask is None:
+        return False, "missing actionable bid/ask"
+    if not (0 < market.yes_bid < 1 and 0 < market.yes_ask < 1 and market.yes_bid <= market.yes_ask):
+        return False, f"bid/ask not actionable ({market.yes_bid}/{market.yes_ask})"
+    if market.yes_ask - market.yes_bid > max_spread:
+        return False, f"spread too wide ({(market.yes_ask - market.yes_bid) * 100:.1f}pp)"
+    if market.volume < min_real_volume:
+        return False, f"real volume below threshold ({market.volume:.0f} < {min_real_volume:.0f})"
     if market.liquidity < min_liquidity and market.volume < min_volume:
         return False, f"liquidity/volume below threshold ({market.liquidity:.0f}/{market.volume:.0f})"
     horizon = candidate_horizon(market, now=now)

@@ -95,6 +95,9 @@ MVP filters for Polymarket:
 - active and not closed
 - binary YES/NO outcome
 - current YES price can be parsed
+- actionable bid/ask: bid and ask present, inside `(0, 1)`, ordered, spread ≤ 10pp
+- YES price in the candidate band: 5%–95%
+- real volume ≥ `$1k`
 - liquidity ≥ `$5k` or volume ≥ `$10k`
 - fast-feedback horizon ladder passes
 
@@ -102,6 +105,9 @@ MVP filters for Kalshi:
 
 - active/open binary market
 - current YES price can be parsed from bid/ask/last
+- actionable bid/ask: bid and ask present, inside `(0, 1)`, ordered, spread ≤ 20pp
+- YES price in the candidate band: 5%–95%
+- real volume ≥ `$1k`
 - liquidity/open interest/volume proxy passes the same `$5k`/`$10k` mechanical gate when available
 - fast-feedback horizon ladder passes
 
