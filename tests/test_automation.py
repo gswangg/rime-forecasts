@@ -7,6 +7,11 @@ from pathlib import Path
 from automation.clv import due_clv_checkpoints
 from automation.config import require_session_id
 from automation.daemon_core import default_state, generate_events, mark_emitted
+from automation.horizons import horizon_decision
+from automation.kalshi import candidate_filter_reason as kalshi_candidate_filter_reason
+from automation.kalshi import normalize_market as normalize_kalshi_market
+from automation.kalshi_core import default_state as kalshi_default_state
+from automation.kalshi_core import generate_events as generate_kalshi_events
 from automation.polymarket import candidate_filter_reason, normalize_market
 from automation.reasoning import extract_polymarket_watches
 from automation.wake import write_wake_event
@@ -25,12 +30,33 @@ def raw_market(**overrides):
         "closed": False,
         "endDate": "2026-05-31T00:00:00Z",
         "liquidityNum": 6000,
-        "volumeNum": 12000,
+        "volumeNum": 120000,
         "outcomes": '["Yes", "No"]',
         "outcomePrices": '["0.42", "0.58"]',
         "bestBid": 0.41,
         "bestAsk": 0.43,
         "lastTradePrice": 0.42,
+    }
+    data.update(overrides)
+    return data
+
+
+def raw_kalshi_market(**overrides):
+    data = {
+        "ticker": "KXTEST-26APR-T1",
+        "event_ticker": "KXTEST-26APR",
+        "market_type": "binary",
+        "title": "Will test happen this week?",
+        "status": "active",
+        "close_time": "2026-04-30T00:00:00Z",
+        "expiration_time": "2026-04-30T00:00:00Z",
+        "yes_bid_dollars": "0.41",
+        "yes_ask_dollars": "0.43",
+        "last_price_dollars": "0.42",
+        "liquidity_dollars": "6000",
+        "volume_fp": "12000",
+        "open_interest_fp": "2000",
+        "category": "Economics",
     }
     data.update(overrides)
     return data
@@ -61,10 +87,49 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("binary", reason)
 
-        too_soon = normalize_market(raw_market(endDate="2026-05-01T00:00:00Z"))
+        too_soon = normalize_market(raw_market(endDate="2026-04-26T12:00:00Z"))
         ok, reason = candidate_filter_reason(too_soon, now=now)
         self.assertFalse(ok)
-        self.assertIn("window", reason)
+        self.assertIn("too near", reason)
+
+        tertiary_low_signal = normalize_market(raw_market(endDate="2026-05-25T00:00:00Z", liquidityNum=6000, volumeNum=12000))
+        ok, reason = candidate_filter_reason(tertiary_low_signal, now=now)
+        self.assertFalse(ok)
+        self.assertIn("tertiary", reason)
+
+        tertiary_high_signal = normalize_market(raw_market(endDate="2026-05-25T00:00:00Z", liquidityNum=26000, volumeNum=12000))
+        ok, reason = candidate_filter_reason(tertiary_high_signal, now=now)
+        self.assertTrue(ok, reason)
+
+    def test_horizon_priority_ladder(self):
+        now = dt("2026-04-26T00:00:00Z")
+        primary = horizon_decision(dt("2026-04-30T00:00:00Z"), now=now, liquidity=6000, volume=12000)
+        secondary = horizon_decision(dt("2026-05-10T00:00:00Z"), now=now, liquidity=6000, volume=12000)
+        tertiary = horizon_decision(dt("2026-05-25T00:00:00Z"), now=now, liquidity=26000, volume=12000)
+        self.assertEqual((primary.bucket, primary.priority), ("primary", 80))
+        self.assertEqual((secondary.bucket, secondary.priority), ("secondary", 65))
+        self.assertEqual((tertiary.bucket, tertiary.priority), ("tertiary", 45))
+
+    def test_kalshi_candidate_filter_and_event_generation(self):
+        now = dt("2026-04-26T00:00:00Z")
+        market = normalize_kalshi_market(raw_kalshi_market())
+        ok, reason = kalshi_candidate_filter_reason(market, now=now)
+        self.assertTrue(ok, reason)
+        self.assertAlmostEqual(market.yes_price, 0.42)
+
+        missing_price = normalize_kalshi_market(raw_kalshi_market(yes_bid_dollars="0.0000", yes_ask_dollars="0.0000", last_price_dollars="0.0000"))
+        ok, reason = kalshi_candidate_filter_reason(missing_price, now=now)
+        self.assertFalse(ok)
+        self.assertIn("YES price", reason)
+
+        state = kalshi_default_state()
+        events = generate_kalshi_events(markets=[market], state=state, now=now, session_id="session-123")
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["source"], "rime-forecasts/kalshi-daemon")
+        self.assertEqual(events[0]["type"], "candidate_found")
+        self.assertEqual(events[0]["priority"], 80)
+        self.assertEqual(events[0]["payload"]["venue"], "Kalshi")
+        self.assertEqual(events[0]["payload"]["horizon"]["bucket"], "primary")
 
     def test_extract_polymarket_watches_from_reasoning(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -138,6 +203,8 @@ class AutomationTests(unittest.TestCase):
             max_events=5,
         )
         self.assertEqual([e["type"] for e in events], ["candidate_found"])
+        self.assertEqual(events[0]["priority"], 45)
+        self.assertEqual(events[0]["payload"]["horizon"]["bucket"], "tertiary")
         mark_emitted(state, events, now=now)
         events = generate_events(
             markets=[market],

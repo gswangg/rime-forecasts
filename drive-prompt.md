@@ -5,6 +5,7 @@
 *Revision history:*
 - *v2–v2.5.2 (2026-04-19/20): 14–45d window, venue equality, 10pp+edge with confidence gate, moved-market discount, skip-fatigue/cadence gates.*
 - *v3 (2026-04-26): event-driven architecture. Market polling moves to daemon(s); model work is triggered by `wake-pi` events. Adds CLV feedback loop (+1h/+6h/+24h/close). Avoids drain-time market scanning and idle model burn.*
+- *v3.1 (2026-04-26): fast-feedback candidate ladder. Daemons prioritize 1–7d markets, then 8–21d, and only emit 22–45d markets when liquidity/volume is unusually high. Added Kalshi candidate daemon.*
 
 ## Goal
 
@@ -73,7 +74,7 @@ If this prompt is invoked without a `[wake:<id>]` event, do not perform open-end
 
 For long-running operation, run the daemon and let `wake-pi` wake the session.
 
-## Starting the Polymarket daemon
+## Starting the market daemons
 
 Requires an explicit pi session id. No cwd/latest-session fallback.
 
@@ -81,7 +82,9 @@ One-shot smoke:
 
 ```bash
 scripts/polymarket-daemon.py --dry-run --pages 1 --page-limit 20
+scripts/kalshi-daemon.py --dry-run --pages 1 --page-limit 50
 scripts/polymarket-daemon.py --session-id <pi-session-id> --once
+scripts/kalshi-daemon.py --session-id <pi-session-id> --once
 ```
 
 Background loop:
@@ -93,9 +96,24 @@ nohup scripts/polymarket-daemon.py \
   --loop \
   --interval-sec 900 \
   >> automation/state/polymarket-daemon.log 2>&1 &
+nohup scripts/kalshi-daemon.py \
+  --session-id <pi-session-id> \
+  --loop \
+  --interval-sec 900 \
+  >> automation/state/kalshi-daemon.log 2>&1 &
 ```
 
 `<pi-session-id>` can be obtained explicitly from `/wake status` in the target pi session. Do not script a fallback that guesses it.
+
+## Fast-feedback candidate ladder
+
+Daemon candidate events are not meant to recreate the old 14–45 day scan. They should maximize validation speed:
+
+1. **Primary:** resolves in 1–7 days. Highest priority (`80`).
+2. **Secondary:** resolves in 8–21 days. Medium priority (`65`).
+3. **Tertiary:** resolves in 22–45 days. Low priority (`45`) and only emitted when liquidity ≥ $25k or volume ≥ $100k.
+
+Markets under 1 day are skipped by default because there may not be time for careful reasoning and documentation. Manual exceptions are allowed, but the daemon should not wake the model for them.
 
 ## Methodology rules
 

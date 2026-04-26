@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from .horizons import HorizonDecision, horizon_decision
 from .timeutil import parse_iso
 
 POLYMARKET_MARKET_URL = "https://polymarket.com/market/{slug}"
@@ -119,12 +120,14 @@ def normalize_market(raw: dict[str, Any]) -> PolymarketMarket:
     )
 
 
+def candidate_horizon(market: PolymarketMarket, *, now: datetime) -> HorizonDecision:
+    return horizon_decision(market.end_date, now=now, liquidity=market.liquidity, volume=market.volume)
+
+
 def candidate_filter_reason(
     market: PolymarketMarket,
     *,
     now: datetime,
-    min_days: int = 14,
-    max_days: int = 45,
     min_liquidity: float = 5_000,
     min_volume: float = 10_000,
 ) -> tuple[bool, str]:
@@ -136,15 +139,12 @@ def candidate_filter_reason(
         return False, "not binary YES/NO"
     if market.yes_price is None:
         return False, "missing YES price"
-    if market.end_date is None:
-        return False, "missing end date"
-
-    days = (market.end_date - now).total_seconds() / 86_400
-    if days < min_days or days > max_days:
-        return False, f"outside {min_days}-{max_days}d window ({days:.1f}d)"
     if market.liquidity < min_liquidity and market.volume < min_volume:
         return False, f"liquidity/volume below threshold ({market.liquidity:.0f}/{market.volume:.0f})"
-    return True, "passes mechanical filters"
+    horizon = candidate_horizon(market, now=now)
+    if not horizon.ok:
+        return False, horizon.reason
+    return True, horizon.reason
 
 
 def market_payload(market: PolymarketMarket) -> dict[str, Any]:

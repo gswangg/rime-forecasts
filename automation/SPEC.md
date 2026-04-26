@@ -1,6 +1,6 @@
 # rime-forecasts automation spec
 
-Status: v0 MVP, 2026-04-26.
+Status: v0.2 MVP, 2026-04-26.
 
 ## Goal
 
@@ -58,7 +58,7 @@ The daemon writes the event schema consumed by `wake-pi`:
   "ts": "2026-04-26T20:30:00.000Z",
   "source": "rime-forecasts/polymarket-daemon",
   "type": "candidate_found",
-  "priority": 50,
+  "priority": 80,
   "prompt": "Read this wake event payload and evaluate the candidate against drive-prompt.md v3.",
   "payload": {
     "market": { "slug": "...", "url": "...", "price": 0.42 }
@@ -67,6 +67,22 @@ The daemon writes the event schema consumed by `wake-pi`:
 ```
 
 `id` is filename-safe and the file is written atomically via temp file + rename to `<wakeRoot>/inbox/<id>.json`.
+
+## Fast-feedback horizon ladder
+
+Candidate discovery is optimized for validation speed, not portfolio aesthetics.
+
+Mechanical horizon buckets:
+
+| Bucket | Resolution window | Wake priority | Use |
+|--------|-------------------|---------------|-----|
+| primary | 1–7 days | 80 | default target; fastest final-resolution feedback |
+| secondary | 8–21 days | 65 | useful when primary bucket is sparse |
+| tertiary | 22–45 days | 45 | emit only when liquidity/volume is unusually high, as a proxy for information value |
+
+Markets under 1 day are skipped by default because there is often too little time for careful reasoning and documentation. Markets over 45 days are skipped by the daemon; manual research can still choose them, but the automation should not wake the model for them.
+
+Tertiary high-liquidity gate: liquidity ≥ `$25k` or volume ≥ `$100k`.
 
 ## Event types
 
@@ -78,9 +94,18 @@ MVP filters for Polymarket:
 
 - active and not closed
 - binary YES/NO outcome
-- resolves in 14–45 days from daemon `now`
-- liquidity ≥ `$5k` or volume ≥ `$10k`
 - current YES price can be parsed
+- liquidity ≥ `$5k` or volume ≥ `$10k`
+- fast-feedback horizon ladder passes
+
+MVP filters for Kalshi:
+
+- active/open binary market
+- current YES price can be parsed from bid/ask/last
+- liquidity/open interest/volume proxy passes the same `$5k`/`$10k` mechanical gate when available
+- fast-feedback horizon ladder passes
+
+Kalshi exists in the loop because it has many short-dated economic, weather, and sports/event markets. Its MVP daemon emits `candidate_found` only; watched-market CLV/resolution support can be added after the first useful candidates are flowing.
 
 The daemon does **not** decide edge. The model still applies the forecast methodology and either writes a prediction or acknowledges a skip.
 
@@ -114,17 +139,18 @@ Payload includes parsed resolution when inferable:
 
 ## State
 
-Default state path:
+Default state paths:
 
 ```text
 automation/state/polymarket-daemon.json
+automation/state/kalshi-daemon.json
 ```
 
 The state file is local runtime state and is gitignored.
 
 State tracks:
 
-- emitted candidate events by market slug
+- emitted candidate events by market slug/ticker
 - last observed prices for watched markets
 - emitted CLV checkpoints by reasoning file + slug
 - emitted resolution events by slug
@@ -134,10 +160,11 @@ State is written only after corresponding wake files are successfully written, e
 
 ## Daemon modes
 
-MVP is a single-shot poller by default:
+MVP daemons are single-shot pollers by default:
 
 ```bash
 scripts/polymarket-daemon.py --session-id <pi-session-id>
+scripts/kalshi-daemon.py --session-id <pi-session-id>
 ```
 
 Options:
@@ -149,6 +176,8 @@ Options:
 - `--max-events N` — cap total emitted events per poll.
 - `--max-candidate-events N` — cap candidate events per poll.
 - `--wake-root <path>` — default `~/.pi/agent/wake`.
+
+Recommended long-running loop for fast feedback: run Polymarket and Kalshi every 10–15 minutes. The model only wakes if a daemon writes an event.
 
 ## Agent handling contract
 
@@ -171,7 +200,8 @@ If the event is malformed, stale, or cannot be acted on, call `wake_fail` with t
 
 Pure logic is tested without network:
 
-- Polymarket normalization and filters
+- Polymarket/Kalshi normalization and filters
+- fast-feedback horizon ranking and priority
 - explicit session id requirement
 - wake event atomic write shape
 - CLV checkpoint scheduling and idempotence

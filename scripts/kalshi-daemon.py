@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Polymarket event daemon for rime-forecasts.
+"""Kalshi event daemon for rime-forecasts.
 
-Single-shot by default. Use --loop for a background process. Emits wake-pi JSON
-files routed by explicit session id only.
+Single-shot by default. Use --loop for a background process. Emits wake-pi
+candidate_found JSON files routed by explicit session id only.
 """
 
 from __future__ import annotations
@@ -13,22 +13,21 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-from datetime import timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from automation.config import DEFAULT_REASONING_DIR, DEFAULT_STATE_PATH, DEFAULT_WAKE_ROOT, require_session_id
-from automation.daemon_core import generate_events, mark_emitted, observe_watched_prices
-from automation.polymarket import normalize_market
-from automation.reasoning import extract_polymarket_watches
+from automation.config import DEFAULT_WAKE_ROOT, require_session_id
+from automation.kalshi import normalize_market
+from automation.kalshi_core import generate_events, mark_emitted
 from automation.state import load_state, save_state
 from automation.timeutil import isoformat_z, utcnow
 from automation.wake import write_wake_event
 
-GAMMA_MARKETS_URL = "https://gamma-api.polymarket.com/markets"
-USER_AGENT = "rime-forecasts/polymarket-daemon/0.1"
+KALSHI_MARKETS_URL = "https://api.elections.kalshi.com/trade-api/v2/markets"
+USER_AGENT = "rime-forecasts/kalshi-daemon/0.1"
+DEFAULT_STATE_PATH = REPO_ROOT / "automation" / "state" / "kalshi-daemon.json"
 
 
 def fetch_json(url: str):
@@ -37,43 +36,20 @@ def fetch_json(url: str):
         return json.loads(resp.read())
 
 
-def fetch_market_pages(*, limit: int, pages: int, now) -> list[dict]:
+def fetch_market_pages(*, limit: int, pages: int) -> list[dict]:
     raws: list[dict] = []
-    end_date_min = (now + timedelta(days=1)).isoformat().replace("+00:00", "Z")
-    end_date_max = (now + timedelta(days=45)).isoformat().replace("+00:00", "Z")
-    for page in range(pages):
-        query = urllib.parse.urlencode(
-            {
-                "active": "true",
-                "closed": "false",
-                "limit": str(limit),
-                "offset": str(page * limit),
-                "order": "endDate",
-                "ascending": "true",
-                "end_date_min": end_date_min,
-                "end_date_max": end_date_max,
-            }
-        )
-        data = fetch_json(f"{GAMMA_MARKETS_URL}?{query}")
-        if not isinstance(data, list) or not data:
+    cursor = None
+    for _page in range(pages):
+        params = {"status": "open", "limit": str(limit)}
+        if cursor:
+            params["cursor"] = cursor
+        query = urllib.parse.urlencode(params)
+        data = fetch_json(f"{KALSHI_MARKETS_URL}?{query}")
+        markets = data.get("markets", []) if isinstance(data, dict) else []
+        raws.extend(item for item in markets if isinstance(item, dict))
+        cursor = data.get("cursor") if isinstance(data, dict) else None
+        if not cursor or not markets:
             break
-        raws.extend(item for item in data if isinstance(item, dict))
-        if len(data) < limit:
-            break
-    return raws
-
-
-def fetch_markets_by_slug(slugs: set[str]) -> list[dict]:
-    raws: list[dict] = []
-    for slug in sorted(slugs):
-        query = urllib.parse.urlencode({"slug": slug})
-        try:
-            data = fetch_json(f"{GAMMA_MARKETS_URL}?{query}")
-        except Exception as exc:  # fail this slug loudly in output, but continue other slugs
-            print(f"warning: failed to fetch Polymarket slug {slug}: {exc}", file=sys.stderr)
-            continue
-        if isinstance(data, list):
-            raws.extend(item for item in data if isinstance(item, dict))
     return raws
 
 
@@ -87,35 +63,25 @@ def load_fixture(path: Path) -> list[dict]:
 
 
 def dedupe_markets(raws: list[dict]):
-    by_slug = {}
+    by_ticker = {}
     for raw in raws:
         market = normalize_market(raw)
-        if market.slug:
-            by_slug[market.slug] = market
-    return list(by_slug.values())
+        if market.ticker:
+            by_ticker[market.ticker] = market
+    return list(by_ticker.values())
 
 
 def poll_once(args, *, session_id: str | None) -> int:
     now = utcnow()
     state = load_state(args.state_path)
-    watches = extract_polymarket_watches(args.reasoning_dir)
-
-    if args.fixture:
-        raws = load_fixture(args.fixture)
-    else:
-        raws = fetch_market_pages(limit=args.page_limit, pages=args.pages, now=now)
-        watch_slugs = {watch.slug for watch in watches}
-        raws.extend(fetch_markets_by_slug(watch_slugs))
-
+    raws = load_fixture(args.fixture) if args.fixture else fetch_market_pages(limit=args.page_limit, pages=args.pages)
     markets = dedupe_markets(raws)
     effective_session_id = session_id or "dry-run-session"
     events = generate_events(
         markets=markets,
-        watches=watches,
         state=state,
         now=now,
         session_id=effective_session_id,
-        price_move_threshold=args.price_move_threshold,
         max_candidate_events=args.max_candidate_events,
         max_events=args.max_events,
     )
@@ -127,7 +93,6 @@ def poll_once(args, *, session_id: str | None) -> int:
                     "ts": isoformat_z(now),
                     "dryRun": True,
                     "markets": len(markets),
-                    "watches": len(watches),
                     "events": events,
                 },
                 indent=2,
@@ -144,14 +109,12 @@ def poll_once(args, *, session_id: str | None) -> int:
         save_state(args.state_path, state)
         written += 1
 
-    observe_watched_prices(state, markets, watches, now=now)
     save_state(args.state_path, state)
     print(
         json.dumps(
             {
                 "ts": isoformat_z(now),
                 "markets": len(markets),
-                "watches": len(watches),
                 "eventsWritten": written,
                 "statePath": str(args.state_path),
             },
@@ -162,21 +125,19 @@ def poll_once(args, *, session_id: str | None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Emit wake-pi events from Polymarket monitoring")
+    parser = argparse.ArgumentParser(description="Emit wake-pi candidate events from Kalshi monitoring")
     parser.add_argument("--session-id", help="explicit target pi session id; or set RIME_WAKE_SESSION_ID")
     parser.add_argument("--wake-root", type=Path, default=DEFAULT_WAKE_ROOT, help=f"wake root (default: {DEFAULT_WAKE_ROOT})")
     parser.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH, help=f"state path (default: {DEFAULT_STATE_PATH})")
-    parser.add_argument("--reasoning-dir", type=Path, default=DEFAULT_REASONING_DIR, help=f"reasoning dir (default: {DEFAULT_REASONING_DIR})")
     parser.add_argument("--fixture", type=Path, help="fixture JSON list/object instead of live API")
     parser.add_argument("--dry-run", action="store_true", help="print events without requiring session id or writing wake/state")
     parser.add_argument("--once", action="store_true", help="single poll (default)")
     parser.add_argument("--loop", action="store_true", help="poll forever in this process")
-    parser.add_argument("--interval-sec", type=int, default=300, help="loop interval seconds (default: 300)")
-    parser.add_argument("--page-limit", type=int, default=100, help="Polymarket page size for candidate scan (default: 100)")
-    parser.add_argument("--pages", type=int, default=5, help="Polymarket pages to scan for candidates (default: 5)")
+    parser.add_argument("--interval-sec", type=int, default=900, help="loop interval seconds (default: 900)")
+    parser.add_argument("--page-limit", type=int, default=200, help="Kalshi page size for candidate scan (default: 200)")
+    parser.add_argument("--pages", type=int, default=3, help="Kalshi pages to scan for candidates (default: 3)")
     parser.add_argument("--max-events", type=int, default=10, help="max events emitted per poll (default: 10)")
     parser.add_argument("--max-candidate-events", type=int, default=3, help="max candidate events emitted per poll (default: 3)")
-    parser.add_argument("--price-move-threshold", type=float, default=0.05, help="price move threshold as probability delta (default: 0.05 = 5pp)")
     return parser
 
 
@@ -200,7 +161,6 @@ def main() -> int:
             poll_once(args, session_id=session_id)
         except Exception as exc:
             print(f"poll failed: {exc}", file=sys.stderr)
-            # fail-loud but keep a daemon alive; external supervisor can still restart if desired.
         time.sleep(args.interval_sec)
 
 

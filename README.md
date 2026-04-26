@@ -13,9 +13,9 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 *As of 2026-04-26 (session 2).*
 
 - **10 predictions placed**: 8 v1 baseline (mixed categories, <10pp edges), 1 v2 Manifold prediction (WTI crude $150, 15.5pp edge), 1 v2.5.2 Polymarket-primary prediction (Tottenham relegation, 17.95pp edge). Earliest resolution 2026-05-27, latest 2026-07-18.
-- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v3. Event-driven market monitoring via `wake-pi`; 14–45 day resolution window, 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle, and CLV checkpoints (+1h/+6h/+24h/close).
+- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v3. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle, and CLV checkpoints (+1h/+6h/+24h/close).
 - **Back-test (N=9)**: v2.5.1 methodology retrospectively tested on resolved Manifold markets. 6-for-6 prediction wins (+1.63 cumulative Brier advantage), 3-for-3 correct skips. See [`backtest/SUMMARY.md`](./backtest/SUMMARY.md).
-- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices, and [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates, price moves, CLV checkpoints, and resolutions.
+- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, and [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events.
 
 ## Structure
 
@@ -44,7 +44,8 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 ### Automation and scripts
 
 - [`automation/SPEC.md`](./automation/SPEC.md) — event-driven automation contract: exact `sessionId` wake routing, event types, state, and agent handling rules.
-- [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) — one-shot or looped Polymarket poller. Writes `wake-pi` events; requires `--session-id` or `RIME_WAKE_SESSION_ID` unless `--dry-run`.
+- [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) — one-shot or looped Polymarket poller. Writes candidate, price-move, CLV, and resolution `wake-pi` events; requires `--session-id` or `RIME_WAKE_SESSION_ID` unless `--dry-run`.
+- [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) — one-shot or looped Kalshi poller. Writes short-horizon candidate `wake-pi` events; same explicit session-id rule.
 - [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Manifold + Polymarket status, report resolved + pending.
 - [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) — reconstruct a Manifold market's price at any past timestamp via bet-history pagination.
 
@@ -91,7 +92,7 @@ These patterns are preliminary — confirmed at N=9 retrospective. Needs forward
 
 - Long-running work is now event-driven through [gswangg/wake-pi](https://github.com/gswangg/wake-pi): daemons write exact-session-id events, `wake-pi` injects `[wake:<id>]`, and the agent acknowledges with `wake_done` / `wake_fail`.
 - [gswangg/auto-continue-pi](https://github.com/gswangg/auto-continue-pi) remains useful for bounded implementation/maintenance, but should not be used as a market polling loop.
-- Start Polymarket monitoring with `scripts/polymarket-daemon.py --session-id <pi-session-id> --loop --interval-sec 900`.
+- Start monitoring with `scripts/polymarket-daemon.py --session-id <pi-session-id> --loop --interval-sec 900` and `scripts/kalshi-daemon.py --session-id <pi-session-id> --loop --interval-sec 900`.
 - Skip actions journal locally but don't commit; predict/resolve/automation actions commit as useful checkpoints.
 
 ## About rime

@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import Any
 
 from .clv import due_clv_checkpoints
-from .polymarket import PolymarketMarket, candidate_filter_reason, market_payload
+from .horizons import horizon_sort_key
+from .polymarket import PolymarketMarket, candidate_filter_reason, candidate_horizon, market_payload
 from .reasoning import PredictionWatch, watch_payload
 from .state import default_state as _default_state
 from .timeutil import isoformat_z
@@ -35,10 +36,10 @@ def _clv_pp(watch: PredictionWatch, market: PolymarketMarket | None) -> float | 
     return round((market.yes_price - watch.price_at_writing) * 100, 2)
 
 
-def _candidate_prompt(market: PolymarketMarket) -> str:
+def _candidate_prompt(market: PolymarketMarket, horizon) -> str:
     return (
-        "Evaluate this Polymarket candidate against drive-prompt.md v3. "
-        "If it clears the edge/confidence/economics bar, write the prediction file and update scorecard/journal. "
+        f"Evaluate this Polymarket {horizon.bucket} fast-feedback candidate ({horizon.days_to_resolution:.1f}d to resolution) "
+        "against drive-prompt.md v3. If it clears the edge/confidence/economics bar, write the prediction file and update scorecard/journal. "
         "If it does not clear, acknowledge with wake_done and a concise skip outcome. "
         f"Market: {market.question} — {market.url}"
     )
@@ -71,14 +72,24 @@ def _resolution_prompt(watch: PredictionWatch, market: PolymarketMarket) -> str:
 
 
 def _candidate_event(market: PolymarketMarket, *, now: datetime, session_id: str) -> dict[str, Any]:
+    horizon = candidate_horizon(market, now=now)
     return build_wake_event(
         event_id=_event_id("candidate_found", market.slug, now),
         session_id=session_id,
         ts=isoformat_z(now),
         event_type="candidate_found",
-        priority=50,
-        prompt=_candidate_prompt(market),
-        payload={"market": market_payload(market), "dedupeKey": f"candidate:{market.slug}"},
+        priority=horizon.priority,
+        prompt=_candidate_prompt(market, horizon),
+        payload={
+            "market": market_payload(market),
+            "horizon": {
+                "bucket": horizon.bucket,
+                "daysToResolution": horizon.days_to_resolution,
+                "reason": horizon.reason,
+                "priority": horizon.priority,
+            },
+            "dedupeKey": f"candidate:{market.slug}",
+        },
         source=SOURCE,
     )
 
@@ -219,11 +230,7 @@ def generate_events(
     candidate_count = 0
     candidate_markets = sorted(
         markets,
-        key=lambda market: (
-            market.end_date or now,
-            -(market.volume or 0),
-            market.slug,
-        ),
+        key=lambda market: horizon_sort_key(candidate_horizon(market, now=now), volume=market.volume, slug=market.slug),
     )
     for market in candidate_markets:
         if len(events) >= max_events or candidate_count >= max_candidate_events:
