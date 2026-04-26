@@ -30,10 +30,22 @@ def _event_id(event_type: str, slug: str, now: datetime, extra: str | None = Non
     return safe_part("-".join(parts), max_len=120)
 
 
-def _clv_pp(watch: PredictionWatch, market: PolymarketMarket | None) -> float | None:
+def _clv_values(watch: PredictionWatch, market: PolymarketMarket | None) -> dict[str, Any]:
     if watch.price_at_writing is None or market is None or market.yes_price is None:
-        return None
-    return round((market.yes_price - watch.price_at_writing) * 100, 2)
+        return {"clvPp": None, "rawYesMovePp": None, "direction": "unknown"}
+
+    raw_yes_move = round((market.yes_price - watch.price_at_writing) * 100, 2)
+    if watch.prediction is None:
+        return {"clvPp": raw_yes_move, "rawYesMovePp": raw_yes_move, "direction": "raw_yes"}
+
+    edge = watch.prediction - watch.price_at_writing
+    if edge > 0:
+        # We were above-market YES; a higher YES price is favorable.
+        return {"clvPp": raw_yes_move, "rawYesMovePp": raw_yes_move, "direction": "toward_yes"}
+    if edge < 0:
+        # We were below-market YES / effectively NO; a lower YES price is favorable.
+        return {"clvPp": round(-raw_yes_move, 2), "rawYesMovePp": raw_yes_move, "direction": "toward_no"}
+    return {"clvPp": raw_yes_move, "rawYesMovePp": raw_yes_move, "direction": "no_edge"}
 
 
 def _candidate_prompt(market: PolymarketMarket, horizon) -> str:
@@ -130,7 +142,8 @@ def _clv_event(
     now: datetime,
     session_id: str,
 ) -> dict[str, Any]:
-    clv = _clv_pp(watch, market)
+    clv_values = _clv_values(watch, market)
+    clv = clv_values["clvPp"]
     return build_wake_event(
         event_id=_event_id("clv_checkpoint_due", watch.slug, now, checkpoint),
         session_id=session_id,
@@ -145,6 +158,8 @@ def _clv_event(
             "priceAtWriting": watch.price_at_writing,
             "currentPrice": market.yes_price if market else None,
             "clvPp": clv,
+            "rawYesMovePp": clv_values["rawYesMovePp"],
+            "clvDirection": clv_values["direction"],
             "dedupeKey": f"clv:{watch.key}:{checkpoint}",
         },
         source=SOURCE,

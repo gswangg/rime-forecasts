@@ -2,7 +2,7 @@
 
 Fast-feedback ledger for prediction price movement before final resolution.
 
-CLV = later market YES price minus entry market YES price, aligned to the prediction's primary direction unless otherwise noted. Positive CLV means the market moved toward rime's prediction after writing; negative CLV means it moved away. This is not final accuracy, but it is faster feedback than waiting for resolution.
+CLV is aligned to rime's prediction direction. Positive CLV means the market moved toward rime's prediction after writing; negative CLV means it moved away. For above-market YES predictions, aligned CLV is later YES price minus entry YES price. For below-market / NO-side predictions, aligned CLV is entry YES price minus later YES price. Raw YES movement is noted when useful. This is not final accuracy, but it is faster feedback than waiting for resolution.
 
 ## Checkpoints
 
@@ -18,14 +18,14 @@ CLV = later market YES price minus entry market YES price, aligned to the predic
 | Written | Market | Venue | Entry | +1h | +6h | +24h | Close | Notes |
 |---------|--------|-------|-------|-----|-----|------|-------|-------|
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | Polymarket | 32.05% YES | 32.05% (+0.0pp, late) | 32.05% (+0.0pp, late) | pending | pending | First Polymarket-primary forward prediction; large Manifold/Polymarket spread. Daemon backfill observed no price move at +1h/+6h event time. |
-| 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | Polymarket | 92.4% YES | pending | pending | n/a (after close) | pending | Short-horizon v3 prediction against a 92% market after official US Netflix top 10 page did not list Running Point. |
+| 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | Polymarket | 92.4% YES | 91.0% (+1.4pp toward prediction; raw YES -1.4pp) | pending | n/a (after close) | pending | Short-horizon v3 prediction against a 92% market after official US Netflix top 10 page did not list Running Point. +1h moved slightly toward the NO thesis. |
 
 ## Update rule
 
 When a `clv_checkpoint_due` wake arrives:
 
-1. read the event payload for `checkpoint`, `priceAtWriting`, `currentPrice`, and `clvPp`
-2. update the relevant table cell with `<price>% (<signed CLV>pp)`
+1. read the event payload for `checkpoint`, `priceAtWriting`, `currentPrice`, `clvPp`, and `rawYesMovePp` if present
+2. update the relevant table cell with `<price>% (<signed aligned CLV>pp)`; include raw YES movement for below-market predictions if it prevents sign confusion
 3. add a short note only if the move teaches something about stale liquidity, cross-venue signal, or reasoning quality
 4. call `wake_done`
 

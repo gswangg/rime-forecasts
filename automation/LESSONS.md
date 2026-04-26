@@ -4,6 +4,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 ## Validated and implemented
 
+### CLV sign must be prediction-aligned, not raw YES movement
+
+**Observed:** the first Running Point CLV wake reported `-1.4pp CLV` because the raw YES price moved from `92.4%` to `91.0%`. But rime's forecast was below market (`30% YES`), so a lower YES price is favorable and should be `+1.4pp` aligned CLV.
+
+**Lesson:** CLV should answer “did the market move toward rime?” not merely “did YES go up?” Raw YES movement is still useful as a secondary field.
+
+**Implementation:** `clv_checkpoint_due` payloads now include prediction-aligned `clvPp`, `rawYesMovePp`, and `clvDirection`. Ledger entries use aligned CLV and note raw YES movement when sign confusion is likely.
+
 ### Candidate must be economically actionable
 
 **Observed:** `rime-kalshi-candidate-found-KXMVESPORTSMULTIGAMEEXTENDED...` woke on a multi-leg Kalshi sports parlay with `yesBid=0.0`, `yesAsk=1.0`, and stale `lastPrice=0.098`.

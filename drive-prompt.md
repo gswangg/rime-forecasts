@@ -178,16 +178,22 @@ Frozen pre-resolution content stays frozen.
 
 ## CLV update format
 
-When updating `clv-ledger.md`, use:
+When updating `clv-ledger.md`, use aligned CLV — positive means the market moved toward rime's forecast:
 
 ```text
-<price>% (<signed CLV>pp)
+<price>% (<signed aligned CLV>pp)
+```
+
+For below-market / NO-side predictions, include raw YES movement when useful:
+
+```text
+<price>% (+1.4pp toward prediction; raw YES -1.4pp)
 ```
 
 If late:
 
 ```text
-<price>% (<signed CLV>pp, late)
+<price>% (<signed aligned CLV>pp, late)
 ```
 
 CLV is not a substitute for final scoring. It is a faster signal about whether the market moved toward the forecast before resolution.

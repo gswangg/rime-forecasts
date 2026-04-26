@@ -201,6 +201,45 @@ class AutomationTests(unittest.TestCase):
             due = due_clv_checkpoints([watch], state, now=dt("2026-04-26T07:00:00Z"))
             self.assertEqual([d.checkpoint for d in due], ["6h"])
 
+    def test_clv_is_aligned_to_prediction_direction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reasoning = Path(tmp) / "reasoning"
+            reasoning.mkdir()
+            (reasoning / "running.md").write_text(
+                "# Running Point\n\n"
+                "**Polymarket market slug**: running-point\n"
+                "**Written**: 2026-04-26T21:21:37+00:00\n"
+                "**Prediction**: 30%\n"
+                "**Primary venue price at writing**: 92.4% YES\n"
+            )
+            watch = extract_polymarket_watches(reasoning)[0]
+            market = normalize_market(
+                raw_market(
+                    slug="running-point",
+                    question="Running Point",
+                    outcomePrices='["0.91", "0.09"]',
+                    bestBid=0.902,
+                    bestAsk=0.918,
+                    lastTradePrice=0.919,
+                )
+            )
+            events = generate_events(
+                markets=[market],
+                watches=[watch],
+                state=default_state(),
+                now=dt("2026-04-26T22:33:00Z"),
+                session_id="session-123",
+                max_candidate_events=0,
+                max_events=5,
+            )
+            clv_events = [event for event in events if event["type"] == "clv_checkpoint_due"]
+            self.assertEqual(len(clv_events), 1)
+            payload = clv_events[0]["payload"]
+            self.assertEqual(payload["checkpoint"], "1h")
+            self.assertAlmostEqual(payload["rawYesMovePp"], -1.4)
+            self.assertAlmostEqual(payload["clvPp"], 1.4)
+            self.assertEqual(payload["clvDirection"], "toward_no")
+
     def test_write_wake_event_is_atomic_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             event = {

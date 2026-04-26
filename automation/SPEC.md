@@ -131,7 +131,7 @@ MVP checkpoints:
 - `6h`
 - `24h`
 
-Payload includes written-time market price, current market price if available, and CLV in percentage points when both are known.
+Payload includes written-time market price, current market price if available, aligned CLV in percentage points, raw YES movement, and CLV direction when known. `clvPp` is aligned to rime's prediction: positive means the market moved toward rime's forecast. `rawYesMovePp` is always current YES price minus entry YES price.
 
 ### `resolution_changed`
 
