@@ -95,3 +95,7 @@ The main risk is burstiness. The market can move from a good 140-159 setup to a 
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-27T15:52Z: Polymarket moved to **71.0% YES** (68% bid / 74% ask; last trade 74%), up 5.5pp from the daemon's previous observed price and **+19.0pp from entry**. This is strong short-run CLV toward the 65% thesis, but the market is now above my point estimate, so the remaining paper edge is gone without a fresh tracker-count update. No forecast/thesis change from price alone; continue watching for the overrun risk into 160+ posts.
