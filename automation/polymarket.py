@@ -138,7 +138,7 @@ def is_weather_range_market(question: str) -> bool:
     normalized = " ".join(question.strip().split())
     patterns = (
         r"^Will the highest temperature in .+ be between .+ on .+\?$",
-        r"^Will the highest temperature in .+ be [-+]?\d+(?:\.\d+)?\s*°[CF] on .+\?$",
+        r"^Will the highest temperature in .+ be [-+]?\d+(?:\.\d+)?\s*°[CF](?: or (?:higher|lower))? on .+\?$",
     )
     return any(re.match(pattern, normalized) for pattern in patterns)
 
