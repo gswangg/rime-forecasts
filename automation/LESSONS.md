@@ -36,15 +36,19 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** candidate wakes require `5% ≤ YES price ≤ 95%`. Watched-market CLV/resolution events are unaffected.
 
+### Generic team-match sports need a model edge, not just fast resolution
+
+**Observed:** first the Argentine soccer 1X2 cluster woke and skipped; after volume/spread filters, a high-volume Southampton vs Ipswich draw market woke and skipped for the same reason. These markets are fast, liquid enough, and mechanically clean, but without a team model or specific information they are not a rime advantage area.
+
+**Lesson:** short resolution is not enough. Generic team-vs-team win/draw markets should not wake the model unless a future sports model/cross-venue signal explicitly opts them in.
+
+**Implementation:** Polymarket candidate filtering excludes generic team match questions matching `Will <team> vs. <team> end in a draw?` and `Will <team> win on <date>?`.
+
 ## Pending / watchlist
 
 ### Cluster suppression
 
 Multiple mutually exclusive markets from the same event can wake back-to-back. The soccer 1X2 cluster was mostly fixed by the volume floor, but high-volume clusters may still spam. If this repeats, group candidates by Polymarket event slug and emit at most one event per event per poll, with payload listing sibling markets.
-
-### Niche filter for generic sports
-
-Short-term sports markets offer fast resolution, but without a model or special information they are mostly efficient. If high-volume generic match/player-prop markets keep waking and skipping, add a soft filter or lower priority for generic sports unless cross-venue spread or unusual market structure is present.
 
 ### Kalshi category quality
 

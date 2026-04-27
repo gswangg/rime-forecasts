@@ -99,6 +99,7 @@ MVP filters for Polymarket:
 - YES price in the candidate band: 5%–95%
 - real volume ≥ `$1k`
 - liquidity ≥ `$5k` or volume ≥ `$10k`
+- generic team-vs-team win/draw sports questions are excluded unless a future model explicitly opts them in
 - fast-feedback horizon ladder passes
 
 MVP filters for Kalshi:

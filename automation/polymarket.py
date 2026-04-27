@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -124,6 +125,15 @@ def candidate_horizon(market: PolymarketMarket, *, now: datetime) -> HorizonDeci
     return horizon_decision(market.end_date, now=now, liquidity=market.liquidity, volume=market.volume)
 
 
+def is_generic_team_match_market(question: str) -> bool:
+    normalized = " ".join(question.strip().split())
+    patterns = (
+        r"^Will .+ vs\. .+ end in a draw\?$",
+        r"^Will .+ win on \d{4}-\d{2}-\d{2}\?$",
+    )
+    return any(re.match(pattern, normalized) for pattern in patterns)
+
+
 def candidate_filter_reason(
     market: PolymarketMarket,
     *,
@@ -155,6 +165,8 @@ def candidate_filter_reason(
         return False, f"real volume below threshold ({market.volume:.0f} < {min_real_volume:.0f})"
     if market.liquidity < min_liquidity and market.volume < min_volume:
         return False, f"liquidity/volume below threshold ({market.liquidity:.0f}/{market.volume:.0f})"
+    if is_generic_team_match_market(market.question):
+        return False, "generic team-match sports market without model edge"
     horizon = candidate_horizon(market, now=now)
     if not horizon.ok:
         return False, horizon.reason

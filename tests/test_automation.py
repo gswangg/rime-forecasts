@@ -97,6 +97,16 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("spread", reason)
 
+        generic_draw = normalize_market(raw_market(question="Will Southampton FC vs. Ipswich Town FC end in a draw?"))
+        ok, reason = candidate_filter_reason(generic_draw, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
+        generic_win = normalize_market(raw_market(question="Will CA Unión win on 2026-04-27?"))
+        ok, reason = candidate_filter_reason(generic_win, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
         self.assertFalse(ok)
