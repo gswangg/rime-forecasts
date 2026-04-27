@@ -50,6 +50,12 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 Multiple mutually exclusive markets from the same event can wake back-to-back. The soccer 1X2 cluster was mostly fixed by the volume floor, but high-volume clusters may still spam. If this repeats, group candidates by Polymarket event slug and emit at most one event per event per poll, with payload listing sibling markets.
 
+### Weather range markets need forecast-aware grouping, not raw candidate wakes
+
+Observed Dallas Apr 28 high-temperature range candidate `82–83°F` at 9.5% YES. NWS point forecast / grid for Dallas showed a Tuesday high around 88°F, making the 82–83 bin plausibly near market rather than a 10pp edge. Weather is potentially a good fast-feedback domain, but individual range bins should be evaluated against a forecast distribution and sibling bins, not woken one at a time by mechanical filters alone.
+
+If weather wakes repeat, implement a weather-aware candidate pass: group all sibling range bins for the same city/date, fetch NWS/source forecast, estimate a crude distribution, and emit only bins with modeled edge ≥ threshold.
+
 ### Kalshi category quality
 
 Kalshi's public feed includes many multi-leg MVE/parlay markets with poor/no pricing. If actionable-spread filtering is insufficient, explicitly downrank or filter `KXMVE*` tickers unless they have real bid/ask, volume, and a clean resolution rule.
