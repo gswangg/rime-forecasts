@@ -85,3 +85,7 @@ The main risk is source interpretation: if the market has the right Netflix week
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-27T15:07Z: Polymarket marked **87.55% YES** after a 6.3pp down move from the daemon's previous observed price. For the 30% forecast / NO-side thesis, this is aligned movement and is **+4.85pp from the 92.4% entry**, though the order book was wide (81.1% bid / 94.0% ask) and last trade remained 94.6%. No thesis change; this partially reverses the adverse +6h checkpoint and keeps the key test as final Netflix source resolution.
