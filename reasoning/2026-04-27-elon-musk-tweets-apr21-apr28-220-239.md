@@ -91,3 +91,7 @@ The edge is thin enough that sizing would be modest in a live account. The main 
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-27T15:07Z: Polymarket moved to **31.0% YES** (30% bid / 32% ask), up 6.5pp from the daemon's previous observed price and **+7.5pp from entry**. This is short-run CLV toward the 35% thesis, but it also compresses the remaining edge to about 4pp. No forecast/thesis change; keep watching the scheduled +6h/+24h checkpoints and final XTracker count.
