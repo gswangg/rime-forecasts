@@ -130,6 +130,7 @@ def is_generic_team_match_market(question: str) -> bool:
     patterns = (
         r"^Will .+ vs\. .+ end in a draw\?$",
         r"^Will .+ win on \d{4}-\d{2}-\d{2}\?$",
+        r"^.+ vs\. .+: Both Teams to Score$",
     )
     return any(re.match(pattern, normalized) for pattern in patterns)
 
