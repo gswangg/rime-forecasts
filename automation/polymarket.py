@@ -143,6 +143,12 @@ def is_weather_range_market(question: str) -> bool:
     return any(re.match(pattern, normalized) for pattern in patterns)
 
 
+def is_crypto_threshold_market(question: str) -> bool:
+    normalized = " ".join(question.strip().split())
+    assets = "Bitcoin|Ethereum|Solana|XRP|Dogecoin|Litecoin|BNB|Cardano|Avalanche|Chainlink|Polkadot|Sui"
+    return re.match(rf"^Will the price of (?:{assets}) be above \$[\d,]+(?:\.\d+)? on .+\?$", normalized) is not None
+
+
 def candidate_group_key(market: PolymarketMarket) -> str:
     """Group mutually-exclusive Polymarket outcome markets from the same event."""
     events = market.raw.get("events")
@@ -199,6 +205,8 @@ def candidate_filter_reason(
         return False, "generic team-match sports market without model edge"
     if is_weather_range_market(market.question):
         return False, "weather range market requires forecast-aware sibling-bin model"
+    if is_crypto_threshold_market(market.question):
+        return False, "crypto price threshold market requires volatility/options model"
     horizon = candidate_horizon(market, now=now)
     if not horizon.ok:
         return False, horizon.reason

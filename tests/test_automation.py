@@ -122,6 +122,11 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("weather range", reason)
 
+        crypto_threshold = normalize_market(raw_market(question="Will the price of Ethereum be above $2,400 on April 28?"))
+        ok, reason = candidate_filter_reason(crypto_threshold, now=now)
+        self.assertFalse(ok)
+        self.assertIn("crypto price threshold", reason)
+
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
         self.assertFalse(ok)
