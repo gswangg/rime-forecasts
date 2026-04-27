@@ -123,6 +123,8 @@ The daemon does **not** decide edge. The model still applies the forecast method
 
 A watched market's YES price moved by at least the configured threshold since the last observed daemon price. Default threshold: 5pp.
 
+To avoid stair-step alert churn on the same watched market, a same-watch price-move alert has a default 1h cooldown. The cooldown is bypassed if the current price is at least 10pp away from the last emitted price-move alert for that market.
+
 Watched markets are extracted from `reasoning/*.md` when a Polymarket market slug is present. This covers Polymarket-primary predictions and Polymarket shadows on Manifold-primary predictions.
 
 ### `clv_checkpoint_due`
@@ -164,6 +166,7 @@ State tracks:
 - last observed prices for watched markets
 - emitted CLV checkpoints by reasoning file + slug
 - emitted resolution events by slug
+- last emitted price-move alert by watched-market slug for cooldown/hysteresis
 - emitted event ids / dedupe keys
 
 State is written only after corresponding wake files are successfully written, except `--dry-run`, which prints events and leaves state unchanged.
@@ -185,6 +188,9 @@ Options:
 - `--fixture <path>` — use fixture JSON instead of the live API, for tests/smoke checks.
 - `--max-events N` — cap total emitted events per poll.
 - `--max-candidate-events N` — cap candidate events per poll.
+- `--price-move-threshold X` — watched-market move threshold; default `0.05` / 5pp.
+- `--price-move-cooldown-sec N` — suppress small repeat price-move wakes for the same watched market; default `3600`.
+- `--price-move-cooldown-override X` — price delta from last emitted price-move alert that bypasses cooldown; default `0.10` / 10pp.
 - `--wake-root <path>` — default `~/.pi/agent/wake`.
 
 Recommended long-running loop for fast feedback: run Polymarket and Kalshi every 10–15 minutes. The model only wakes if a daemon writes an event.
@@ -216,6 +222,6 @@ Pure logic is tested without network:
 - wake event atomic write shape
 - CLV checkpoint scheduling and idempotence
 - watched-market extraction from reasoning markdown
-- stateful event generation/deduplication
+- stateful event generation/deduplication, including same-watch price-move cooldown
 
 Network fetch is isolated in the CLI/poller layer.

@@ -12,6 +12,7 @@ def default_state() -> dict[str, Any]:
         "candidate_event_groups": {},
         "last_prices": {},
         "price_move_events": {},
+        "last_price_move_events": {},
         "clv_checkpoints": {},
         "resolution_events": {},
         "emitted_events": {},

@@ -116,6 +116,8 @@ def poll_once(args, *, session_id: str | None) -> int:
         now=now,
         session_id=effective_session_id,
         price_move_threshold=args.price_move_threshold,
+        price_move_cooldown_sec=args.price_move_cooldown_sec,
+        price_move_cooldown_override=args.price_move_cooldown_override,
         max_candidate_events=args.max_candidate_events,
         max_events=args.max_events,
     )
@@ -177,6 +179,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-events", type=int, default=10, help="max events emitted per poll (default: 10)")
     parser.add_argument("--max-candidate-events", type=int, default=3, help="max candidate events emitted per poll (default: 3)")
     parser.add_argument("--price-move-threshold", type=float, default=0.05, help="price move threshold as probability delta (default: 0.05 = 5pp)")
+    parser.add_argument("--price-move-cooldown-sec", type=int, default=3600, help="suppress same-watch price move alerts inside this cooldown unless override delta is reached (default: 3600)")
+    parser.add_argument("--price-move-cooldown-override", type=float, default=0.10, help="price delta from last alert that bypasses cooldown (default: 0.10 = 10pp)")
     return parser
 
 

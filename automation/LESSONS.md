@@ -68,6 +68,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate filtering excludes individual crypto price threshold/range questions such as `Will the price of Bitcoin/Ethereum be above $X on <date>?`, `between $X and $Y`, `greater than $X`, and `less than $X` until a volatility/options model is added.
 
+### Watched-market price moves need same-market hysteresis
+
+**Observed:** White House `140-159` moved from 65.5% to 71.0% and then to 76.0% on adjacent daemon polls. The first wake was useful: it showed the market had moved through and above the 65% forecast. The second wake added little new information: same direction, same thesis state, no fresh resolution signal in the payload.
+
+**Lesson:** watched-market price alerts are useful for large thesis-relevant moves, but 5pp stair-step alerts on the same market can burn turns during active trading.
+
+**Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 1h unless the price is at least 10pp away from the last emitted alert price.
+
 ## Pending / watchlist
 
 ### Kalshi category quality

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from .clv import due_clv_checkpoints
@@ -8,7 +8,7 @@ from .horizons import horizon_sort_key
 from .polymarket import PolymarketMarket, candidate_filter_reason, candidate_group_key, candidate_horizon, market_payload
 from .reasoning import PredictionWatch, watch_payload
 from .state import default_state as _default_state
-from .timeutil import isoformat_z
+from .timeutil import isoformat_z, parse_iso
 from .wake import build_wake_event, safe_part
 
 SOURCE = "rime-forecasts/polymarket-daemon"
@@ -201,6 +201,8 @@ def generate_events(
     now: datetime,
     session_id: str,
     price_move_threshold: float = 0.05,
+    price_move_cooldown_sec: int = 3600,
+    price_move_cooldown_override: float = 0.10,
     max_candidate_events: int = 3,
     max_events: int = 10,
 ) -> list[dict[str, Any]]:
@@ -232,6 +234,14 @@ def generate_events(
             continue
         move = market.yes_price - float(previous)
         if abs(move) >= price_move_threshold:
+            last_alert = state.get("last_price_move_events", {}).get(watch.slug, {})
+            if last_alert.get("emitted_at") and last_alert.get("price") is not None:
+                alert_time = parse_iso(last_alert["emitted_at"])
+                alert_price = float(last_alert["price"])
+                recent_alert = now - alert_time < timedelta(seconds=price_move_cooldown_sec)
+                move_since_alert = market.yes_price - alert_price
+                if recent_alert and abs(move_since_alert) < price_move_cooldown_override:
+                    continue
             events.append(
                 _price_moved_event(
                     watch,
@@ -302,6 +312,7 @@ def mark_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now: da
     state.setdefault("candidate_event_groups", {})
     state.setdefault("last_prices", {})
     state.setdefault("price_move_events", {})
+    state.setdefault("last_price_move_events", {})
     state.setdefault("clv_checkpoints", {})
     state.setdefault("resolution_events", {})
     state.setdefault("emitted_events", {})
@@ -322,6 +333,12 @@ def mark_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now: da
                 state["candidate_event_groups"][group_key] = {"event_id": event["id"], "emitted_at": emitted_at, "slug": slug}
         elif event_type == "price_moved" and slug:
             state["price_move_events"][dedupe_key] = {"event_id": event["id"], "emitted_at": emitted_at}
+            if market.get("yesPrice") is not None:
+                state["last_price_move_events"][slug] = {
+                    "event_id": event["id"],
+                    "emitted_at": emitted_at,
+                    "price": market.get("yesPrice"),
+                }
         elif event_type == "clv_checkpoint_due":
             watch = payload.get("watch", {})
             checkpoint = payload.get("checkpoint")
