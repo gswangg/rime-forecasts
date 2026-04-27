@@ -107,6 +107,16 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("generic team-match", reason)
 
+        weather_range_f = normalize_market(raw_market(question="Will the highest temperature in Dallas be between 82-83°F on April 28?"))
+        ok, reason = candidate_filter_reason(weather_range_f, now=now)
+        self.assertFalse(ok)
+        self.assertIn("weather range", reason)
+
+        weather_exact_c = normalize_market(raw_market(question="Will the highest temperature in Chengdu be 24°C on April 28?"))
+        ok, reason = candidate_filter_reason(weather_exact_c, now=now)
+        self.assertFalse(ok)
+        self.assertIn("weather range", reason)
+
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
         self.assertFalse(ok)

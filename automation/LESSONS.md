@@ -44,17 +44,19 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate filtering excludes generic team match questions matching `Will <team> vs. <team> end in a draw?` and `Will <team> win on <date>?`.
 
+### Individual weather range bins need a forecast-aware model
+
+**Observed:** Dallas Apr 28 `82–83°F` woke and skipped after NWS forecast/grid showed a high around 88°F. Chengdu Apr 28 `24°C` then woke as the same class of candidate: individual temperature bin, low-ish price, no sibling-bin distribution in the payload.
+
+**Lesson:** weather can be a good fast-feedback domain, but waking individual range bins without fetching forecasts and sibling prices just asks the model to do ad hoc weather modeling. The daemon should either group/score the full city/date distribution or not wake these bins.
+
+**Implementation:** Polymarket candidate filtering excludes highest-temperature range/exact-bin questions matching `Will the highest temperature in <place> be between <range> on <date>?` and `Will the highest temperature in <place> be <temp>°C/°F on <date>?` until a forecast-aware sibling-bin model exists.
+
 ## Pending / watchlist
 
 ### Cluster suppression
 
 Multiple mutually exclusive markets from the same event can wake back-to-back. The soccer 1X2 cluster was mostly fixed by the volume floor, but high-volume clusters may still spam. If this repeats, group candidates by Polymarket event slug and emit at most one event per event per poll, with payload listing sibling markets.
-
-### Weather range markets need forecast-aware grouping, not raw candidate wakes
-
-Observed Dallas Apr 28 high-temperature range candidate `82–83°F` at 9.5% YES. NWS point forecast / grid for Dallas showed a Tuesday high around 88°F, making the 82–83 bin plausibly near market rather than a 10pp edge. Weather is potentially a good fast-feedback domain, but individual range bins should be evaluated against a forecast distribution and sibling bins, not woken one at a time by mechanical filters alone.
-
-If weather wakes repeat, implement a weather-aware candidate pass: group all sibling range bins for the same city/date, fetch NWS/source forecast, estimate a crude distribution, and emit only bins with modeled edge ≥ threshold.
 
 ### Kalshi category quality
 

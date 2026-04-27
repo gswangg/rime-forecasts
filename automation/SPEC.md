@@ -100,6 +100,7 @@ MVP filters for Polymarket:
 - real volume ≥ `$1k`
 - liquidity ≥ `$5k` or volume ≥ `$10k`
 - generic team-vs-team win/draw sports questions are excluded unless a future model explicitly opts them in
+- individual highest-temperature range/exact-bin questions are excluded until a forecast-aware sibling-bin model exists
 - fast-feedback horizon ladder passes
 
 MVP filters for Kalshi:

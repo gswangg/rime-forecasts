@@ -134,6 +134,15 @@ def is_generic_team_match_market(question: str) -> bool:
     return any(re.match(pattern, normalized) for pattern in patterns)
 
 
+def is_weather_range_market(question: str) -> bool:
+    normalized = " ".join(question.strip().split())
+    patterns = (
+        r"^Will the highest temperature in .+ be between .+ on .+\?$",
+        r"^Will the highest temperature in .+ be [-+]?\d+(?:\.\d+)?\s*°[CF] on .+\?$",
+    )
+    return any(re.match(pattern, normalized) for pattern in patterns)
+
+
 def candidate_filter_reason(
     market: PolymarketMarket,
     *,
@@ -167,6 +176,8 @@ def candidate_filter_reason(
         return False, f"liquidity/volume below threshold ({market.liquidity:.0f}/{market.volume:.0f})"
     if is_generic_team_match_market(market.question):
         return False, "generic team-match sports market without model edge"
+    if is_weather_range_market(market.question):
+        return False, "weather range market requires forecast-aware sibling-bin model"
     horizon = candidate_horizon(market, now=now)
     if not horizon.ok:
         return False, horizon.reason
