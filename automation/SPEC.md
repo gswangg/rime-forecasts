@@ -101,7 +101,7 @@ MVP filters for Polymarket:
 - liquidity ≥ `$5k` or volume ≥ `$10k`
 - generic team-vs-team win/draw sports questions are excluded unless a future model explicitly opts them in
 - individual highest-temperature range/exact/threshold-bin questions are excluded until a forecast-aware sibling-bin model exists
-- individual crypto price threshold questions are excluded until a volatility/options-aware model exists
+- individual crypto price threshold/range questions are excluded until a volatility/options-aware model exists
 - mutually-exclusive Gamma event / negative-risk clusters emit at most one candidate wake, with sibling markets included in the payload
 - fast-feedback horizon ladder passes
 

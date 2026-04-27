@@ -60,13 +60,13 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate generation now groups markets by Gamma event slug / negative-risk group, emits at most one candidate wake per group, records group-level dedupe state, and includes sibling market payloads in the wake event.
 
-### Crypto threshold markets need a volatility/options model
+### Crypto price bins need a volatility/options model
 
-**Observed:** Bitcoin Apr 28 above `$76k` and Ethereum Apr 28 above `$2,400` both woke as clean, liquid, short-horizon candidates. Spot/sibling-threshold checks put each market roughly in line with ordinary one-day crypto volatility; without an options-implied distribution or systematic vol model, the review was just ad hoc market-making.
+**Observed:** Bitcoin Apr 28 above `$76k` and Ethereum Apr 28 above `$2,400` both woke as clean, liquid, short-horizon candidates. Then Bitcoin `$80k-$82k` woke as the same class with range wording. Spot/sibling-price checks put each market roughly in line with ordinary one-day crypto volatility; without an options-implied distribution or systematic vol model, the review was just ad hoc market-making.
 
-**Lesson:** daily crypto threshold bins are liquid and fast, but not automatically rime edge. Waking individual thresholds without a volatility/options-aware model burns turns on efficient markets.
+**Lesson:** daily crypto threshold/range bins are liquid and fast, but not automatically rime edge. Waking individual thresholds or ranges without a volatility/options-aware model burns turns on efficient markets.
 
-**Implementation:** Polymarket candidate filtering excludes individual crypto price threshold questions such as `Will the price of Bitcoin/Ethereum be above $X on <date>?` until a volatility/options model is added.
+**Implementation:** Polymarket candidate filtering excludes individual crypto price threshold/range questions such as `Will the price of Bitcoin/Ethereum be above $X on <date>?`, `between $X and $Y`, `greater than $X`, and `less than $X` until a volatility/options model is added.
 
 ## Pending / watchlist
 

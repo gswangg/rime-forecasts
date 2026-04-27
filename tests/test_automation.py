@@ -125,7 +125,17 @@ class AutomationTests(unittest.TestCase):
         crypto_threshold = normalize_market(raw_market(question="Will the price of Ethereum be above $2,400 on April 28?"))
         ok, reason = candidate_filter_reason(crypto_threshold, now=now)
         self.assertFalse(ok)
-        self.assertIn("crypto price threshold", reason)
+        self.assertIn("crypto price market", reason)
+
+        crypto_range = normalize_market(raw_market(question="Will the price of Bitcoin be between $80,000 and $82,000 on April 28?"))
+        ok, reason = candidate_filter_reason(crypto_range, now=now)
+        self.assertFalse(ok)
+        self.assertIn("crypto price market", reason)
+
+        crypto_greater_than = normalize_market(raw_market(question="Will the price of Bitcoin be greater than $84,000 on April 28?"))
+        ok, reason = candidate_filter_reason(crypto_greater_than, now=now)
+        self.assertFalse(ok)
+        self.assertIn("crypto price market", reason)
 
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
