@@ -101,6 +101,7 @@ MVP filters for Polymarket:
 - liquidity ≥ `$5k` or volume ≥ `$10k`
 - generic team-vs-team win/draw sports questions are excluded unless a future model explicitly opts them in
 - individual highest-temperature range/exact/threshold-bin questions are excluded until a forecast-aware sibling-bin model exists
+- mutually-exclusive Gamma event / negative-risk clusters emit at most one candidate wake, with sibling markets included in the payload
 - fast-feedback horizon ladder passes
 
 MVP filters for Kalshi:
@@ -158,7 +159,7 @@ The state file is local runtime state and is gitignored.
 
 State tracks:
 
-- emitted candidate events by market slug/ticker
+- emitted candidate events by market slug/ticker and candidate group
 - last observed prices for watched markets
 - emitted CLV checkpoints by reasoning file + slug
 - emitted resolution events by slug

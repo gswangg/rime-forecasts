@@ -52,11 +52,15 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate filtering excludes highest-temperature range/exact/threshold questions matching `Will the highest temperature in <place> be between <range> on <date>?`, `Will the highest temperature in <place> be <temp>°C/°F on <date>?`, and `Will the highest temperature in <place> be <temp>°C/°F or higher/lower on <date>?` until a forecast-aware sibling-bin model exists.
 
+### Mutually-exclusive event clusters should wake once with siblings
+
+**Observed:** the Elon Musk tweet-count event emitted adjacent range-bin wakes (`180-199`, then `200-219`) from the same Polymarket event. Evaluating bins one-by-one duplicated source work and hid the fact that the real question was the full event distribution.
+
+**Lesson:** high-volume mutually-exclusive clusters should be reviewed as a cluster, not as independent candidate wakes.
+
+**Implementation:** Polymarket candidate generation now groups markets by Gamma event slug / negative-risk group, emits at most one candidate wake per group, records group-level dedupe state, and includes sibling market payloads in the wake event.
+
 ## Pending / watchlist
-
-### Cluster suppression
-
-Multiple mutually exclusive markets from the same event can wake back-to-back. The soccer 1X2 cluster was mostly fixed by the volume floor, but high-volume clusters may still spam. If this repeats, group candidates by Polymarket event slug and emit at most one event per event per poll, with payload listing sibling markets.
 
 ### Kalshi category quality
 

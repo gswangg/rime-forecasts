@@ -283,6 +283,64 @@ class AutomationTests(unittest.TestCase):
             self.assertEqual(stored["sessionId"], "session-123")
             self.assertFalse(list((Path(tmp) / "inbox").glob("*.tmp*")))
 
+    def test_candidate_generation_suppresses_same_event_clusters(self):
+        now = dt("2026-04-27T12:00:00Z")
+        event = [{"slug": "elon-musk-of-tweets-april-21-april-28"}]
+        first = normalize_market(
+            raw_market(
+                slug="elon-musk-of-tweets-april-21-april-28-180-199",
+                question="Will Elon Musk post 180-199 tweets from April 21 to April 28, 2026?",
+                endDate="2026-04-28T16:00:00Z",
+                liquidityNum=40_000,
+                volumeNum=500_000,
+                outcomePrices='["0.12", "0.88"]',
+                bestBid=0.11,
+                bestAsk=0.13,
+                events=event,
+            )
+        )
+        second = normalize_market(
+            raw_market(
+                slug="elon-musk-of-tweets-april-21-april-28-200-219",
+                question="Will Elon Musk post 200-219 tweets from April 21 to April 28, 2026?",
+                endDate="2026-04-28T16:00:00Z",
+                liquidityNum=37_000,
+                volumeNum=314_000,
+                outcomePrices='["0.455", "0.545"]',
+                bestBid=0.45,
+                bestAsk=0.46,
+                events=event,
+            )
+        )
+        state = default_state()
+        events = generate_events(
+            markets=[second, first],
+            watches=[],
+            state=state,
+            now=now,
+            session_id="session-123",
+            max_candidate_events=5,
+            max_events=5,
+        )
+        self.assertEqual([event["type"] for event in events], ["candidate_found"])
+        self.assertEqual(events[0]["payload"]["candidateGroupKey"], "event:elon-musk-of-tweets-april-21-april-28")
+        self.assertEqual(
+            {market["slug"] for market in events[0]["payload"]["siblingMarkets"]},
+            {first.slug, second.slug},
+        )
+
+        mark_emitted(state, events, now=now)
+        events = generate_events(
+            markets=[second],
+            watches=[],
+            state=state,
+            now=now,
+            session_id="session-123",
+            max_candidate_events=5,
+            max_events=5,
+        )
+        self.assertEqual(events, [])
+
     def test_generate_events_dedupes_candidates_and_detects_price_moves(self):
         now = dt("2026-04-26T00:00:00Z")
         market = normalize_market(raw_market())

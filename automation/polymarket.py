@@ -143,6 +143,27 @@ def is_weather_range_market(question: str) -> bool:
     return any(re.match(pattern, normalized) for pattern in patterns)
 
 
+def candidate_group_key(market: PolymarketMarket) -> str:
+    """Group mutually-exclusive Polymarket outcome markets from the same event."""
+    events = market.raw.get("events")
+    if isinstance(events, list):
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            event_slug = str(event.get("slug") or "").strip()
+            if event_slug:
+                return f"event:{event_slug}"
+            event_id = str(event.get("id") or "").strip()
+            if event_id:
+                return f"event-id:{event_id}"
+
+    neg_risk_market_id = str(market.raw.get("negRiskMarketID") or "").strip()
+    if neg_risk_market_id:
+        return f"neg-risk:{neg_risk_market_id}"
+
+    return f"market:{market.slug}"
+
+
 def candidate_filter_reason(
     market: PolymarketMarket,
     *,

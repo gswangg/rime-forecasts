@@ -5,7 +5,7 @@ from typing import Any
 
 from .clv import due_clv_checkpoints
 from .horizons import horizon_sort_key
-from .polymarket import PolymarketMarket, candidate_filter_reason, candidate_horizon, market_payload
+from .polymarket import PolymarketMarket, candidate_filter_reason, candidate_group_key, candidate_horizon, market_payload
 from .reasoning import PredictionWatch, watch_payload
 from .state import default_state as _default_state
 from .timeutil import isoformat_z
@@ -83,7 +83,14 @@ def _resolution_prompt(watch: PredictionWatch, market: PolymarketMarket) -> str:
     )
 
 
-def _candidate_event(market: PolymarketMarket, *, now: datetime, session_id: str) -> dict[str, Any]:
+def _candidate_event(
+    market: PolymarketMarket,
+    *,
+    now: datetime,
+    session_id: str,
+    group_key: str,
+    sibling_markets: list[PolymarketMarket],
+) -> dict[str, Any]:
     horizon = candidate_horizon(market, now=now)
     return build_wake_event(
         event_id=_event_id("candidate_found", market.slug, now),
@@ -94,13 +101,15 @@ def _candidate_event(market: PolymarketMarket, *, now: datetime, session_id: str
         prompt=_candidate_prompt(market, horizon),
         payload={
             "market": market_payload(market),
+            "siblingMarkets": [market_payload(sibling) for sibling in sibling_markets],
+            "candidateGroupKey": group_key,
             "horizon": {
                 "bucket": horizon.bucket,
                 "daysToResolution": horizon.days_to_resolution,
                 "reason": horizon.reason,
                 "priority": horizon.priority,
             },
-            "dedupeKey": f"candidate:{market.slug}",
+            "dedupeKey": f"candidate:{group_key}",
         },
         source=SOURCE,
     )
@@ -243,6 +252,18 @@ def generate_events(
 
     # Candidate discovery last, capped separately to avoid inbox floods.
     candidate_count = 0
+    grouped_markets: dict[str, list[PolymarketMarket]] = {}
+    for market in markets:
+        if market.slug:
+            grouped_markets.setdefault(candidate_group_key(market), []).append(market)
+
+    emitted_candidate_groups: set[str] = set()
+    state_candidate_events = state.get("candidate_events", {})
+    state_candidate_groups = set(state.get("candidate_event_groups", {}))
+    for group_key, group in grouped_markets.items():
+        if any(market.slug in state_candidate_events for market in group):
+            state_candidate_groups.add(group_key)
+
     candidate_markets = sorted(
         markets,
         key=lambda market: horizon_sort_key(candidate_horizon(market, now=now), volume=market.volume, slug=market.slug),
@@ -252,12 +273,24 @@ def generate_events(
             break
         if market.slug in watch_slugs:
             continue
-        if market.slug in state.get("candidate_events", {}):
+        if market.slug in state_candidate_events:
+            continue
+        group_key = candidate_group_key(market)
+        if group_key in emitted_candidate_groups or group_key in state_candidate_groups:
             continue
         ok, _reason = candidate_filter_reason(market, now=now)
         if not ok:
             continue
-        events.append(_candidate_event(market, now=now, session_id=session_id))
+        sibling_markets = sorted(
+            (
+                sibling
+                for sibling in grouped_markets.get(group_key, [market])
+                if sibling.slug and sibling.active and not sibling.closed and sibling.is_binary_yes_no and sibling.yes_price is not None
+            ),
+            key=lambda sibling: sibling.slug,
+        )
+        events.append(_candidate_event(market, now=now, session_id=session_id, group_key=group_key, sibling_markets=sibling_markets))
+        emitted_candidate_groups.add(group_key)
         candidate_count += 1
 
     return events
@@ -266,6 +299,7 @@ def generate_events(
 def mark_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now: datetime) -> None:
     emitted_at = isoformat_z(now)
     state.setdefault("candidate_events", {})
+    state.setdefault("candidate_event_groups", {})
     state.setdefault("last_prices", {})
     state.setdefault("price_move_events", {})
     state.setdefault("clv_checkpoints", {})
@@ -283,6 +317,9 @@ def mark_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now: da
 
         if event_type == "candidate_found" and slug:
             state["candidate_events"][slug] = {"event_id": event["id"], "emitted_at": emitted_at}
+            group_key = payload.get("candidateGroupKey")
+            if group_key:
+                state["candidate_event_groups"][group_key] = {"event_id": event["id"], "emitted_at": emitted_at, "slug": slug}
         elif event_type == "price_moved" and slug:
             state["price_move_events"][dedupe_key] = {"event_id": event["id"], "emitted_at": emitted_at}
         elif event_type == "clv_checkpoint_due":

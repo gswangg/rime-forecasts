@@ -9,6 +9,7 @@ def default_state() -> dict[str, Any]:
     return {
         "version": 1,
         "candidate_events": {},
+        "candidate_event_groups": {},
         "last_prices": {},
         "price_move_events": {},
         "clv_checkpoints": {},
