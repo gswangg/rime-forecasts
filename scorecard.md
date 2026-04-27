@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-04-27T12:24:19+00:00*
+*Last updated: 2026-04-27T12:28:11+00:00*
 
 ## Summary
 
-- Predictions made: 12 (8 v1 + 4 v2/v2.5.x/v3)
+- Predictions made: 13 (8 v1 + 5 v2/v2.5.x/v3)
 - Resolved: 0
 - Brier score: —
 - Naive primary-venue Brier: —
 - Log loss: —
 - Calibration: insufficient N
-- **Portfolio direction bias (at writing):** 7 below primary venue, 5 above primary venue.
+- **Portfolio direction bias (at writing):** 7 below primary venue, 6 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -69,5 +69,6 @@ None yet.
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | 30% | — | — | 92.4% | 2026-04-28 | v3 |
 | 2026-04-27 | [Elon Musk 220-239 posts Apr 21-28](./reasoning/2026-04-27-elon-musk-tweets-apr21-apr28-220-239.md) | 35% | — | — | 23.5% | 2026-04-28 | v3 |
+| 2026-04-27 | [Trump 100-119 Truth Social posts Apr 21-28](./reasoning/2026-04-27-trump-truth-social-posts-apr21-apr28-100-119.md) | 40% | — | — | 5.15% | 2026-04-28 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
