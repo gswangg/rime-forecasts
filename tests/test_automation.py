@@ -142,6 +142,22 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("crypto price market", reason)
 
+        deferred_election = normalize_market(
+            raw_market(
+                question="Will the All India Trinamool Congress (AITC) win the most seats in the 2026 West Bengal Legislative Assembly election?",
+                description='If the results are not known definitively by October 31, 2026, 11:59 PM ET, this market will resolve to "Other".',
+                endDate="2026-04-29T00:00:00Z",
+                liquidityNum=58_000,
+                volumeNum=1_700_000,
+                outcomePrices='["0.46", "0.54"]',
+                bestBid=0.46,
+                bestAsk=0.461,
+            )
+        )
+        ok, reason = candidate_filter_reason(deferred_election, now=now)
+        self.assertFalse(ok)
+        self.assertIn("election result", reason)
+
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
         self.assertFalse(ok)

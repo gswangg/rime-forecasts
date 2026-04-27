@@ -155,6 +155,16 @@ def is_crypto_price_market(question: str) -> bool:
     return any(re.match(pattern, normalized) for pattern in patterns)
 
 
+def is_deferred_election_result_market(question: str, description: str) -> bool:
+    normalized_question = " ".join(question.strip().split()).lower()
+    normalized_description = " ".join(description.strip().split()).lower()
+    return (
+        "election" in normalized_question
+        and ("win the most seats" in normalized_question or "election winner" in normalized_question)
+        and "results are not known definitively by" in normalized_description
+    )
+
+
 def candidate_group_key(market: PolymarketMarket) -> str:
     """Group mutually-exclusive Polymarket outcome markets from the same event."""
     events = market.raw.get("events")
@@ -213,6 +223,8 @@ def candidate_filter_reason(
         return False, "weather range market requires forecast-aware sibling-bin model"
     if is_crypto_price_market(market.question):
         return False, "crypto price market requires volatility/options model"
+    if is_deferred_election_result_market(market.question, str(market.raw.get("description") or "")):
+        return False, "election result market uses trading close date, not resolution date"
     horizon = candidate_horizon(market, now=now)
     if not horizon.ok:
         return False, horizon.reason

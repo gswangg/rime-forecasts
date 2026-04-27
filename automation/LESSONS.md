@@ -68,6 +68,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate filtering excludes individual crypto price threshold/range questions such as `Will the price of Bitcoin/Ethereum be above $X on <date>?`, `between $X and $Y`, `greater than $X`, and `less than $X` until a volatility/options model is added.
 
+### Election winner markets can have close dates that are not resolution dates
+
+**Observed:** West Bengal Legislative Assembly election winner woke as a `1.1d` primary candidate because Polymarket's `endDate` was Apr 29. The market description says results may remain unknown until Oct 31, and event context described Apr 29 as another polling phase, not final resolution. This is not fast feedback despite a near `endDate`.
+
+**Lesson:** election-result markets often use `endDate` as trading close / election phase timing. The daemon should not treat that as a near-term resolution unless it has result-date awareness.
+
+**Implementation:** Polymarket candidate filtering excludes election winner / most-seats markets whose description says results may not be known definitively by a later fallback date. Revisit with an election-calendar-aware horizon model if election markets become a priority.
+
 ### Watched-market price moves need same-market hysteresis
 
 **Observed:** White House `140-159` moved from 65.5% to 71.0% and then to 76.0% on adjacent daemon polls. The first wake was useful: it showed the market had moved through and above the 65% forecast. The second wake added little new information: same direction, same thesis state, no fresh resolution signal in the payload.
