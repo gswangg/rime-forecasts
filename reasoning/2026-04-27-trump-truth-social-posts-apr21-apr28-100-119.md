@@ -99,3 +99,7 @@ The risk is not market microstructure; it is burst risk. The market can lose in 
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-27T20:11Z: Polymarket moved to **18.65% YES** (18.5% bid / 18.8% ask), **+13.5pp from entry** but still below the 40% forecast. XTracker API showed **114 counted posts** at sync 20:11:28Z after nine additional posts since writing, including a seven-post burst around 20:04-20:06Z. The bin now needs **0-5 more posts** in the remaining ~19.8h. A quick historical analog check for similar partial counts and remaining time put staying ≤5 future posts around the mid-teens, so the original extreme underpricing edge is mostly gone; current market is much closer to fair than the 5% entry.
