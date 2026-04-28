@@ -73,3 +73,7 @@ This is a narrow, source-based edge rather than a deep macro view. The important
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-28T01:31Z: +6h checkpoint marked **73.0% YES** (72% bid / 74% ask), **-1.5pp from entry**, unchanged from +1h. This is a small drift away from the 88% forecast, but the book is tight and the move is still ordinary pre-event noise; no thesis change without a source/transcript signal.
