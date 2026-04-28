@@ -82,7 +82,7 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Lesson:** watched-market price alerts are useful for large thesis-relevant moves, but 5pp stair-step alerts on the same market can burn turns during active trading.
 
-**Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 2h unless the price is at least 10pp away from the last emitted alert price.
+**Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 2h unless the price is at least 15pp away from the last emitted alert price.
 
 ### Wide-book watched-market stair steps are noisy
 

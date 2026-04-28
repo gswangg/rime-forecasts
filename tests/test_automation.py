@@ -486,14 +486,28 @@ class AutomationTests(unittest.TestCase):
             )
             self.assertEqual(still_suppressed, [])
 
-            large_followup = normalize_market(raw_market(outcomePrices='["0.77", "0.23"]', bestBid=0.76, bestAsk=0.78))
-            emitted = generate_events(
-                markets=[large_followup],
+            eleven_point_followup = normalize_market(raw_market(outcomePrices='["0.77", "0.23"]', bestBid=0.76, bestAsk=0.78))
+            still_suppressed = generate_events(
+                markets=[eleven_point_followup],
                 watches=[watch],
                 state=state,
                 now=dt("2026-04-26T00:30:00Z"),
                 price_move_threshold=0.05,
-                price_move_cooldown_override=0.10,
+                price_move_cooldown_override=0.15,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(still_suppressed, [])
+
+            large_followup = normalize_market(raw_market(outcomePrices='["0.82", "0.18"]', bestBid=0.81, bestAsk=0.83))
+            emitted = generate_events(
+                markets=[large_followup],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:45:00Z"),
+                price_move_threshold=0.05,
+                price_move_cooldown_override=0.15,
                 max_candidate_events=0,
                 max_events=5,
                 session_id="session-123",
