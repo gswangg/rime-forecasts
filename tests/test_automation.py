@@ -514,6 +514,33 @@ class AutomationTests(unittest.TestCase):
             )
             self.assertEqual([event["type"] for event in emitted], ["price_moved"])
 
+    def test_price_move_alerts_require_actionable_book(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reasoning = Path(tmp) / "reasoning"
+            reasoning.mkdir()
+            (reasoning / "example.md").write_text(
+                "# Example\n\n"
+                "**Polymarket market slug**: will-test-happen-by-may-31\n"
+                "**Written**: 2026-04-26T00:00:00+00:00\n"
+                "**Prediction**: 65%\n"
+                "**Primary venue price at writing**: 52% YES\n"
+            )
+            watch = extract_polymarket_watches(reasoning)[0]
+            state = default_state()
+            state["last_prices"][watch.slug] = {"price": 0.0005, "observed_at": "2026-04-25T00:00:00Z"}
+            missing_bid = normalize_market(raw_market(outcomePrices='["0.495", "0.505"]', bestBid=None, bestAsk=0.99, liquidityNum=1))
+            events = generate_events(
+                markets=[missing_bid],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:15:00Z"),
+                price_move_threshold=0.05,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(events, [])
+
     def test_price_move_alerts_suppress_wide_book_stair_steps(self):
         with tempfile.TemporaryDirectory() as tmp:
             reasoning = Path(tmp) / "reasoning"

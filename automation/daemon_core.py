@@ -232,16 +232,17 @@ def generate_events(
         market = markets_by_slug.get(watch.slug)
         if not market or market.yes_price is None:
             continue
+        if market.best_bid is None or market.best_ask is None:
+            continue
+        if not (0 < market.best_bid <= market.best_ask < 1):
+            continue
         previous = state.get("last_prices", {}).get(watch.slug, {}).get("price")
         if previous is None:
             continue
         move = market.yes_price - float(previous)
         if abs(move) >= price_move_threshold:
             if (
-                market.best_bid is not None
-                and market.best_ask is not None
-                and 0 < market.best_bid <= market.best_ask < 1
-                and market.best_ask - market.best_bid > price_move_max_spread
+                market.best_ask - market.best_bid > price_move_max_spread
                 and abs(move) < price_move_wide_spread_override
             ):
                 continue

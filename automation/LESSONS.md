@@ -84,6 +84,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 2h unless the price is at least 15pp away from the last emitted alert price.
 
+### Missing-book Gamma marks are not actionable price moves
+
+**Observed:** Trump `100-119` emitted a 49.5pp price-move wake from a Gamma `outcomePrices` mark even though the market had no YES bid, a 99% ask, and only about `$1` liquidity. XTracker had already reached 120, so the source state was useful, but the price mark itself was not tradeable CLV.
+
+**Lesson:** watched price moves should use actionable books like candidate discovery does. Missing/no-bid Gamma marks near resolution can be stale or structurally broken.
+
+**Implementation:** Polymarket price-move alerts now require bid/ask present, inside `(0,1)`, and ordered before evaluating the move.
+
 ### Bounce-back price moves are often ping-pong, not new information
 
 **Observed:** Elon `220-239` moved down from 68.5% to 55.0%, then back to 70.5% fifteen minutes later with no new XTracker posts. The second wake mostly returned to the pre-alert price and did not change the thesis state.

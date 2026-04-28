@@ -124,6 +124,8 @@ The daemon does **not** decide edge. The model still applies the forecast method
 
 A watched market's YES price moved by at least the configured threshold since the last observed daemon price. Default threshold: 5pp.
 
+Watched price moves require an actionable bid/ask book: bid and ask present, inside `(0, 1)`, ordered. Missing/no-bid Gamma marks are ignored as non-actionable.
+
 To avoid stair-step alert churn on the same watched market, a same-watch price-move alert has a default 2h cooldown. The cooldown is bypassed if the current price is at least 15pp away from the last emitted price-move alert for that market.
 
 If a recent price-move alert reverses and returns within 5pp of the pre-alert price, suppress it as ping-pong unless a later poll breaks away again.
