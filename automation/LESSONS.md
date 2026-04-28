@@ -76,6 +76,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket candidate filtering excludes election winner / most-seats markets whose description says results may not be known definitively by a later fallback date. Revisit with an election-calendar-aware horizon model if election markets become a priority.
 
+### Question deadlines can be later than Gamma endDate
+
+**Observed:** `SAVE Act becomes law by December 31, 2026?` woke as a `1.2d` primary candidate because Gamma's `endDate` was Apr 30 even though the title's resolution deadline is Dec 31. That is a trading/event close, not fast feedback.
+
+**Lesson:** if the question explicitly says `by <Month> <day>, <year>` and that date is materially later than `endDate`, the title date should control fast-feedback eligibility.
+
+**Implementation:** Polymarket candidate filtering excludes markets whose explicit question deadline is more than 7 days after Gamma `endDate`.
+
 ### Watched-market price moves need same-market hysteresis
 
 **Observed:** White House `140-159` moved from 65.5% to 71.0% and then to 76.0% on adjacent daemon polls. The first wake was useful: it showed the market had moved through and above the 65% forecast. The second wake added little new information: same direction, same thesis state, no fresh resolution signal in the payload.

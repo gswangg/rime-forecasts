@@ -168,6 +168,22 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("election result", reason)
 
+        later_question_deadline = normalize_market(
+            raw_market(
+                question="SAVE Act becomes law by December 31, 2026?",
+                slug="save-act-becomes-law-by-december-31-2026-347",
+                endDate="2026-04-30T00:00:00Z",
+                liquidityNum=23_000,
+                volumeNum=106_000,
+                outcomePrices='["0.275", "0.725"]',
+                bestBid=0.26,
+                bestAsk=0.29,
+            )
+        )
+        ok, reason = candidate_filter_reason(later_question_deadline, now=now)
+        self.assertFalse(ok)
+        self.assertIn("question deadline", reason)
+
         non_binary = normalize_market(raw_market(outcomes='["A", "B", "C"]', outcomePrices='["0.2", "0.3", "0.5"]'))
         ok, reason = candidate_filter_reason(non_binary, now=now)
         self.assertFalse(ok)

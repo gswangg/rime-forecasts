@@ -167,6 +167,49 @@ def is_deferred_election_result_market(question: str, description: str) -> bool:
     )
 
 
+_MONTH_NUMBERS = {
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
+}
+
+
+def has_later_question_deadline(question: str, end_date: datetime | None, *, tolerance_days: int = 7) -> bool:
+    """Detect markets whose title deadline is much later than Gamma's endDate.
+
+    Gamma sometimes exposes a trading/event close as ``endDate`` while the market
+    question itself names the actual resolution deadline. Those are not
+    fast-feedback candidates merely because trading closes soon.
+    """
+    if end_date is None:
+        return False
+    normalized = " ".join(question.strip().split())
+    deadline_pattern = re.compile(
+        r"\bby\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s*(20\d{2})\b",
+        re.IGNORECASE,
+    )
+    for match in deadline_pattern.finditer(normalized):
+        month = _MONTH_NUMBERS[match.group(1).lower()]
+        day = int(match.group(2))
+        year = int(match.group(3))
+        try:
+            deadline = datetime(year, month, day, tzinfo=end_date.tzinfo).date()
+        except ValueError:
+            continue
+        if (deadline - end_date.date()).days > tolerance_days:
+            return True
+    return False
+
+
 def candidate_group_key(market: PolymarketMarket) -> str:
     """Group mutually-exclusive Polymarket outcome markets from the same event."""
     events = market.raw.get("events")
@@ -227,6 +270,8 @@ def candidate_filter_reason(
         return False, "crypto price market requires volatility/options model"
     if is_deferred_election_result_market(market.question, str(market.raw.get("description") or "")):
         return False, "election result market uses trading close date, not resolution date"
+    if has_later_question_deadline(market.question, market.end_date):
+        return False, "question deadline is later than Polymarket endDate"
     horizon = candidate_horizon(market, now=now)
     if not horizon.ok:
         return False, horizon.reason
