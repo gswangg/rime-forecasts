@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-04-28T15:02:04+00:00*
+*Last updated: 2026-04-28T23:48:16+00:00*
 
 ## Summary
 
-- Predictions made: 16 (8 v1 + 8 v2/v2.5.x/v3)
+- Predictions made: 17 (8 v1 + 9 v2/v2.5.x/v3)
 - Resolved: 0
 - Brier score: —
 - Naive primary-venue Brier: —
 - Log loss: —
 - Calibration: insufficient N
-- **Portfolio direction bias (at writing):** 8 below primary venue, 8 above primary venue.
+- **Portfolio direction bias (at writing):** 8 below primary venue, 9 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -79,5 +79,6 @@ None yet.
 | 2026-04-27 | [White House 140-159 posts Apr 21-28](./reasoning/2026-04-27-white-house-posts-apr21-apr28-140-159.md) | 65% | — | — | 52.0% | 2026-04-28 | v3 |
 | 2026-04-27 | [Powell says "Pandemic" during April press conference](./reasoning/2026-04-27-powell-pandemic-april-press-conference.md) | 88% | — | — | 74.5% | 2026-04-29 | v3 |
 | 2026-04-28 | [Amazon GAAP EPS > $1.65](./reasoning/2026-04-28-amzn-gaap-eps-q1-2026.md) | 80% | — | — | 92.15% | 2026-04-29 | v3 |
+| 2026-04-28 | [Anthropic Mythos to US government by Apr 30](./reasoning/2026-04-28-anthropic-mythos-us-government-april-30.md) | 60% | — | — | 5.5% | 2026-04-30 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
