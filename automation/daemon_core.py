@@ -201,7 +201,7 @@ def generate_events(
     now: datetime,
     session_id: str,
     price_move_threshold: float = 0.05,
-    price_move_cooldown_sec: int = 3600,
+    price_move_cooldown_sec: int = 7200,
     price_move_cooldown_override: float = 0.10,
     price_move_max_spread: float = 0.20,
     price_move_wide_spread_override: float = 0.25,

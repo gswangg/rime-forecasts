@@ -471,6 +471,20 @@ class AutomationTests(unittest.TestCase):
                 session_id="session-123",
             )
             self.assertEqual(suppressed, [])
+            state["clv_checkpoints"][watch.key] = {"1h": {"event_id": "already"}}
+
+            ninety_minute_followup = normalize_market(raw_market(outcomePrices='["0.72", "0.28"]', bestBid=0.71, bestAsk=0.73))
+            still_suppressed = generate_events(
+                markets=[ninety_minute_followup],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T01:30:00Z"),
+                price_move_threshold=0.05,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(still_suppressed, [])
 
             large_followup = normalize_market(raw_market(outcomePrices='["0.77", "0.23"]', bestBid=0.76, bestAsk=0.78))
             emitted = generate_events(

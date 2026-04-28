@@ -181,7 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-events", type=int, default=10, help="max events emitted per poll (default: 10)")
     parser.add_argument("--max-candidate-events", type=int, default=3, help="max candidate events emitted per poll (default: 3)")
     parser.add_argument("--price-move-threshold", type=float, default=0.05, help="price move threshold as probability delta (default: 0.05 = 5pp)")
-    parser.add_argument("--price-move-cooldown-sec", type=int, default=3600, help="suppress same-watch price move alerts inside this cooldown unless override delta is reached (default: 3600)")
+    parser.add_argument("--price-move-cooldown-sec", type=int, default=7200, help="suppress same-watch price move alerts inside this cooldown unless override delta is reached (default: 7200)")
     parser.add_argument("--price-move-cooldown-override", type=float, default=0.10, help="price delta from last alert that bypasses cooldown (default: 0.10 = 10pp)")
     parser.add_argument("--price-move-max-spread", type=float, default=0.20, help="suppress watched price moves on wider books unless wide-spread override is reached (default: 0.20 = 20pp)")
     parser.add_argument("--price-move-wide-spread-override", type=float, default=0.25, help="price delta that still wakes on wide watched-market books (default: 0.25 = 25pp)")

@@ -124,7 +124,7 @@ The daemon does **not** decide edge. The model still applies the forecast method
 
 A watched market's YES price moved by at least the configured threshold since the last observed daemon price. Default threshold: 5pp.
 
-To avoid stair-step alert churn on the same watched market, a same-watch price-move alert has a default 1h cooldown. The cooldown is bypassed if the current price is at least 10pp away from the last emitted price-move alert for that market.
+To avoid stair-step alert churn on the same watched market, a same-watch price-move alert has a default 2h cooldown. The cooldown is bypassed if the current price is at least 10pp away from the last emitted price-move alert for that market.
 
 Watched price moves on very wide books are lower-quality marks. If bid/ask spread is wider than 20pp, suppress moves smaller than 25pp; still wake for extreme wide-book repricings.
 
