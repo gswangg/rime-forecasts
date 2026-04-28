@@ -112,6 +112,16 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("generic team-match", reason)
 
+        generic_exact_score = normalize_market(raw_market(question="Exact Score: Club Atlético de Madrid 2 - 2 Arsenal FC?"))
+        ok, reason = candidate_filter_reason(generic_exact_score, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
+        generic_exact_score_other = normalize_market(raw_market(question="Exact Score: Any Other Score?"))
+        ok, reason = candidate_filter_reason(generic_exact_score_other, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
         weather_range_f = normalize_market(raw_market(question="Will the highest temperature in Dallas be between 82-83°F on April 28?"))
         ok, reason = candidate_filter_reason(weather_range_f, now=now)
         self.assertFalse(ok)
