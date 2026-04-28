@@ -203,6 +203,8 @@ def generate_events(
     price_move_threshold: float = 0.05,
     price_move_cooldown_sec: int = 3600,
     price_move_cooldown_override: float = 0.10,
+    price_move_max_spread: float = 0.20,
+    price_move_wide_spread_override: float = 0.25,
     max_candidate_events: int = 3,
     max_events: int = 10,
 ) -> list[dict[str, Any]]:
@@ -234,6 +236,14 @@ def generate_events(
             continue
         move = market.yes_price - float(previous)
         if abs(move) >= price_move_threshold:
+            if (
+                market.best_bid is not None
+                and market.best_ask is not None
+                and 0 < market.best_bid <= market.best_ask < 1
+                and market.best_ask - market.best_bid > price_move_max_spread
+                and abs(move) < price_move_wide_spread_override
+            ):
+                continue
             last_alert = state.get("last_price_move_events", {}).get(watch.slug, {})
             if last_alert.get("emitted_at") and last_alert.get("price") is not None:
                 alert_time = parse_iso(last_alert["emitted_at"])

@@ -486,6 +486,51 @@ class AutomationTests(unittest.TestCase):
             )
             self.assertEqual([event["type"] for event in emitted], ["price_moved"])
 
+    def test_price_move_alerts_suppress_wide_book_stair_steps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reasoning = Path(tmp) / "reasoning"
+            reasoning.mkdir()
+            (reasoning / "example.md").write_text(
+                "# Example\n\n"
+                "**Polymarket market slug**: will-test-happen-by-may-31\n"
+                "**Written**: 2026-04-26T00:00:00+00:00\n"
+                "**Prediction**: 65%\n"
+                "**Primary venue price at writing**: 52% YES\n"
+            )
+            watch = extract_polymarket_watches(reasoning)[0]
+            state = default_state()
+            state["last_prices"][watch.slug] = {"price": 0.305, "observed_at": "2026-04-26T00:00:00Z"}
+
+            wide_stair_step = normalize_market(raw_market(outcomePrices='["0.18", "0.82"]', bestBid=0.06, bestAsk=0.30))
+            suppressed = generate_events(
+                markets=[wide_stair_step],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:15:00Z"),
+                price_move_threshold=0.05,
+                price_move_max_spread=0.20,
+                price_move_wide_spread_override=0.25,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(suppressed, [])
+
+            large_wide_move = normalize_market(raw_market(outcomePrices='["0.02", "0.98"]', bestBid=0.01, bestAsk=0.28))
+            emitted = generate_events(
+                markets=[large_wide_move],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:30:00Z"),
+                price_move_threshold=0.05,
+                price_move_max_spread=0.20,
+                price_move_wide_spread_override=0.25,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual([event["type"] for event in emitted], ["price_moved"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -84,6 +84,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 1h unless the price is at least 10pp away from the last emitted alert price.
 
+### Wide-book watched-market stair steps are noisy
+
+**Observed:** White House `140-159` kept emitting fast follow-up price moves as the book thinned near resolution. A tight 28/33 move after the post-count burst was useful, but the next 6/30 mark was a low-quality stair-step: same thesis state, nearly same XTracker count, much wider spread.
+
+**Lesson:** watched-market price marks on very wide books should not wake for ordinary 5-15pp stair steps. They are still useful when the repricing is extreme enough to indicate a real market/state change.
+
+**Implementation:** Polymarket price-move alerts suppress watched-market moves on books wider than 20pp unless the price moved at least 25pp since the previous daemon observation.
+
 ## Pending / watchlist
 
 ### Kalshi category quality

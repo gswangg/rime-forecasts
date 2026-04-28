@@ -118,6 +118,8 @@ def poll_once(args, *, session_id: str | None) -> int:
         price_move_threshold=args.price_move_threshold,
         price_move_cooldown_sec=args.price_move_cooldown_sec,
         price_move_cooldown_override=args.price_move_cooldown_override,
+        price_move_max_spread=args.price_move_max_spread,
+        price_move_wide_spread_override=args.price_move_wide_spread_override,
         max_candidate_events=args.max_candidate_events,
         max_events=args.max_events,
     )
@@ -181,6 +183,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--price-move-threshold", type=float, default=0.05, help="price move threshold as probability delta (default: 0.05 = 5pp)")
     parser.add_argument("--price-move-cooldown-sec", type=int, default=3600, help="suppress same-watch price move alerts inside this cooldown unless override delta is reached (default: 3600)")
     parser.add_argument("--price-move-cooldown-override", type=float, default=0.10, help="price delta from last alert that bypasses cooldown (default: 0.10 = 10pp)")
+    parser.add_argument("--price-move-max-spread", type=float, default=0.20, help="suppress watched price moves on wider books unless wide-spread override is reached (default: 0.20 = 20pp)")
+    parser.add_argument("--price-move-wide-spread-override", type=float, default=0.25, help="price delta that still wakes on wide watched-market books (default: 0.25 = 25pp)")
     return parser
 
 
