@@ -1,6 +1,6 @@
 # Scorecard
 
-*Last updated: 2026-04-27T19:29:23+00:00*
+*Last updated: 2026-04-28T12:50:00+00:00*
 
 ## Summary
 
@@ -47,6 +47,12 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 ## Resolved predictions
 
 None yet.
+
+## Source-decisive, awaiting market settlement
+
+| Market | Forecast | Entry | Source state | Expected outcome | Expected Brier |
+|--------|----------|-------|--------------|------------------|----------------|
+| [Trump 100-119 Truth Social posts Apr 21-28](./reasoning/2026-04-27-trump-truth-social-posts-apr21-apr28-100-119.md) | 40% YES | 5.15% YES | XTracker showed 121 counted posts by 2026-04-28T12:46Z, above the 119 upper bound | NO pending Polymarket settlement | 0.160 |
 
 ## Lessons
 
