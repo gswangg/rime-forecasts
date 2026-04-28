@@ -84,6 +84,14 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket price-move alerts now keep a same-market cooldown. After a price-move alert, further alerts for that watched market are suppressed for 2h unless the price is at least 15pp away from the last emitted alert price.
 
+### Bounce-back price moves are often ping-pong, not new information
+
+**Observed:** Elon `220-239` moved down from 68.5% to 55.0%, then back to 70.5% fifteen minutes later with no new XTracker posts. The second wake mostly returned to the pre-alert price and did not change the thesis state.
+
+**Lesson:** a recent price move that merely reverses back near the pre-alert price is low-value churn even if the absolute move clears the cooldown override.
+
+**Implementation:** Polymarket price-move alerts now store the pre-alert price. During the cooldown, a reversal that returns within 5pp of that pre-alert price is suppressed; a real break beyond that band still wakes.
+
 ### Wide-book watched-market stair steps are noisy
 
 **Observed:** White House `140-159` kept emitting fast follow-up price moves as the book thinned near resolution. A tight 28/33 move after the post-count burst was useful, but the next 6/30 mark was a low-quality stair-step: same thesis state, nearly same XTracker count, much wider spread.

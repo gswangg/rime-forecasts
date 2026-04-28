@@ -203,6 +203,7 @@ def generate_events(
     price_move_threshold: float = 0.05,
     price_move_cooldown_sec: int = 7200,
     price_move_cooldown_override: float = 0.15,
+    price_move_reversal_band: float = 0.05,
     price_move_max_spread: float = 0.20,
     price_move_wide_spread_override: float = 0.25,
     max_candidate_events: int = 3,
@@ -250,6 +251,13 @@ def generate_events(
                 alert_price = float(last_alert["price"])
                 recent_alert = now - alert_time < timedelta(seconds=price_move_cooldown_sec)
                 move_since_alert = market.yes_price - alert_price
+                previous_alert_price = last_alert.get("previous_price")
+                if recent_alert and previous_alert_price is not None:
+                    last_alert_move = alert_price - float(previous_alert_price)
+                    reversed_last_alert = last_alert_move * move_since_alert < 0
+                    returned_near_pre_alert = abs(market.yes_price - float(previous_alert_price)) <= price_move_reversal_band
+                    if reversed_last_alert and returned_near_pre_alert:
+                        continue
                 if recent_alert and abs(move_since_alert) < price_move_cooldown_override:
                     continue
             events.append(
@@ -348,6 +356,8 @@ def mark_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now: da
                     "event_id": event["id"],
                     "emitted_at": emitted_at,
                     "price": market.get("yesPrice"),
+                    "previous_price": payload.get("previousPrice"),
+                    "move_pp": payload.get("movePp"),
                 }
         elif event_type == "clv_checkpoint_due":
             watch = payload.get("watch", {})

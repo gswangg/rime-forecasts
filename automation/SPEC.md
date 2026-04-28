@@ -126,6 +126,8 @@ A watched market's YES price moved by at least the configured threshold since th
 
 To avoid stair-step alert churn on the same watched market, a same-watch price-move alert has a default 2h cooldown. The cooldown is bypassed if the current price is at least 15pp away from the last emitted price-move alert for that market.
 
+If a recent price-move alert reverses and returns within 5pp of the pre-alert price, suppress it as ping-pong unless a later poll breaks away again.
+
 Watched price moves on very wide books are lower-quality marks. If bid/ask spread is wider than 20pp, suppress moves smaller than 25pp; still wake for extreme wide-book repricings.
 
 Watched markets are extracted from `reasoning/*.md` when a Polymarket market slug is present. This covers Polymarket-primary predictions and Polymarket shadows on Manifold-primary predictions.

@@ -559,6 +559,65 @@ class AutomationTests(unittest.TestCase):
             )
             self.assertEqual([event["type"] for event in emitted], ["price_moved"])
 
+    def test_price_move_alerts_suppress_recent_reversals_to_pre_alert_price(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reasoning = Path(tmp) / "reasoning"
+            reasoning.mkdir()
+            (reasoning / "example.md").write_text(
+                "# Example\n\n"
+                "**Polymarket market slug**: will-test-happen-by-may-31\n"
+                "**Written**: 2026-04-26T00:00:00+00:00\n"
+                "**Prediction**: 65%\n"
+                "**Primary venue price at writing**: 52% YES\n"
+            )
+            watch = extract_polymarket_watches(reasoning)[0]
+            state = default_state()
+            state["last_prices"][watch.slug] = {"price": 0.30, "observed_at": "2026-04-25T00:00:00Z"}
+
+            first_market = normalize_market(raw_market(outcomePrices='["0.50", "0.50"]', bestBid=0.49, bestAsk=0.51))
+            first_events = generate_events(
+                markets=[first_market],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:00:00Z"),
+                price_move_threshold=0.05,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual([event["type"] for event in first_events], ["price_moved"])
+            mark_emitted(state, first_events, now=dt("2026-04-26T00:00:00Z"))
+
+            bounce_back = normalize_market(raw_market(outcomePrices='["0.31", "0.69"]', bestBid=0.30, bestAsk=0.32))
+            suppressed = generate_events(
+                markets=[bounce_back],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:15:00Z"),
+                price_move_threshold=0.05,
+                price_move_cooldown_override=0.15,
+                price_move_reversal_band=0.05,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(suppressed, [])
+
+            real_break = normalize_market(raw_market(outcomePrices='["0.10", "0.90"]', bestBid=0.09, bestAsk=0.11))
+            emitted = generate_events(
+                markets=[real_break],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:30:00Z"),
+                price_move_threshold=0.05,
+                price_move_cooldown_override=0.15,
+                price_move_reversal_band=0.05,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual([event["type"] for event in emitted], ["price_moved"])
+
 
 if __name__ == "__main__":
     unittest.main()
