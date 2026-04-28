@@ -46,11 +46,11 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 ### Individual weather range bins need a forecast-aware model
 
-**Observed:** Dallas Apr 28 `82–83°F` woke and skipped after NWS forecast/grid showed a high around 88°F. Chengdu Apr 28 `24°C` then woke as the same class of candidate: individual temperature bin, low-ish price, no sibling-bin distribution in the payload. Taipei Apr 28 `34°C or higher` later showed the same class again with threshold wording the first regex missed.
+**Observed:** Dallas Apr 28 `82–83°F` woke and skipped after NWS forecast/grid showed a high around 88°F. Chengdu Apr 28 `24°C` then woke as the same class of candidate: individual temperature bin, low-ish price, no sibling-bin distribution in the payload. Taipei Apr 28 `34°C or higher` later showed the same class again with threshold wording the first regex missed. Seattle April precipitation `2.5–3 inches` later woke as the same weather-bin class: actual/forecast checks make the market plausible, but not a clean edge without a systematic sibling-bin weather model.
 
 **Lesson:** weather can be a good fast-feedback domain, but waking individual range bins without fetching forecasts and sibling prices just asks the model to do ad hoc weather modeling. The daemon should either group/score the full city/date distribution or not wake these bins.
 
-**Implementation:** Polymarket candidate filtering excludes highest-temperature range/exact/threshold questions matching `Will the highest temperature in <place> be between <range> on <date>?`, `Will the highest temperature in <place> be <temp>°C/°F on <date>?`, and `Will the highest temperature in <place> be <temp>°C/°F or higher/lower on <date>?` until a forecast-aware sibling-bin model exists.
+**Implementation:** Polymarket candidate filtering excludes highest-temperature range/exact/threshold questions matching `Will the highest temperature in <place> be between <range> on <date>?`, `Will the highest temperature in <place> be <temp>°C/°F on <date>?`, and `Will the highest temperature in <place> be <temp>°C/°F or higher/lower on <date>?`, plus monthly precipitation range/threshold bins such as `Will <place> have between <low> and <high> inches of precipitation in <month>?`, until a forecast-aware sibling-bin model exists.
 
 ### Mutually-exclusive event clusters should wake once with siblings
 

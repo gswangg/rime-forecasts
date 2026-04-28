@@ -137,6 +137,16 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("weather range", reason)
 
+        precipitation_range = normalize_market(raw_market(question="Will Seattle have between 2.5 and 3 inches of precipitation in April?"))
+        ok, reason = candidate_filter_reason(precipitation_range, now=now)
+        self.assertFalse(ok)
+        self.assertIn("weather range", reason)
+
+        precipitation_threshold = normalize_market(raw_market(question="Will Seattle have greater than 3 inches of precipitation in April?"))
+        ok, reason = candidate_filter_reason(precipitation_threshold, now=now)
+        self.assertFalse(ok)
+        self.assertIn("weather range", reason)
+
         crypto_threshold = normalize_market(raw_market(question="Will the price of Ethereum be above $2,400 on April 28?"))
         ok, reason = candidate_filter_reason(crypto_threshold, now=now)
         self.assertFalse(ok)

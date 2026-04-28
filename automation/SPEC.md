@@ -100,7 +100,7 @@ MVP filters for Polymarket:
 - real volume ≥ `$1k`
 - liquidity ≥ `$5k` or volume ≥ `$10k`
 - generic team-vs-team win/draw/BTTS/exact-score sports questions are excluded unless a future model explicitly opts them in
-- individual highest-temperature range/exact/threshold-bin questions are excluded until a forecast-aware sibling-bin model exists
+- individual weather range/exact/threshold-bin questions, including highest-temperature and monthly precipitation bins, are excluded until a forecast-aware sibling-bin model exists
 - individual crypto price threshold/range questions are excluded until a volatility/options-aware model exists
 - deferred election-result markets are excluded when the Polymarket `endDate` is a trading/phase close rather than a near-term result date
 - markets with an explicit question deadline materially later than Polymarket `endDate` are excluded because the title deadline controls fast-feedback eligibility
