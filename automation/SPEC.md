@@ -130,7 +130,7 @@ To avoid stair-step alert churn on the same watched market, a same-watch price-m
 
 If a recent price-move alert reverses and returns within 5pp of the pre-alert price, suppress it as ping-pong unless a later poll breaks away again.
 
-Watched price moves on very wide books are lower-quality marks. If bid/ask spread is wider than 20pp, suppress moves smaller than 25pp; still wake for extreme wide-book repricings.
+Watched price moves on very wide books are lower-quality marks. If bid/ask spread is wider than 20pp, suppress moves smaller than 25pp; books wider than 50pp are always ignored as untradeable marks.
 
 Watched markets are extracted from `reasoning/*.md` when a Polymarket market slug is present. This covers Polymarket-primary predictions and Polymarket shadows on Manifold-primary predictions.
 

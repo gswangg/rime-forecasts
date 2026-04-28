@@ -121,6 +121,7 @@ def poll_once(args, *, session_id: str | None) -> int:
         price_move_reversal_band=args.price_move_reversal_band,
         price_move_max_spread=args.price_move_max_spread,
         price_move_wide_spread_override=args.price_move_wide_spread_override,
+        price_move_untradeable_spread=args.price_move_untradeable_spread,
         max_candidate_events=args.max_candidate_events,
         max_events=args.max_events,
     )
@@ -187,6 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--price-move-reversal-band", type=float, default=0.05, help="suppress recent reversal moves that return within this distance of the pre-alert price (default: 0.05 = 5pp)")
     parser.add_argument("--price-move-max-spread", type=float, default=0.20, help="suppress watched price moves on wider books unless wide-spread override is reached (default: 0.20 = 20pp)")
     parser.add_argument("--price-move-wide-spread-override", type=float, default=0.25, help="price delta that still wakes on wide watched-market books (default: 0.25 = 25pp)")
+    parser.add_argument("--price-move-untradeable-spread", type=float, default=0.50, help="suppress watched price moves on books wider than this regardless of move size (default: 0.50 = 50pp)")
     return parser
 
 

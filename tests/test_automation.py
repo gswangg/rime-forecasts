@@ -586,6 +586,36 @@ class AutomationTests(unittest.TestCase):
             )
             self.assertEqual([event["type"] for event in emitted], ["price_moved"])
 
+    def test_price_move_alerts_suppress_untradeable_extreme_spreads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reasoning = Path(tmp) / "reasoning"
+            reasoning.mkdir()
+            (reasoning / "example.md").write_text(
+                "# Example\n\n"
+                "**Polymarket market slug**: will-test-happen-by-may-31\n"
+                "**Written**: 2026-04-26T00:00:00+00:00\n"
+                "**Prediction**: 30%\n"
+                "**Primary venue price at writing**: 92% YES\n"
+            )
+            watch = extract_polymarket_watches(reasoning)[0]
+            state = default_state()
+            state["last_prices"][watch.slug] = {"price": 0.10, "observed_at": "2026-04-26T00:00:00Z"}
+            untradeable_mark = normalize_market(raw_market(outcomePrices='["0.499", "0.501"]', bestBid=0.001, bestAsk=0.997))
+            suppressed = generate_events(
+                markets=[untradeable_mark],
+                watches=[watch],
+                state=state,
+                now=dt("2026-04-26T00:15:00Z"),
+                price_move_threshold=0.05,
+                price_move_max_spread=0.20,
+                price_move_wide_spread_override=0.25,
+                price_move_untradeable_spread=0.50,
+                max_candidate_events=0,
+                max_events=5,
+                session_id="session-123",
+            )
+            self.assertEqual(suppressed, [])
+
     def test_price_move_alerts_suppress_recent_reversals_to_pre_alert_price(self):
         with tempfile.TemporaryDirectory() as tmp:
             reasoning = Path(tmp) / "reasoning"

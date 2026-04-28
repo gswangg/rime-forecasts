@@ -106,7 +106,15 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Lesson:** watched-market price marks on very wide books should not wake for ordinary 5-15pp stair steps. They are still useful when the repricing is extreme enough to indicate a real market/state change.
 
-**Implementation:** Polymarket price-move alerts suppress watched-market moves on books wider than 20pp unless the price moved at least 25pp since the previous daemon observation.
+**Implementation:** Polymarket price-move alerts suppress watched-market moves on books wider than 20pp unless the price moved at least 25pp since the previous daemon observation. Books wider than 50pp are always ignored as untradeable marks.
+
+### Extreme-spread marks are not useful even when the midpoint moves a lot
+
+**Observed:** Running Point rebounded from 10% to a 49.9% midpoint, but the book was 0.1% / 99.7% with only about `$14` liquidity. The source check still excluded Running Point from the Netflix US TV top 10; the midpoint was not an executable signal.
+
+**Lesson:** the wide-book override should not apply to effectively empty books. A huge midpoint move on a near-100pp spread is worse than no mark.
+
+**Implementation:** Polymarket price-move alerts suppress books wider than 50pp regardless of move size.
 
 ## Pending / watchlist
 
