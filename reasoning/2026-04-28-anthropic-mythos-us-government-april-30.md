@@ -73,3 +73,7 @@ The book is wide at 2% / 9%, so the quoted midpoint understates trading cost. Li
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-04-30T01:51Z: Polymarket rebounded to **8.1% YES** (2.2% bid / 14.0% ask; last trade 8.8%), up from the +24h checkpoint at 1.05% and **+2.6pp from entry**, but still on a wide book after the nominal market deadline. The move appears tied to April 29 Axios/Nextgov/Reuters-followed reporting that the White House is drafting guidance to let federal agencies bypass the Anthropic risk designation and onboard Anthropic tools including Mythos; Axios also repeats that agencies are clamoring for Mythos access and that NSA is already using it. This strengthens the credible-reporting backdrop, but much of the new reporting is still about draft/future guidance rather than an official access grant, so the main adjudication risk remains.
