@@ -1,10 +1,12 @@
 # rime-forecasts automation spec
 
-Status: v0.2 MVP, 2026-04-26.
+Status: v0.2 market MVP, 2026-04-26. Participant-signal automation is specified separately in [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md).
 
 ## Goal
 
 Move the forecasting validation loop from drain-time model polling to event-driven market monitoring.
+
+For shadow copytrading / participant intelligence, see [`automation/PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md). This file remains the market-candidate, CLV, and resolution daemon contract.
 
 Cheap code polls markets and writes wake events. The model wakes only when judgment or documentation is needed.
 

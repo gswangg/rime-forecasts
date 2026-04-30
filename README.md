@@ -10,20 +10,21 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 
 ## Current status
 
-*As of 2026-04-27 (session 2).*
+*As of 2026-04-30.*
 
-- **15 predictions placed**: 8 v1 baseline (mixed categories, <10pp edges), 1 v2 Manifold prediction (WTI crude $150, 15.5pp edge), 1 v2.5.2 Polymarket-primary prediction (Tottenham relegation, 17.95pp edge), 5 v3 short-horizon Polymarket predictions (Running Point top US Netflix show, 62.4pp edge; Elon Musk 220-239 posts, 11.5pp edge; Trump 100-119 Truth Social posts, 34.85pp edge; White House 140-159 posts, 13.0pp edge; Powell says `Pandemic`, 13.5pp edge). Earliest resolution 2026-04-28, latest 2026-07-18.
-- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v3. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle, and CLV checkpoints (+1h/+6h/+24h/close).
+- **17 predictions placed**: 8 v1 baseline, 1 v2 Manifold prediction (WTI crude $150), 1 v2.5.2 Polymarket-primary prediction (Tottenham relegation), and 7 v3 short-horizon Polymarket predictions (Running Point top US Netflix show; Elon Musk 220-239 posts; Trump 100-119 Truth Social posts; White House 140-159 posts; Powell says `Pandemic`; AMZN GAAP EPS > `$1.65`; Anthropic Mythos to US government). Formal scorecard resolutions still pending.
+- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v4. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle, CLV checkpoints (+1h/+6h/+24h/close), and a new no-capital shadow participant-signal track for copy-after-delay validation.
 - **Back-test (N=9)**: v2.5.1 methodology retrospectively tested on resolved Manifold markets. 6-for-6 prediction wins (+1.63 cumulative Brier advantage), 3-for-3 correct skips. See [`backtest/SUMMARY.md`](./backtest/SUMMARY.md).
-- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, and [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events.
+- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events, and [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) is the MVP shadow participant-signal daemon.
 
 ## Structure
 
 ### Core files
 
-- [`drive-prompt.md`](./drive-prompt.md) — event-driven operating prompt. Methodology, wake-event handling, daemon operation, stop criteria. Currently v3.
+- [`drive-prompt.md`](./drive-prompt.md) — event-driven operating prompt. Methodology, wake-event handling, daemon operation, stop criteria. Currently v4.
 - [`scorecard.md`](./scorecard.md) — running calibration score. Summary + per-prediction detail. Updated on every resolution.
 - [`clv-ledger.md`](./clv-ledger.md) — fast-feedback ledger for +1h/+6h/+24h/close price movement before final resolution.
+- [`participant-ledger.md`](./participant-ledger.md) — shadow ledger for participant-signal / copy-after-delay validation.
 - [`journal.jsonl`](./journal.jsonl) — append-only cycle log. One JSON object per cycle.
 
 ### Predictions
@@ -43,10 +44,12 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 
 ### Automation and scripts
 
-- [`automation/SPEC.md`](./automation/SPEC.md) — event-driven automation contract: exact `sessionId` wake routing, event types, state, and agent handling rules.
+- [`automation/SPEC.md`](./automation/SPEC.md) — event-driven market automation contract: exact `sessionId` wake routing, event types, state, and agent handling rules.
+- [`automation/PARTICIPANT_SPEC.md`](./automation/PARTICIPANT_SPEC.md) — no-capital participant intelligence contract: public data sources, scoring, copy-after-delay economics, quality gates, and participant wake types.
 - [`automation/LESSONS.md`](./automation/LESSONS.md) — lessons from wake-driven operation and the daemon filters/tests they produced.
 - [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) — one-shot or looped Polymarket poller. Writes candidate, price-move, CLV, and resolution `wake-pi` events; requires `--session-id` or `RIME_WAKE_SESSION_ID` unless `--dry-run`.
 - [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) — one-shot or looped Kalshi poller. Writes short-horizon candidate `wake-pi` events; same explicit session-id rule.
+- [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) — one-shot or looped Polymarket public-trade observer. Writes `participant_signal_candidate` wakes only when score/economics gates pass; `--emit-unscored` is for cold-start experiments.
 - [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Manifold + Polymarket status, report resolved + pending.
 - [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) — reconstruct a Manifold market's price at any past timestamp via bet-history pagination.
 
@@ -93,7 +96,8 @@ These patterns are preliminary — confirmed at N=9 retrospective. Needs forward
 
 - Long-running work is now event-driven through [gswangg/wake-pi](https://github.com/gswangg/wake-pi): daemons write exact-session-id events, `wake-pi` injects `[wake:<id>]`, and the agent acknowledges with `wake_done` / `wake_fail`.
 - [gswangg/auto-continue-pi](https://github.com/gswangg/auto-continue-pi) remains useful for bounded implementation/maintenance, but should not be used as a market polling loop.
-- Start monitoring with `scripts/polymarket-daemon.py --session-id <pi-session-id> --loop --interval-sec 900` and `scripts/kalshi-daemon.py --session-id <pi-session-id> --loop --interval-sec 900`.
+- Start market monitoring with `scripts/polymarket-daemon.py --session-id <pi-session-id> --loop --interval-sec 900` and `scripts/kalshi-daemon.py --session-id <pi-session-id> --loop --interval-sec 900`.
+- Participant-signal monitoring is shadow-only. Smoke it with `scripts/polymarket-participant-daemon.py --dry-run --limit 100`; run it with an explicit session id only after score/economics gates are configured conservatively.
 - Skip actions journal locally but don't commit; predict/resolve/automation actions commit as useful checkpoints.
 
 ## About rime

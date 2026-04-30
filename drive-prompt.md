@@ -1,15 +1,16 @@
-# Drive prompt: rime-forecasts (validation experiment, v3 event-driven)
+# Drive prompt: rime-forecasts (validation experiment, v4 event-driven + participant intelligence)
 
-*Purpose: test whether rime's forecasting reasoning produces economically tradeable calibration before any capital is committed.*
+*Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
 *Revision history:*
 - *v2–v2.5.2 (2026-04-19/20): 14–45d window, venue equality, 10pp+edge with confidence gate, moved-market discount, skip-fatigue/cadence gates.*
 - *v3 (2026-04-26): event-driven architecture. Market polling moves to daemon(s); model work is triggered by `wake-pi` events. Adds CLV feedback loop (+1h/+6h/+24h/close). Avoids drain-time market scanning and idle model burn.*
 - *v3.1 (2026-04-26): fast-feedback candidate ladder. Daemons prioritize 1–7d markets, then 8–21d, and only emit 22–45d markets when liquidity/volume is unusually high. Added Kalshi candidate daemon.*
+- *v4 (2026-04-30): add shadow participant intelligence. Track wallets/traders as noisy signals, simulate copy-after-delay economics, and score participant CLV/final results. No capital allocation and no live copy execution.*
 
 ## Goal
 
-Accumulate 15–25 resolved predictions with published reasoning where the pre-friction edge is large enough that a real-money trader on Kalshi or Polymarket could have profitably taken the same position after typical spread/slippage.
+Accumulate 15–25 resolved market predictions with published reasoning **and** build a parallel shadow participant-signal ledger that tests whether observable Polymarket/Kalshi traders contain copyable residual edge after latency, spread, and liquidity.
 
 Score objectively:
 
@@ -17,18 +18,21 @@ Score objectively:
 2. economic realizability — Brier differential and net edge after friction
 3. fast feedback — CLV at +1h/+6h/+24h/close
 4. cross-venue signal — especially Manifold vs real-money disagreement
-5. reasoning quality — Greg's subjective reread
+5. participant signal — copy-after-delay CLV/final ROI by trader/domain/horizon
+6. reasoning quality — Greg's subjective reread
 
-Still no capital allocation. Pundit validation only.
+Still no capital allocation. Pundit validation and shadow-copy research only.
 
-## Architecture shift in v3
-
-The old loop asked the model to wake repeatedly and scan markets. That was the wrong shape: expensive, slow to validate, and prone to idle thrash.
-
-The v3 loop is event-driven:
+## Architecture
 
 ```text
-scripts/polymarket-daemon.py / future venue daemons
+scripts/polymarket-daemon.py / scripts/kalshi-daemon.py
+  -> market candidate / CLV / resolution wakes
+
+scripts/polymarket-participant-daemon.py (v4 scaffold)
+  -> participant signal / participant CLV wakes
+
+all daemons
   -> ~/.pi/agent/wake/inbox/*.json
   -> wake-pi exact sessionId routing
   -> [wake:<id>] followUp
@@ -38,14 +42,21 @@ scripts/polymarket-daemon.py / future venue daemons
 
 Core docs:
 
-- [`automation/SPEC.md`](./automation/SPEC.md) — daemon/wake contract
+- [`automation/SPEC.md`](./automation/SPEC.md) — market daemon/wake contract
+- [`automation/PARTICIPANT_SPEC.md`](./automation/PARTICIPANT_SPEC.md) — participant intelligence contract
 - [`automation/LESSONS.md`](./automation/LESSONS.md) — wake-loop lessons and implemented filter changes
-- [`clv-ledger.md`](./clv-ledger.md) — fast-feedback ledger
+- [`clv-ledger.md`](./clv-ledger.md) — fast-feedback market ledger
+- [`participant-ledger.md`](./participant-ledger.md) — shadow participant-signal ledger
 - [`scorecard.md`](./scorecard.md) — final calibration ledger
 
-## Operating modes
+## Operating priorities
 
-### 1. Wake-event mode
+1. **Wake events first.** If the user message starts with `[wake:<id>]`, process exactly that event before any build work.
+2. **Queued AC tasks second.** If auto-continue has a concrete task, execute it with tests/docs/commits as appropriate.
+3. **Bounded maintenance third.** Check resolutions, daemon health, or docs only when explicitly queued or requested.
+4. **No idle market scanning.** Do not keep the model alive looking for markets. Cheap daemons do polling.
+
+## Wake-event mode
 
 If the current user message starts with `[wake:<id>]`, treat it as extension-generated, not Greg.
 
@@ -58,35 +69,46 @@ Steps:
 5. If the event teaches a reusable filter/automation lesson, update `automation/LESSONS.md`. If the lesson is validated by repeated wakes or an obvious fail-loud bad candidate, implement the filter/test change before continuing normal operation.
 6. Call `wake_done({id, outcome, notes?})` when complete, or `wake_fail({id, reason})` if blocked.
 
-Event handling:
+Market event handling:
 
 - `candidate_found`: evaluate the market against the methodology. If it clears, write a prediction file and update scorecard/journal/CLV ledger. If it does not clear, usually just `wake_done` with a skip outcome; journal only if the skip teaches something.
 - `price_moved`: update `clv-ledger.md` or reasoning notes only if the move teaches something. Otherwise acknowledge.
 - `clv_checkpoint_due`: update `clv-ledger.md` with price and signed CLV. Mark late if the checkpoint was missed and only current price is available.
 - `resolution_changed`: verify finality, append Resolution section to the reasoning file, update scorecard, commit/push.
 
-### 2. Maintenance/manual mode
+Participant event handling:
 
-If this prompt is invoked without a `[wake:<id>]` event, do not perform open-ended market scanning. Use this only for bounded maintenance:
+- `participant_signal_candidate`: evaluate whether the observed trader/wallet action is a useful **shadow signal** after detection delay and current executable price. If useful, append/update `participant-ledger.md` and `journal.jsonl`; do **not** write a normal prediction unless rime independently clears the market edge/confidence/economics bar.
+- `participant_clv_checkpoint_due`: update participant-ledger CLV for the simulated copy entry.
+- `participant_resolution_changed`: update participant-ledger final outcome and any trader scorecard summaries.
+
+## Maintenance/manual mode
+
+If this prompt is invoked without a wake event and without an AC task, do not perform open-ended market scanning. Use this only for bounded maintenance:
 
 1. Check `scripts/check-resolutions.py` for newly resolved existing predictions.
-2. Verify daemon health/config if asked.
-3. Improve automation/tests/docs if asked.
-4. If no concrete work exists, stop. Do **not** keep the model alive waiting for markets.
+2. Verify daemon health/config if asked or queued.
+3. Improve automation/tests/docs if asked or queued.
+4. If no concrete work exists, call `ac off` and stop.
 
-For long-running operation, run the daemon and let `wake-pi` wake the session.
-
-## Starting the market daemons
+## Starting daemons
 
 Requires an explicit pi session id. No cwd/latest-session fallback.
 
-One-shot smoke:
+Market daemon smoke:
 
 ```bash
 scripts/polymarket-daemon.py --dry-run --pages 1 --page-limit 20
 scripts/kalshi-daemon.py --dry-run --pages 1 --page-limit 50
 scripts/polymarket-daemon.py --session-id <pi-session-id> --once
 scripts/kalshi-daemon.py --session-id <pi-session-id> --once
+```
+
+Participant daemon smoke (once implemented):
+
+```bash
+scripts/polymarket-participant-daemon.py --dry-run --limit 100
+scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --once
 ```
 
 Background loop:
@@ -103,21 +125,27 @@ nohup scripts/kalshi-daemon.py \
   --loop \
   --interval-sec 900 \
   >> automation/state/kalshi-daemon.log 2>&1 &
+# participant daemon interval can be shorter once signal filters are conservative:
+nohup scripts/polymarket-participant-daemon.py \
+  --session-id <pi-session-id> \
+  --loop \
+  --interval-sec 300 \
+  >> automation/state/polymarket-participant-daemon.log 2>&1 &
 ```
 
 `<pi-session-id>` can be obtained explicitly from `/wake status` in the target pi session. Do not script a fallback that guesses it.
 
-## Fast-feedback candidate ladder
+## Market candidate methodology
 
-Daemon candidate events are not meant to recreate the old 14–45 day scan. They should maximize validation speed:
+### Fast-feedback candidate ladder
+
+Daemon candidate events maximize validation speed:
 
 1. **Primary:** resolves in 1–7 days. Highest priority (`80`).
 2. **Secondary:** resolves in 8–21 days. Medium priority (`65`).
 3. **Tertiary:** resolves in 22–45 days. Low priority (`45`) and only emitted when liquidity ≥ $25k or volume ≥ $100k.
 
 Markets under 1 day are skipped by default because there may not be time for careful reasoning and documentation. Manual exceptions are allowed, but the daemon should not wake the model for them.
-
-## Methodology rules
 
 ### Venue equality, with real-money validation priority
 
@@ -141,9 +169,29 @@ If current price has moved ≥20pp from initial/creation level in the direction 
 
 Large adverse moves encode information. Fighting them with generic base-rate reasoning is dangerous.
 
-### Prediction file requirements
+## Participant-signal methodology
 
-Every prediction file must include:
+Participant intelligence is **shadow-only**. It is not live copytrading.
+
+Treat trader/wallet behavior as noisy, adversarial, and domain-specific:
+
+- Raw realized PnL is a lead, not proof of edge.
+- Score signals on **copy-after-delay** executable prices, not the trader's historical entry.
+- Prefer prospective CLV and final outcomes after observation over leaderboard ROI.
+- Apply Bayesian shrinkage toward zero edge, especially for small samples.
+- Track domain/horizon separately: politics/source adjudication, crypto microstructure, earnings, sports, macro, culture, etc.
+- Exclude or downweight tiny trades, self-evidently hedged/arb trades, micro-duration up/down markets, empty books, and copy entries where spread/liquidity erase the signal.
+- Cap any future simulated portfolio by trader, market, theme, and hidden correlation cluster.
+
+A participant signal is useful only if it answers:
+
+> Given we observed this wallet at this time, could a real trader still enter at the current book with positive expected CLV/final value after spread and slippage?
+
+Do not produce a normal rime forecast merely because a participant signal exists. Use participant signals to learn who is informative and when; only write a market prediction if rime's independent methodology clears.
+
+## Prediction file requirements
+
+Every market prediction file must include:
 
 ```markdown
 # <Market title> — resolves <YYYY-MM-DD>
@@ -200,15 +248,16 @@ CLV is not a substitute for final scoring. It is a faster signal about whether t
 
 ## Journaling
 
-After substantive forecast work, append to `journal.jsonl`:
+After substantive forecast, participant, or automation work, append to `journal.jsonl`:
 
 ```json
-{"ts":"<iso>","action":"predict|resolve|clv|skip|automation","files":["<filename>"],"edge_pp":<number or null>,"notes":"<brief>"}
+{"ts":"<iso>","action":"predict|resolve|clv|skip|automation|participant","files":["<filename>"],"edge_pp":<number or null>,"notes":"<brief>"}
 ```
 
 Commit behavior:
 
 - prediction/resolution/automation docs/tests: commit and push
+- participant scaffold / participant ledger updates: commit and push at useful checkpoints
 - CLV ledger updates: commit if they add durable learning; otherwise batch with next substantive commit
 - pure no-op skips: do not commit
 
@@ -216,23 +265,40 @@ Commit behavior:
 
 Call `ac off` or leave `ac` disabled when:
 
-- no wake event or concrete maintenance task is present
+- no wake event, no AC task, and no concrete maintenance task is present
+- the participant-signal scaffold checkpoint has been committed/pushed and there is no next explicit task
 - OAuth/model limits are near exhaustion
 - 15+ predictions are resolved and the scorecard supports a graduate/iterate/archive decision
 - Greg explicitly halts
 
-Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events.
+Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events and daemon polling.
 
 ## Context to read each substantive event
 
 - This file
 - The wake event payload (if any)
 - `automation/SPEC.md`
+- `automation/PARTICIPANT_SPEC.md` when participant-related
 - `automation/LESSONS.md`
 - Relevant `reasoning/*.md`
 - `scorecard.md`
 - `clv-ledger.md`
+- `participant-ledger.md` when participant-related
 - `journal.jsonl` tail
+
+## Find-work on AC drain
+
+When AC injects this prompt because the queue is empty:
+
+1. Check for unprocessed wake events only if they were explicitly delivered as `[wake:<id>]`; do not scan wake inbox manually as a polling substitute.
+2. Inspect `git status --short` and recent `journal.jsonl` tail.
+3. If the v4 participant scaffold is incomplete, push one concrete next task to AC and execute it. Incomplete means any of:
+   - `automation/PARTICIPANT_SPEC.md` missing or stale
+   - `participant-ledger.md` missing
+   - `automation/participants.py` missing tests for scoring/economics
+   - `scripts/polymarket-participant-daemon.py` missing dry-run/fixture support
+   - tests fail
+4. If scaffold is complete and committed/pushed, call `ac off` and stop.
 
 ## Post-validation path
 
