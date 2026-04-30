@@ -219,6 +219,7 @@ automation/state/polymarket-participant-daemon.json
 State tracks:
 
 - processed transaction hashes
+- cold-start wallet/domain/horizon observation aggregates (`count`, side counts, total notional, first/last trade timestamps, last seen market)
 - known wallets and aggregate score snapshots
 - emitted participant signal ids
 - shadow signal checkpoint emissions
@@ -226,12 +227,37 @@ State tracks:
 
 State is local runtime state and gitignored.
 
+## Cold-start workflow
+
+Participant intelligence starts with observations, not wakes:
+
+1. **Observe without scores** — run the participant daemon with no score fixture. It records processed trades and `wallet_observations` aggregates by wallet/domain/horizon, but suppresses unscored wakes.
+   ```bash
+   scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --once
+   ```
+2. **Backfill candidate wallets** — score wallets seen in local state, bounded by wallet/market limits.
+   ```bash
+   scripts/polymarket-participant-score.py \
+     --state-path automation/state/polymarket-participant-daemon.json \
+     --output automation/state/participant-scores.json
+   ```
+3. **Run with score gates** — pass the score fixture into the daemon. Only future trades matching wallet/domain/horizon scores and quality gates can emit `participant_signal_candidate` wakes.
+   ```bash
+   scripts/polymarket-participant-daemon.py \
+     --session-id <pi-session-id> \
+     --score-fixture automation/state/participant-scores.json \
+     --loop --interval-sec 300
+   ```
+
+Do not retroactively wake old cold-start trades after they become scored. That would fake detection latency.
+
 ## Daemon modes
 
 ```bash
 scripts/polymarket-participant-daemon.py --dry-run --limit 100
 scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --once
 scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --loop --interval-sec 300
+scripts/polymarket-participant-score.py --state-path automation/state/polymarket-participant-daemon.json --output automation/state/participant-scores.json
 ```
 
 Options should mirror market daemons where practical:
@@ -240,11 +266,12 @@ Options should mirror market daemons where practical:
 - `--once`
 - `--loop --interval-sec N`
 - `--fixture <path>`
+- `--score-fixture <path>`
 - `--max-events N`
 - `--wake-root <path>`
 - `--session-id <id>` or `RIME_WAKE_SESSION_ID`
 - `--min-notional-usd`
-- `--min-score`
+- `--min-score-pp`
 
 ## Scoring principles
 
@@ -258,6 +285,18 @@ shrunk_edge = raw_edge * shrinkage_weight
 ```
 
 Initial `prior_n` should be high (`25` or more) because public wallets are selected from a huge universe.
+
+### Backfill score fixture
+
+`scripts/polymarket-participant-score.py` creates a conservative triage fixture from bounded public wallet trade fetches:
+
+- group by wallet/domain/horizon
+- compute participant-direction movement from historical trade price to current Gamma YES mark
+- subtract a fixed copy-delay penalty
+- shrink toward zero with `sample_size / (sample_size + prior_n)`
+- emit rows consumable by `scripts/polymarket-participant-daemon.py --score-fixture`
+
+This is **not** validated copytrading edge. It is a way to choose which wallets deserve prospective shadow tracking. Real signal quality is measured only by future post-detection copy entries.
 
 ### Copy-after-delay discount
 
@@ -305,6 +344,7 @@ Pure logic tests should cover:
 - shrinkage score calculation
 - copy entry economics from bid/ask for BUY/SELL and YES/NO outcomes
 - quality gates for tiny trades, micro markets, wide books, and low-score wallets
+- cold-start observation aggregation without emitting unscored wakes
 - event id/dedupe construction
 
 Network fetch belongs in the script layer and should be fixture-testable.

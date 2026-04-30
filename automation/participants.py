@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import re
 from typing import Any, Mapping
 
-from automation.timeutil import isoformat_z
+from automation.timeutil import isoformat_z, parse_iso
 from automation.wake import build_wake_event, safe_part
 
 
@@ -203,6 +203,45 @@ def score_participant(
     )
 
 
+def participant_exposure(trade: ParticipantTrade) -> tuple[str, float] | None:
+    """Return directional exposure (YES/NO) and implied reference entry price.
+
+    Public trade rows can be BUY or SELL on either binary token. A BUY YES and a SELL NO
+    are both YES exposure; a BUY NO and a SELL YES are both NO exposure. SELL rows use
+    the complementary implied price for same-direction copy accounting.
+    """
+    side = trade.side.upper()
+    if side not in {"BUY", "SELL"} or trade.price <= 0 or trade.price >= 1:
+        return None
+
+    outcome = trade.outcome.lower()
+    if outcome in {"yes", "up"} or trade.outcome_index == 0:
+        if side == "BUY":
+            return "YES", trade.price
+        return "NO", 1 - trade.price
+    if outcome in {"no", "down"} or trade.outcome_index == 1:
+        if side == "BUY":
+            return "NO", trade.price
+        return "YES", 1 - trade.price
+    return None
+
+
+def current_aligned_clv_pp(trade: ParticipantTrade, yes_price: float | None) -> float | None:
+    """Current mark movement in participant-direction percentage points.
+
+    This is a historical/current-mark proxy for backfill triage, not a substitute for
+    prospective copy-after-delay CLV.
+    """
+    if yes_price is None or yes_price <= 0 or yes_price >= 1:
+        return None
+    exposure = participant_exposure(trade)
+    if exposure is None:
+        return None
+    direction, reference_price = exposure
+    current_price = yes_price if direction == "YES" else 1 - yes_price
+    return (current_price - reference_price) * 100
+
+
 def copy_entry_from_book(trade: ParticipantTrade, book: MarketBook, *, max_notional_usd: float | None = None) -> CopyEntry | None:
     """Approximate executable copy entry for a binary YES/NO market from YES bid/ask.
 
@@ -213,16 +252,11 @@ def copy_entry_from_book(trade: ParticipantTrade, book: MarketBook, *, max_notio
         return None
     assert book.yes_bid is not None and book.yes_ask is not None
 
-    outcome = trade.outcome.lower()
-    side = trade.side.upper()
-    wants_yes = None
-    if outcome in {"yes", "up"} or trade.outcome_index == 0:
-        wants_yes = side == "BUY"
-    elif outcome in {"no", "down"} or trade.outcome_index == 1:
-        wants_yes = side == "SELL"
-
-    if wants_yes is None:
+    exposure = participant_exposure(trade)
+    if exposure is None:
         return None
+    direction, reference_price = exposure
+    wants_yes = direction == "YES"
 
     if wants_yes:
         bid = book.yes_bid
@@ -238,7 +272,7 @@ def copy_entry_from_book(trade: ParticipantTrade, book: MarketBook, *, max_notio
     return CopyEntry(
         side=copy_side,
         executable_price=executable,
-        reference_price=trade.price,
+        reference_price=reference_price,
         bid=bid,
         ask=ask,
         spread_pp=(ask - bid) * 100,
@@ -298,6 +332,7 @@ def participant_state_default() -> dict[str, Any]:
         "processed_transactions": {},
         "emitted_signals": {},
         "wallet_scores": {},
+        "wallet_observations": {},
     }
 
 
@@ -353,6 +388,188 @@ def participant_score_payload(score: ParticipantScore | None) -> dict[str, Any] 
     }
 
 
+def market_book_yes_mark(book: MarketBook | None) -> float | None:
+    if book is None:
+        return None
+    if book.yes_price is not None and 0 < book.yes_price < 1:
+        return book.yes_price
+    if book.actionable and book.yes_bid is not None and book.yes_ask is not None:
+        return (book.yes_bid + book.yes_ask) / 2
+    return None
+
+
+def score_backfilled_wallet_trades(
+    *,
+    trades: list[ParticipantTrade],
+    books_by_slug: Mapping[str, MarketBook],
+    end_times_by_slug: Mapping[str, datetime] | None = None,
+    min_notional_usd: float = 10.0,
+    min_samples: int = 5,
+    prior_n: int = 25,
+    copy_delay_penalty_pp: float = 1.0,
+    allow_micro: bool = False,
+) -> list[dict[str, Any]]:
+    """Build score-fixture rows from bounded wallet trade backfills.
+
+    The score is a conservative current-mark triage proxy: participant-direction movement
+    from the historical trade price to the currently observed YES mark, minus a fixed
+    copy-delay penalty, then shrunk toward zero. It is only a candidate-wallet seed for
+    prospective shadow validation.
+    """
+    end_times_by_slug = end_times_by_slug or {}
+    aggregates: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for trade in trades:
+        if not trade.wallet or trade.notional < min_notional_usd:
+            continue
+        if not allow_micro and is_micro_market(trade.title, trade.market_slug):
+            continue
+        yes_mark = market_book_yes_mark(books_by_slug.get(trade.market_slug))
+        clv = current_aligned_clv_pp(trade, yes_mark)
+        if clv is None:
+            continue
+
+        domain = domain_bucket(trade.title, trade.market_slug)
+        horizon = horizon_bucket(end_times_by_slug.get(trade.market_slug), trade.timestamp)
+        key = (trade.wallet.lower(), domain, horizon)
+        aggregate = aggregates.setdefault(
+            key,
+            {
+                "wallet": trade.wallet.lower(),
+                "displayWallet": trade.wallet,
+                "traderLabel": trade.trader_label,
+                "domain": domain,
+                "horizonBucket": horizon,
+                "count": 0,
+                "sumClvPp": 0.0,
+                "totalNotionalUsd": 0.0,
+                "firstTradeAt": trade.timestamp,
+                "lastTradeAt": trade.timestamp,
+                "lastMarketSlug": trade.market_slug,
+                "lastTitle": trade.title,
+            },
+        )
+        aggregate["count"] = int(aggregate["count"]) + 1
+        aggregate["sumClvPp"] = float(aggregate["sumClvPp"]) + clv
+        aggregate["totalNotionalUsd"] = float(aggregate["totalNotionalUsd"]) + trade.notional
+        if trade.timestamp < aggregate["firstTradeAt"]:
+            aggregate["firstTradeAt"] = trade.timestamp
+        if trade.timestamp >= aggregate["lastTradeAt"]:
+            aggregate["lastTradeAt"] = trade.timestamp
+            aggregate["lastMarketSlug"] = trade.market_slug
+            aggregate["lastTitle"] = trade.title
+            aggregate["traderLabel"] = trade.trader_label
+
+    rows: list[dict[str, Any]] = []
+    for aggregate in aggregates.values():
+        sample_size = int(aggregate["count"])
+        if sample_size < min_samples:
+            continue
+        mean_clv_pp = float(aggregate["sumClvPp"]) / sample_size
+        copy_after_delay_mean_clv_pp = mean_clv_pp - copy_delay_penalty_pp
+        score = score_participant(
+            wallet=str(aggregate["wallet"]),
+            domain=str(aggregate["domain"]),
+            horizon=str(aggregate["horizonBucket"]),
+            sample_size=sample_size,
+            mean_clv_pp=mean_clv_pp,
+            copy_after_delay_mean_clv_pp=copy_after_delay_mean_clv_pp,
+            realized_roi=None,
+            prior_n=prior_n,
+        )
+        row = participant_score_payload(score)
+        assert row is not None
+        row.update(
+            {
+                "scoreSource": "current-price-backfill",
+                "scoreWarning": "current-mark proxy only; prospective copy-after-delay validation still required",
+                "displayWallet": aggregate["displayWallet"],
+                "traderLabel": aggregate["traderLabel"],
+                "qualifiedTrades": sample_size,
+                "totalNotionalUsd": aggregate["totalNotionalUsd"],
+                "firstTradeAt": isoformat_z(aggregate["firstTradeAt"]),
+                "lastTradeAt": isoformat_z(aggregate["lastTradeAt"]),
+                "lastMarketSlug": aggregate["lastMarketSlug"],
+                "lastTitle": aggregate["lastTitle"],
+            }
+        )
+        rows.append(row)
+
+    return sorted(rows, key=lambda row: (row["score"], row["sampleSize"], row["totalNotionalUsd"]), reverse=True)
+
+
+def participant_observation_key(wallet: str, domain: str, horizon: str) -> str:
+    return f"{wallet.lower()}|{domain}|{horizon}"
+
+
+def _parse_optional_iso(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return parse_iso(value)
+    except Exception:
+        return None
+
+
+def observe_participant_trade(
+    state: dict[str, Any],
+    trade: ParticipantTrade,
+    *,
+    domain: str,
+    horizon: str,
+    now: datetime,
+) -> dict[str, Any] | None:
+    """Aggregate a newly observed trade into cold-start wallet/domain/horizon state."""
+    if not trade.wallet:
+        return None
+    state.setdefault("wallet_observations", {})
+    observations = state["wallet_observations"]
+    key = participant_observation_key(trade.wallet, domain, horizon)
+    trade_ts = isoformat_z(trade.timestamp)
+    observed_ts = isoformat_z(now)
+    record = observations.get(key)
+    if record is None:
+        record = {
+            "wallet": trade.wallet.lower(),
+            "displayWallet": trade.wallet,
+            "traderLabel": trade.trader_label,
+            "domain": domain,
+            "horizonBucket": horizon,
+            "count": 0,
+            "buyCount": 0,
+            "sellCount": 0,
+            "totalNotionalUsd": 0.0,
+            "firstTradeAt": trade_ts,
+            "lastTradeAt": trade_ts,
+            "firstObservedAt": observed_ts,
+            "lastObservedAt": observed_ts,
+            "lastMarketSlug": trade.market_slug,
+            "lastTitle": trade.title,
+        }
+        observations[key] = record
+
+    record["count"] = int(record.get("count", 0)) + 1
+    record["totalNotionalUsd"] = float(record.get("totalNotionalUsd", 0.0)) + trade.notional
+    if trade.side == "BUY":
+        record["buyCount"] = int(record.get("buyCount", 0)) + 1
+    elif trade.side == "SELL":
+        record["sellCount"] = int(record.get("sellCount", 0)) + 1
+
+    first_trade_at = _parse_optional_iso(record.get("firstTradeAt"))
+    last_trade_at = _parse_optional_iso(record.get("lastTradeAt"))
+    if first_trade_at is None or trade.timestamp < first_trade_at:
+        record["firstTradeAt"] = trade_ts
+    if last_trade_at is None or trade.timestamp >= last_trade_at:
+        record["lastTradeAt"] = trade_ts
+        record["lastMarketSlug"] = trade.market_slug
+        record["lastTitle"] = trade.title
+        record["traderLabel"] = trade.trader_label
+
+    last_observed_at = _parse_optional_iso(record.get("lastObservedAt"))
+    if last_observed_at is None or now >= last_observed_at:
+        record["lastObservedAt"] = observed_ts
+    return record
+
+
 def generate_participant_events(
     *,
     trades: list[ParticipantTrade],
@@ -377,6 +594,7 @@ def generate_participant_events(
     """
     state.setdefault("processed_transactions", {})
     state.setdefault("emitted_signals", {})
+    state.setdefault("wallet_observations", {})
     books_by_slug = books_by_slug or {}
     end_times_by_slug = end_times_by_slug or {}
     scores_by_wallet_domain = scores_by_wallet_domain or {}
@@ -390,6 +608,7 @@ def generate_participant_events(
 
         domain = domain_bucket(trade.title, trade.market_slug)
         horizon = horizon_bucket(end_times_by_slug.get(trade.market_slug), now)
+        observe_participant_trade(state, trade, domain=domain, horizon=horizon, now=now)
         score = scores_by_wallet_domain.get((trade.wallet.lower(), domain, horizon))
         book = books_by_slug.get(trade.market_slug)
         if score is None and not emit_unscored:

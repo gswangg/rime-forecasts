@@ -32,7 +32,7 @@ from automation.participants import (
 )
 from automation.polymarket import normalize_market
 from automation.state import save_state
-from automation.timeutil import isoformat_z, parse_iso, utcnow
+from automation.timeutil import isoformat_z, utcnow
 from automation.wake import write_wake_event
 
 DATA_API_TRADES_URL = "https://data-api.polymarket.com/trades"
@@ -175,6 +175,7 @@ def poll_once(args, *, session_id: str | None) -> int:
                     "markets": len(raw_markets),
                     "events": events,
                     "processedTransactionsInMemory": len(state.get("processed_transactions", {})),
+                    "walletObservationBucketsInMemory": len(state.get("wallet_observations", {})),
                 },
                 indent=2,
                 sort_keys=True,
@@ -200,6 +201,7 @@ def poll_once(args, *, session_id: str | None) -> int:
                 "markets": len(raw_markets),
                 "eventsWritten": written,
                 "statePath": str(args.state_path),
+                "walletObservationBuckets": len(state.get("wallet_observations", {})),
             },
             sort_keys=True,
         )
