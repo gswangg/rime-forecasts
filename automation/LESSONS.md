@@ -38,11 +38,11 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 ### Generic team-match sports need a model edge, not just fast resolution
 
-**Observed:** first the Argentine soccer 1X2 cluster woke and skipped; after volume/spread filters, a high-volume Southampton vs Ipswich draw market woke and skipped for the same reason. Later, a PSG vs Bayern `Both Teams to Score` market woke as the same class. Atlético Madrid vs Arsenal exact-score bins then woke as another generic team-match derivative. A Rockets NBA playoff advancement market also woke, but active sportsbook series odds matched Polymarket almost exactly.
+**Observed:** first the Argentine soccer 1X2 cluster woke and skipped; after volume/spread filters, a high-volume Southampton vs Ipswich draw market woke and skipped for the same reason. Later, a PSG vs Bayern `Both Teams to Score` market woke as the same class. Atlético Madrid vs Arsenal exact-score bins then woke as another generic team-match derivative. A Rockets NBA playoff advancement market also woke, but active sportsbook series odds matched Polymarket almost exactly. BLAST Rivals esports MVP/winner wakes also required ad hoc team/player modeling and produced no clear edge.
 
-**Lesson:** short resolution is not enough. Generic team-vs-team win/draw/BTTS/exact-score/series-advancement markets should not wake the model unless a future sports model/cross-venue signal explicitly opts them in.
+**Lesson:** short resolution is not enough. Generic team-vs-team win/draw/BTTS/exact-score/series-advancement/tournament-winner markets should not wake the model unless a future sports/esports model or cross-venue signal explicitly opts them in.
 
-**Implementation:** Polymarket candidate filtering excludes generic team match questions matching `Will <team> vs. <team> end in a draw?`, `Will <team> win on <date>?`, `<team> vs. <team>: Both Teams to Score`, `Exact Score: <team> <score> - <score> <team>?`, and NBA playoff `Will <team> advance to the Conference Semifinals...` markets.
+**Implementation:** Polymarket candidate filtering excludes generic team match questions matching `Will <team> vs. <team> end in a draw?`, `Will <team> win on <date>?`, `<team> vs. <team>: Both Teams to Score`, `Exact Score: <team> <score> - <score> <team>?`, NBA playoff `Will <team> advance to the Conference Semifinals...` markets, and common esports tournament-winner questions like `Will <team> win BLAST ... 20XX?`.
 
 ### Individual weather range bins need a forecast-aware model
 
