@@ -99,4 +99,12 @@ The book is reasonably actionable for a short-horizon range bin (9.0% bid / 12.0
 
 ---
 
-*(Resolution section added below after the market resolves. The above is frozen.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+At 2026-05-01T15:44Z, Gamma showed the 160-179 market closed/resolved with outcome prices `0/1`. The XTracker export showed **193** White House posts in the April 24 12:00 PM ET to May 1 12:00 PM ET window, with the latest in-window post at 2026-05-01T15:38:25Z. That exceeds the 179 upper bound, so this bin overran.
+
+Forecast: **40% YES**. Outcome: **NO**. Brier: **0.160**. The primary market entry at 10.5% YES had Brier **0.011**, so this was materially worse than the market.
+
+The key miss was source-state quality. At writing, the visible Gamma/XTracker state showed 153 counted posts and a long silence. The later export had **162** posts timestamped at or before the writing time, implying the visible count lagged/backfilled by roughly 9 posts. That made the true remaining cushion smaller than the thesis assumed. Posting then resumed and pushed the final count to 193. For White House range bins, tracker-count latency/backfill plus burst continuation deserve heavier weight than a visible silence gap.
