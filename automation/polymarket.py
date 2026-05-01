@@ -136,6 +136,7 @@ def is_generic_team_match_market(question: str) -> bool:
         r"^Will .+ advance to the Conference Semifinals in the \d{4} NBA Playoffs\?$",
         r"^Will .+ win (?:BLAST|IEM|PGL|ESL) .+ \d{4}\?$",
         r"^Will .+ make it to the (?:BLAST|IEM|PGL|ESL) .+ Grand Final\?$",
+        r"^Will .+ win the \d{4} .+ Championship\?$",
     )
     return any(re.match(pattern, normalized) for pattern in patterns)
 
