@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import re
 from typing import Any
 
 from .horizons import HorizonDecision, horizon_decision
@@ -138,6 +139,17 @@ def candidate_horizon(market: KalshiMarket, *, now: datetime) -> HorizonDecision
     return horizon_decision(market.close_time or market.expiration_time, now=now, liquidity=market.liquidity, volume=market.volume)
 
 
+def is_generic_multileg_sports_market(market: KalshiMarket) -> bool:
+    title = re.sub(r"\s+", " ", market.title.strip())
+    if market.event_ticker and market.event_ticker.startswith("KXMVECROSSCATEGORY-"):
+        return True
+    if market.ticker.startswith("KXMVECROSSCATEGORY-"):
+        return True
+    if title.count(",") >= 2 and re.search(r"\byes\b|\bno\b", title, re.IGNORECASE):
+        return True
+    return False
+
+
 def candidate_filter_reason(
     market: KalshiMarket,
     *,
@@ -159,6 +171,8 @@ def candidate_filter_reason(
         return False, "missing YES price"
     if market.yes_price < min_price or market.yes_price > max_price:
         return False, f"YES price outside candidate band ({market.yes_price:.3f})"
+    if is_generic_multileg_sports_market(market):
+        return False, "generic multileg sports/parlay market"
     if market.yes_bid is None or market.yes_ask is None:
         return False, "missing actionable bid/ask"
     if not (0 < market.yes_bid < 1 and 0 < market.yes_ask < 1 and market.yes_bid <= market.yes_ask):
