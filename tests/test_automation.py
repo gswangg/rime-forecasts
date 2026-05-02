@@ -293,6 +293,17 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("multileg sports", reason)
 
+        multigame_sports = normalize_kalshi_market(
+            raw_kalshi_market(
+                ticker="KXMVESPORTSMULTIGAMEEXTENDED-S20267F4A142A32A-AA7A350FF95",
+                event_ticker="KXMVESPORTSMULTIGAMEEXTENDED-S20267F4A142A32A",
+                title="no Over 8.5 runs scored,no Over 7.5 runs scored,yes Boston wins by over 8.5 points",
+            )
+        )
+        ok, reason = kalshi_candidate_filter_reason(multigame_sports, now=now)
+        self.assertFalse(ok)
+        self.assertIn("multileg sports", reason)
+
         state = kalshi_default_state()
         events = generate_kalshi_events(markets=[market], state=state, now=now, session_id="session-123")
         self.assertEqual(len(events), 1)

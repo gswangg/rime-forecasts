@@ -141,9 +141,10 @@ def candidate_horizon(market: KalshiMarket, *, now: datetime) -> HorizonDecision
 
 def is_generic_multileg_sports_market(market: KalshiMarket) -> bool:
     title = re.sub(r"\s+", " ", market.title.strip())
-    if market.event_ticker and market.event_ticker.startswith("KXMVECROSSCATEGORY-"):
+    mve_prefixes = ("KXMVECROSSCATEGORY-", "KXMVESPORTSMULTIGAMEEXTENDED-")
+    if market.event_ticker and market.event_ticker.startswith(mve_prefixes):
         return True
-    if market.ticker.startswith("KXMVECROSSCATEGORY-"):
+    if market.ticker.startswith(mve_prefixes):
         return True
     if title.count(",") >= 2 and re.search(r"\byes\b|\bno\b", title, re.IGNORECASE):
         return True
