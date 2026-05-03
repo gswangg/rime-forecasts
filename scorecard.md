@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-03T12:07:51+00:00*
+*Last updated: 2026-05-03T17:13:22+00:00*
 
 ## Summary
 
-- Predictions made: 21 (8 v1 + 13 v2/v2.5.x/v3)
+- Predictions made: 22 (8 v1 + 14 v2/v2.5.x/v3)
 - Resolved: 9
 - Brier score: 0.203
 - Naive primary-venue Brier: 0.364
 - Log loss: 0.584
 - Calibration: insufficient N (30-40% bucket: 2/5 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 2/2 YES)
-- **Portfolio direction bias (at writing):** 10 below primary venue, 11 above primary venue.
+- **Portfolio direction bias (at writing):** 11 below primary venue, 11 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -78,6 +78,7 @@ None currently.
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-03 | [Michael 2nd weekend box office > $55m](./reasoning/2026-05-03-michael-second-weekend-box-office-55m.md) | 28% | — | — | 42.25% | 2026-05-04 | v3 |
 | 2026-05-03 | [Elon Musk <40 tweets May 2-May 4](./reasoning/2026-05-03-elon-musk-tweets-may2-may4-0-39.md) | 3% | — | — | 13.5% | 2026-05-04 | v3 |
+| 2026-05-03 | [ON Semiconductor non-GAAP EPS > $0.61](./reasoning/2026-05-03-on-semiconductor-nongaap-eps-q1-2026.md) | 80% | — | — | 91.5% | 2026-05-04 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
