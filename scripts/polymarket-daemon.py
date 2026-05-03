@@ -69,6 +69,11 @@ def fetch_markets_by_slug(slugs: set[str]) -> list[dict]:
         query = urllib.parse.urlencode({"slug": slug})
         try:
             data = fetch_json(f"{GAMMA_MARKETS_URL}?{query}")
+            if not isinstance(data, list) or not data:
+                # Gamma often omits closed markets unless explicitly requested;
+                # watched markets still need them for final CLV/resolution checks.
+                query = urllib.parse.urlencode({"slug": slug, "closed": "true"})
+                data = fetch_json(f"{GAMMA_MARKETS_URL}?{query}")
         except Exception as exc:  # fail this slug loudly in output, but continue other slugs
             print(f"warning: failed to fetch Polymarket slug {slug}: {exc}", file=sys.stderr)
             continue
