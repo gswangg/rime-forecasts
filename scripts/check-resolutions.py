@@ -173,6 +173,10 @@ def fetch_polymarket_status(slug: str, *, is_market_slug: bool = True):
         query = urllib.parse.urlencode({"slug": slug})
         data = fetch(POLYMARKET_MARKETS_API.format(query=query))
         if not isinstance(data, list) or not data:
+            # Gamma excludes many closed markets unless explicitly requested.
+            query = urllib.parse.urlencode({"slug": slug, "closed": "true"})
+            data = fetch(POLYMARKET_MARKETS_API.format(query=query))
+        if not isinstance(data, list) or not data:
             return {"venue": "Polymarket", "found": False, "error": "not found"}
 
         market = None

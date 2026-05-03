@@ -2,7 +2,7 @@
 
 **Primary venue**: Polymarket
 **Primary URL**: https://polymarket.com/market/will-powell-say-pandemic-during-april-press-conference
-**Polymarket market slug**: will-powell-say-pandemic-during-april-press-conference
+**Polymarket market slug**: will-powell-say-pandemic-during-april-press-conference-892-546-734-268-338-988
 **Other venues (same question, if any)**:
 - Kalshi: n/a
 - Polymarket: n/a
