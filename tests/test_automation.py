@@ -129,6 +129,13 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("generic team-match", reason)
 
+        generic_nhl_advance = normalize_market(
+            raw_market(question="Will Tampa Bay Lightning advance to Round 2 of the 2026 NHL Playoffs?")
+        )
+        ok, reason = candidate_filter_reason(generic_nhl_advance, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
         generic_esports_winner = normalize_market(raw_market(question="Will FaZe win BLAST Rivals Fort Worth 2026?"))
         ok, reason = candidate_filter_reason(generic_esports_winner, now=now)
         self.assertFalse(ok)
