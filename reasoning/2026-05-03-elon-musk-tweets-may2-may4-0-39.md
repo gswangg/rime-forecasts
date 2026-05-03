@@ -70,3 +70,7 @@ This is a small-upside, high-probability trade rather than a cheap-lottery trade
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Post-writing watch notes
+
+- 2026-05-03T18:21Z: +6h checkpoint marked **2.65% YES** (2.3% bid / 3.0% ask; last trade 1.8%), **+10.85pp aligned from entry** for the NO-side forecast. XTracker API showed **33** in-window counted posts through 2026-05-03T18:00Z, up from 25 at writing; `<40` now allows only **6** more counted posts over ~21.6 hours. This supports the original burst/backfill thesis and brings market price close to my 3% forecast.
