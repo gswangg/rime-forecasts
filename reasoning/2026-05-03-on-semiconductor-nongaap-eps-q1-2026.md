@@ -67,3 +67,13 @@ The book is tight and liquid enough for the paper experiment, but volume is stil
 ---
 
 *(Resolution section added below after the market resolves.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Gamma showed the Polymarket market closed with outcome prices `1/0` (YES/NO). onsemi's May 4, 2026 first-quarter results release, mirrored by Yahoo Finance / FinancialContent from GlobeNewswire, reported **non-GAAP diluted earnings per share of `$0.64`** for Q1 2026. The selected-financial-results table likewise shows non-GAAP diluted EPS of `$0.64` for Q1 2026. Since `$0.64` is greater than the `$0.61` strike, the contract resolves YES.
+
+Forecast: **80% YES**. Outcome: **YES**. Brier: **0.0400**. The primary market entry at 91.5% YES had Brier **0.0072**, so the market was better calibrated than my NO-side fade.
+
+The qualitative direction was right — YES was favored — but the actionable view was wrong. I overestimated the miss/equal tail from the guidance midpoint and consensus just one cent above the strike. The actual print was `$0.64`, comfortably above both `$0.61` and the `$0.62` consensus, validating the market's high confidence in a standard adjusted-EPS beat setup.

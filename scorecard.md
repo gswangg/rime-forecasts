@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-05T02:45:00+00:00*
+*Last updated: 2026-05-05T02:58:00+00:00*
 
 ## Summary
 
 - Predictions made: 23 (8 v1 + 15 v2/v2.5.x/v3)
-- Resolved: 11
-- Brier score: 0.174
-- Naive primary-venue Brier: 0.315
-- Log loss: 0.510
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/5 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 2/2 YES)
+- Resolved: 12
+- Brier score: 0.162
+- Naive primary-venue Brier: 0.290
+- Log loss: 0.487
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/5 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
 - **Portfolio direction bias (at writing):** 12 below primary venue, 11 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -59,6 +59,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-30 | [Tesla high $390 week of Apr 27](./reasoning/2026-04-30-tsla-high-390-week-apr27.md) | 40% YES | 23.5% YES | YES | 0.360 | 0.585 | Pyth/Gamma resolved YES; Yahoo proxy showed first RTH high >= $390 on May 1. Directionally right but underconfident. |
 | 2026-05-03 | [Michael 2nd weekend box office > $55m](./reasoning/2026-05-03-michael-second-weekend-box-office-55m.md) | 28% YES | 42.25% YES | NO | 0.078 | 0.179 | The Numbers and Box Office Mojo finalized the May 1-3 weekend at $54.403m, below threshold. Forecast beat the market despite ugly interim CLV. |
 | 2026-05-03 | [Elon Musk <40 tweets May 2-May 4](./reasoning/2026-05-03-elon-musk-tweets-may2-may4-0-39.md) | 3% YES | 13.5% YES | NO | 0.001 | 0.018 | XTracker counted 55 in-window posts, so the `<40` lower-tail bin resolved NO. Burst/backfill continuation thesis validated. |
+| 2026-05-03 | [ON Semiconductor non-GAAP EPS > $0.61](./reasoning/2026-05-03-on-semiconductor-nongaap-eps-q1-2026.md) | 80% YES | 91.5% YES | YES | 0.040 | 0.007 | onsemi reported Q1 non-GAAP diluted EPS of $0.64, clearing the strict `>$0.61` strike. YES-side direction right, but market confidence beat the NO-side fade. |
 
 ## Source-decisive, awaiting market settlement
 
@@ -78,7 +79,6 @@ None currently.
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
-| 2026-05-03 | [ON Semiconductor non-GAAP EPS > $0.61](./reasoning/2026-05-03-on-semiconductor-nongaap-eps-q1-2026.md) | 80% | — | — | 91.5% | 2026-05-04 | v3 |
 | 2026-05-03 | [Sonos non-GAAP EPS > $0.01](./reasoning/2026-05-03-sonos-nongaap-eps-q2-2026.md) | 30% | — | — | 56.5% | 2026-05-04 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
