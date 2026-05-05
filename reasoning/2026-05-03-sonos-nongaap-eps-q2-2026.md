@@ -70,3 +70,13 @@ The book is tight and has enough liquidity for the paper experiment. The risk is
 ---
 
 *(Resolution section added below after the market resolves.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Gamma showed the Polymarket market closed with outcome prices `0/1` (YES/NO). Sonos' May 4, 2026 second-quarter fiscal 2026 results release, carried via Business Wire / FinancialContent, reported **non-GAAP diluted EPS of `($0.02)`** for Q2. That is below the strict `>$0.01` strike, so the contract resolves NO.
+
+Forecast: **30% YES**. Outcome: **NO**. Brier: **0.0900**. The primary market entry at 56.5% YES had Brier **0.3192**, so the forecast beat the market materially.
+
+This was a clean rule/source win. The market treated the fixed strike like a generic earnings-beat contract, but the company headline needed at least `$0.02` after rounding. Revenue and adjusted EBITDA came in better than guidance midpoint, yet non-GAAP EPS was still negative, validating the thesis that the guide/consensus setup did not make `$0.02+` the modal outcome.
