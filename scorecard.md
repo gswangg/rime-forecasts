@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-03T17:39:41+00:00*
+*Last updated: 2026-05-05T02:30:12+00:00*
 
 ## Summary
 
 - Predictions made: 23 (8 v1 + 15 v2/v2.5.x/v3)
-- Resolved: 9
-- Brier score: 0.203
-- Naive primary-venue Brier: 0.364
-- Log loss: 0.584
-- Calibration: insufficient N (30-40% bucket: 2/5 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 2/2 YES)
+- Resolved: 10
+- Brier score: 0.183
+- Naive primary-venue Brier: 0.329
+- Log loss: 0.529
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 30-40% bucket: 2/5 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 2/2 YES)
 - **Portfolio direction bias (at writing):** 12 below primary venue, 11 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -57,6 +57,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-28 | [Anthropic Mythos to US government by Apr 30](./reasoning/2026-04-28-anthropic-mythos-us-government-april-30.md) | 60% YES | 5.5% YES | YES | 0.160 | 0.893 | Axios/credible-reporting adjudication thesis resolved YES after large positive CLV. |
 | 2026-04-30 | [White House 160-179 posts Apr 24-May 1](./reasoning/2026-04-30-white-house-posts-apr24-may1-160-179.md) | 40% YES | 10.5% YES | NO | 0.160 | 0.011 | XTracker export showed 193 in-window posts, overrunning the 179 upper bound. Visible count at writing was stale/backfilled by ~9 posts, and a later burst made 180-199 the correct bin. |
 | 2026-04-30 | [Tesla high $390 week of Apr 27](./reasoning/2026-04-30-tsla-high-390-week-apr27.md) | 40% YES | 23.5% YES | YES | 0.360 | 0.585 | Pyth/Gamma resolved YES; Yahoo proxy showed first RTH high >= $390 on May 1. Directionally right but underconfident. |
+| 2026-05-03 | [Elon Musk <40 tweets May 2-May 4](./reasoning/2026-05-03-elon-musk-tweets-may2-may4-0-39.md) | 3% YES | 13.5% YES | NO | 0.001 | 0.018 | XTracker counted 55 in-window posts, so the `<40` lower-tail bin resolved NO. Burst/backfill continuation thesis validated. |
 
 ## Source-decisive, awaiting market settlement
 
@@ -77,7 +78,6 @@ None currently.
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-03 | [Michael 2nd weekend box office > $55m](./reasoning/2026-05-03-michael-second-weekend-box-office-55m.md) | 28% | — | — | 42.25% | 2026-05-04 | v3 |
-| 2026-05-03 | [Elon Musk <40 tweets May 2-May 4](./reasoning/2026-05-03-elon-musk-tweets-may2-may4-0-39.md) | 3% | — | — | 13.5% | 2026-05-04 | v3 |
 | 2026-05-03 | [ON Semiconductor non-GAAP EPS > $0.61](./reasoning/2026-05-03-on-semiconductor-nongaap-eps-q1-2026.md) | 80% | — | — | 91.5% | 2026-05-04 | v3 |
 | 2026-05-03 | [Sonos non-GAAP EPS > $0.01](./reasoning/2026-05-03-sonos-nongaap-eps-q2-2026.md) | 30% | — | — | 56.5% | 2026-05-04 | v3 |
 

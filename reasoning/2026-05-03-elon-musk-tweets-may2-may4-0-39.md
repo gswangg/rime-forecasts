@@ -74,3 +74,13 @@ This is a small-upside, high-probability trade rather than a cheap-lottery trade
 ## Post-writing watch notes
 
 - 2026-05-03T18:21Z: +6h checkpoint marked **2.65% YES** (2.3% bid / 3.0% ask; last trade 1.8%), **+10.85pp aligned from entry** for the NO-side forecast. XTracker API showed **33** in-window counted posts through 2026-05-03T18:00Z, up from 25 at writing; `<40` now allows only **6** more counted posts over ~21.6 hours. This supports the original burst/backfill thesis and brings market price close to my 3% forecast.
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Gamma showed the market closed with outcome prices `0/1` (YES/NO). XTracker's current API export shows **55** counted posts in the contract window from 2026-05-02T16:00:00Z to 2026-05-04T16:00:00Z, with the in-window count crossing the `<40` threshold and final in-window posts ending at 2026-05-04T10:17:15Z. That makes the lower-tail `<40` bin impossible, matching Polymarket's NO settlement.
+
+Forecast: **3% YES**. Outcome: **NO**. Brier: **0.0009**. The primary market entry at 13.5% YES had Brier **0.0182**, so the forecast beat the market, though the absolute gain was small because the market already favored NO.
+
+This resolved exactly through the intended mechanism: the quiet gap was real but not enough. After 25 counted posts by writing and 33 by +6h, ordinary burst/backfill continuation pushed the window well above 39. The historical aligned-window check was useful here: matching 16:00Z-start windows with 20-30 early posts had not stayed under 40, and this case finished at 55.
