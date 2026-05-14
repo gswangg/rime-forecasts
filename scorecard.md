@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-14T13:22:35+00:00*
+*Last updated: 2026-05-14T13:34:00+00:00*
 
 ## Summary
 
-- Predictions made: 24 (8 v1 + 16 v2/v2.5.x/v3)
+- Predictions made: 25 (8 v1 + 17 v2/v2.5.x/v3)
 - Resolved: 14
 - Brier score: 0.152
 - Naive primary-venue Brier: 0.280
 - Log loss: 0.468
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
-- **Portfolio direction bias (at writing):** 12 below primary venue, 12 above primary venue.
+- **Portfolio direction bias (at writing):** 13 below primary venue, 12 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -81,6 +81,7 @@ None currently.
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% | — | — | 3.15% | 2026-05-14 | v3 |
+| 2026-05-14 | [Trump says "Taiwan" or "Tibet" with Xi](./reasoning/2026-05-14-trump-say-taiwan-tibet-xi-events.md) | 18% | — | — | 28.5% | 2026-05-15 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
