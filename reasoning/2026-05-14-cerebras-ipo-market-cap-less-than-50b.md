@@ -90,3 +90,26 @@ The main risk is not economics or spread. It is adjudication: if the market reso
 ---
 
 *(Resolution section added below after the market resolves, never editing above.)*
+
+## Resolution — 2026-05-14
+
+**Outcome**: NO.
+
+Polymarket resolved/settled effectively NO, with YES at 0 and NO at 1 in the resolution wake payload.
+
+The source state also supports NO even under the outstanding-share interpretation I used:
+
+- Yahoo Finance chart data for `CBRS` showed the May 14 regular-session close at **$311.07**.
+- StockAnalysis showed `CBRS` at **$311.07** at the May 14 close, **+68.15%** from the $185 IPO price, with **215.23M shares out** and **$66.95B** market cap.
+- Using the filing-derived 215,228,541 outstanding shares, $311.07 implies about **$66.95B** market cap.
+
+So this was not an adjudication loss on fully diluted versus outstanding shares. The stock simply closed far above the ~$232.31 threshold needed for a sub-$50B basic outstanding-share market cap.
+
+**Brier**: `(0.35 - 0)^2 = 0.1225`.
+**Primary venue entry Brier**: `(0.0315 - 0)^2 = 0.00099`.
+
+## Post-mortem
+
+The source/rule read was directionally right: the contract's outstanding-share language made the threshold roughly $232, not a below-IPO-price crash threshold. But I badly underpriced the magnitude of first-day demand for a hot AI infrastructure IPO. A +68% close cleared the threshold by a huge margin.
+
+The market beat the forecast decisively. It may have been pricing fully diluted valuation, a very large IPO pop, or both; either way, its low YES price was much closer to the realized outcome. The lesson is that rule/source arbitrage still needs a robust distribution for the underlying price path. Here the rule interpretation changed the threshold, but the updated threshold was still not high enough to make YES a strong live tail.

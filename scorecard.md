@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-14T20:40:30+00:00*
+*Last updated: 2026-05-14T22:23:51+00:00*
 
 ## Summary
 
 - Predictions made: 30 (8 v1 + 22 v2/v2.5.x/v3)
-- Resolved: 14
-- Brier score: 0.152
-- Naive primary-venue Brier: 0.280
-- Log loss: 0.468
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
+- Resolved: 15
+- Brier score: 0.150
+- Naive primary-venue Brier: 0.261
+- Log loss: 0.465
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/8 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
 - **Portfolio direction bias (at writing):** 15 below primary venue, 15 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -62,6 +62,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-03 | [Elon Musk <40 tweets May 2-May 4](./reasoning/2026-05-03-elon-musk-tweets-may2-may4-0-39.md) | 3% YES | 13.5% YES | NO | 0.001 | 0.018 | XTracker counted 55 in-window posts, so the `<40` lower-tail bin resolved NO. Burst/backfill continuation thesis validated. |
 | 2026-05-03 | [ON Semiconductor non-GAAP EPS > $0.61](./reasoning/2026-05-03-on-semiconductor-nongaap-eps-q1-2026.md) | 80% YES | 91.5% YES | YES | 0.040 | 0.007 | onsemi reported Q1 non-GAAP diluted EPS of $0.64, clearing the strict `>$0.61` strike. YES-side direction right, but market confidence beat the NO-side fade. |
 | 2026-05-03 | [Sonos non-GAAP EPS > $0.01](./reasoning/2026-05-03-sonos-nongaap-eps-q2-2026.md) | 30% YES | 56.5% YES | NO | 0.090 | 0.319 | Sonos reported Q2 non-GAAP diluted EPS of `($0.02)`, below the strict `>$0.01` strike. Fixed-strike/rule thesis beat the market. |
+| 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% YES | 3.15% YES | NO | 0.123 | 0.001 | CBRS closed at $311.07; StockAnalysis/Yahoo showed ~215.23M shares out and ~$66.95B market cap, above $50B even on the outstanding-share interpretation. Source/rule thesis got the threshold right but underpriced the first-day IPO pop; market beat decisively. |
 
 ## Source-decisive, awaiting market settlement
 
@@ -80,7 +81,6 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
-| 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% | — | — | 3.15% | 2026-05-14 | v3 |
 | 2026-05-14 | [Trump says "Taiwan" or "Tibet" with Xi](./reasoning/2026-05-14-trump-say-taiwan-tibet-xi-events.md) | 18% | — | — | 28.5% | 2026-05-15 | v3 |
 | 2026-05-14 | [Confirmed Hantavirus case in US by May 15](./reasoning/2026-05-14-hantavirus-confirmed-us-by-may-15.md) | 35% | — | — | 19.5% | 2026-05-15 | v3 |
 | 2026-05-14 | [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md) | 95% | — | — | 17.5% | 2026-05-15 | v3 |
