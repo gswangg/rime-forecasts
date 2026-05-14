@@ -81,3 +81,11 @@ The main risk is source timing and confirmation language: a passenger may have h
 ---
 
 *(Resolution section added below after the market resolves, never editing above.)*
+
+## Post-writing source update — 2026-05-14T23:56Z
+
+A price-move wake found Polymarket at **6.0% YES** (5/7 bid/ask), down from 19.5% at writing and 12.5% at the +6h checkpoint.
+
+The central pending-test mechanism has deteriorated materially. New reporting after the forecast says CDC still sees no current U.S. hantavirus cases: CNBC's May 14 article headline is **"CDC says there are no U.S. hantavirus cases currently, 41 people being monitored"**, and Forbes' May 14 update says more than 40 people are monitored but there are no confirmed cases in the United States. Forbes also reports that Oregon doctor Stephen Kornfeld, the U.S. citizen who initially tested positive abroad and was isolated in Nebraska, was allowed to join fellow passengers after testing negative for hantavirus at least twice and remaining asymptomatic.
+
+This does not settle the market by itself: the rules run through May 15 and a late official/credible U.S.-territory lab confirmation could still resolve YES. But it directly weakens the main thesis from the original forecast. The Nebraska/NQU pending-retest branch now looks much less live; remaining YES probability is mostly late reporting from another monitored passenger or a separate U.S. confirmatory case.
