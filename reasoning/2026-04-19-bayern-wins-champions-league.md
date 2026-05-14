@@ -116,3 +116,13 @@ Possible reasons the cross-venue consensus is higher than my model:
 ---
 
 *(Resolution section added below after market resolves on 2026-06-29. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Manifold resolved the market NO. Public match reports confirm Bayern did not reach the final: PSG eliminated Bayern in the semifinal after a 1-1 second-leg draw on May 6, advancing 6-5 on aggregate to face Arsenal in the 2026 Champions League final.
+
+Forecast: **30% YES**. Outcome: **NO**. Brier: **0.0900**. The primary Manifold entry at 35% YES had Brier **0.1225**, so the forecast beat the market slightly.
+
+This was a small, disciplined-base-rate win rather than a large edge. The cross-venue note was right that 30% was defensible but not a high-conviction disagreement; Bayern lost in the semifinal, validating the modest below-consensus stance.

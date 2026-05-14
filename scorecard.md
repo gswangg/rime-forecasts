@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-05T03:10:00+00:00*
+*Last updated: 2026-05-14T13:22:35+00:00*
 
 ## Summary
 
-- Predictions made: 23 (8 v1 + 15 v2/v2.5.x/v3)
-- Resolved: 13
-- Brier score: 0.157
-- Naive primary-venue Brier: 0.292
-- Log loss: 0.477
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
-- **Portfolio direction bias (at writing):** 12 below primary venue, 11 above primary venue.
+- Predictions made: 24 (8 v1 + 16 v2/v2.5.x/v3)
+- Resolved: 14
+- Brier score: 0.152
+- Naive primary-venue Brier: 0.280
+- Log loss: 0.468
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
+- **Portfolio direction bias (at writing):** 12 below primary venue, 12 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -48,6 +48,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 
 | Written | Market | Forecast | Entry | Outcome | Brier | Market Brier | Notes |
 |---------|--------|----------|-------|---------|-------|--------------|-------|
+| 2026-04-19 | [Bayern wins Champions League](./reasoning/2026-04-19-bayern-wins-champions-league.md) | 30% YES | 35.0% YES | NO | 0.090 | 0.123 | PSG eliminated Bayern in the semifinal, advancing 6-5 on aggregate after a 1-1 second-leg draw. Small below-consensus base-rate win. |
 | 2026-04-26 | [Running Point S2 top US Netflix show](./reasoning/2026-04-26-running-point-netflix-top-us-show.md) | 30% YES | 92.4% YES | NO | 0.090 | 0.854 | Official Netflix source did not list `Running Point`; Polymarket resolved NO. Strong stale/source-check win. |
 | 2026-04-27 | [Elon Musk 220-239 posts Apr 21-28](./reasoning/2026-04-27-elon-musk-tweets-apr21-apr28-220-239.md) | 35% YES | 23.5% YES | YES | 0.423 | 0.585 | Market moved strongly toward the bin before close and resolved YES; forecast had positive edge but was underconfident. |
 | 2026-04-27 | [Trump 100-119 Truth Social posts Apr 21-28](./reasoning/2026-04-27-trump-truth-social-posts-apr21-apr28-100-119.md) | 40% YES | 5.15% YES | NO | 0.160 | 0.003 | XTracker reached 121+ counted posts, overrunning the 119 upper bound. Burst risk dominated the quiet-stretch thesis. |
@@ -74,12 +75,12 @@ None currently.
 | 2026-04-19 | [OpenAI captcha refusal by mid-2026](./reasoning/2026-04-19-openai-agent-captcha-refusal.md) | 78% | 72% | — | — | 2026-07-18 | v1 |
 | 2026-04-19 | [SSI ship AI by July](./reasoning/2026-04-19-ssi-ship-before-july-2026.md) | 5% | 10% | — | — | 2026-06-30 | v1 |
 | 2026-04-19 | [Messi plays WC26](./reasoning/2026-04-19-messi-plays-world-cup-2026.md) | 93% | 88% | — | 92.5% | 2026-06-30 | v1 |
-| 2026-04-19 | [Bayern wins CL](./reasoning/2026-04-19-bayern-wins-champions-league.md) | 30% | 35% | — | 34.5% | 2026-06-29 | v1 |
 | 2026-04-19 | [Starship F12 clears pad](./reasoning/2026-04-19-starship-flight-12-clears-pad.md) | 85% | 93% | — | ⚠️ | 2026-06-30 | v1 |
 | 2026-04-19 | [LLM coauthor Nature/Sci](./reasoning/2026-04-19-llm-coauthor-nature-science.md) | 8% | 14% | — | — | 2026-06-30 | v1 |
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
+| 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% | — | — | 3.15% | 2026-05-14 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
