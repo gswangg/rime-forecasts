@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-14T13:33:35+00:00*
+*Last updated: 2026-05-14T13:53:00+00:00*
 
 ## Summary
 
-- Predictions made: 26 (8 v1 + 18 v2/v2.5.x/v3)
+- Predictions made: 27 (8 v1 + 19 v2/v2.5.x/v3)
 - Resolved: 14
 - Brier score: 0.152
 - Naive primary-venue Brier: 0.280
 - Log loss: 0.468
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
-- **Portfolio direction bias (at writing):** 13 below primary venue, 13 above primary venue.
+- **Portfolio direction bias (at writing):** 13 below primary venue, 14 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -65,7 +65,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 
 ## Source-decisive, awaiting market settlement
 
-None currently.
+- [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md): official Senate roll-call vote 120 confirmed Kevin Warsh as Chairman of the Federal Reserve Board on May 13, and PBS/AP reported Powell had stated he would step aside when his chair term ends May 15. Waiting for Polymarket/Fed settlement mechanics.
 
 ## Pending predictions
 
@@ -83,6 +83,7 @@ None currently.
 | 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% | — | — | 3.15% | 2026-05-14 | v3 |
 | 2026-05-14 | [Trump says "Taiwan" or "Tibet" with Xi](./reasoning/2026-05-14-trump-say-taiwan-tibet-xi-events.md) | 18% | — | — | 28.5% | 2026-05-15 | v3 |
 | 2026-05-14 | [Confirmed Hantavirus case in US by May 15](./reasoning/2026-05-14-hantavirus-confirmed-us-by-may-15.md) | 35% | — | — | 19.5% | 2026-05-15 | v3 |
+| 2026-05-14 | [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md) | 95% | — | — | 17.5% | 2026-05-15 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
