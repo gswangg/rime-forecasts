@@ -88,3 +88,20 @@ The main risk is an adversarially simple trigger: one reporter question or one o
 ---
 
 *(Resolution section added below after the market resolves, never editing above.)*
+
+## Resolution — 2026-05-15
+
+**Outcome**: NO.
+
+Polymarket/Gamma showed the market closed and UMA-resolved at **NO** on May 15, with outcome prices **YES 0 / NO 1**.
+
+The rule-specific thesis was validated: the summit/readout source state made Taiwan a central topic, but no qualifying live/broadcast remark by Trump at an event featuring both Trump and Xi was counted with the terms `Taiwan` or `Tibet`. Substantive discussion, Chinese readouts, and reporter questions did not satisfy the market unless Trump himself said the listed word in a qualifying event.
+
+**Brier**: `(0.18 - 0)^2 = 0.0324`.
+**Primary venue entry Brier**: `(0.285 - 0)^2 = 0.0812`.
+
+## Post-mortem
+
+This was a clean source/rule win. The market priced the obvious geopolitical topic risk, while the relevant mechanism was narrower: whether Trump would personally say a sensitive term on live/broadcast footage while standing with Xi. The earlier public non-answer to a Taiwan question was the key clue.
+
+The forecast beat the venue and had positive CLV all the way to settlement. If anything, 18% may still have been a little high after multiple public appearances had already passed without a trigger, but the residual off-script Q&A risk justified not going near zero.
