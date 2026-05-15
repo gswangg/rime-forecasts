@@ -82,3 +82,7 @@ This is the strongest source update so far for the YES thesis: the official sour
 ### 2026-05-15T21:30Z UMA disputed
 
 A follow-up price-move wake showed Gamma at 40.0% YES, but the market's `umaResolutionStatus` was now `disputed` (`umaResolutionStatuses`: `proposed`, `disputed`). The executable CLOB had backed off to about 31.5% (30/33) at review. This confirms the market has moved from factual/source discovery into adjudication: the official Fed release is in evidence, but the unresolved question is whether `chair pro tempore` preserves Powell as Chair for this contract or proves his regular chair term ended and therefore he was out as Fed Chair for at least some period/status.
+
+### 2026-05-15T22:00Z YES repricing inside dispute
+
+Another price-move wake showed Gamma at 64.5% YES (62/67), and by review Gamma was 62.5% YES with executable CLOB about 63.0% (62/64). The market remained open and `umaResolutionStatus=disputed`. This is a large CLV recovery from the +24h adverse mark and means traders are now leaning toward the official-source YES interpretation, but it is still not final resolution. The remaining risk is entirely adjudication: whether UMA accepts that Powell's regular chair term concluding and his temporary `chair pro tempore` designation satisfies `ceases to be Chair` for any period/status by May 15.

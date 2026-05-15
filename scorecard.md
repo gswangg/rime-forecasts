@@ -67,7 +67,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 
 ## Source-decisive, awaiting market settlement
 
-- [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md): official Senate roll-call vote 120 confirmed Kevin Warsh as Chairman of the Federal Reserve Board on May 13, and PBS/AP reported Powell had stated he would step aside when his chair term ends May 15. On May 15 at 21:00Z, the Fed posted that `Powell's term as chair concludes` and named him `chair pro tempore` until Warsh is sworn in. Gamma later showed `umaResolutionStatus=disputed`; waiting for Polymarket/UMA to decide whether chair pro tempore counts as Powell being out as Fed Chair.
+- [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md): official Senate roll-call vote 120 confirmed Kevin Warsh as Chairman of the Federal Reserve Board on May 13, and PBS/AP reported Powell had stated he would step aside when his chair term ends May 15. On May 15 at 21:00Z, the Fed posted that `Powell's term as chair concludes` and named him `chair pro tempore` until Warsh is sworn in. Gamma later showed `umaResolutionStatus=disputed`; CLOB repriced to ~63% YES by 22:02Z. Waiting for Polymarket/UMA to decide whether chair pro tempore counts as Powell being out as Fed Chair.
 
 ## Pending predictions
 
