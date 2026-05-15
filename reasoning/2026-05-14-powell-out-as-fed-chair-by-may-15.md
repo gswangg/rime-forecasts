@@ -65,4 +65,10 @@ The only serious economics risk is adjudication ambiguity, not factual uncertain
 
 ---
 
-## Resolution (added after market resolves, never editing above)
+## Resolution / watch notes (added after writing, never editing above)
+
+### 2026-05-15T15:58Z price-move / resolution watch
+
+A price-move wake fired with YES at 22.5% (22/23). By review, the CLOB midpoint was 21.5% (20/23). This recovers from the +24h adverse 13.5% mark and is back above the 17.5% entry, but it is not a resolution signal.
+
+Official Federal Reserve Board pages fetched at 2026-05-15T15:59Z still listed `Jerome H. Powell, Chair` and did not list Warsh among Board members; their Last-Modified headers were from March. The thesis remains a source/adjudication timing bet: Senate confirmation and term-expiry reporting still point YES, but the market is mostly pricing the risk that Polymarket/UMA waits for a Fed-page/oath update or resolves NO if no official chair-status change appears during May 15 ET.
