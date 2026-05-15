@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-15T10:56:39+00:00*
+*Last updated: 2026-05-15T23:35:22+00:00*
 
 ## Summary
 
-- Predictions made: 30 (8 v1 + 22 v2/v2.5.x/v3)
+- Predictions made: 31 (8 v1 + 23 v2/v2.5.x/v3)
 - Resolved: 16
 - Brier score: 0.143
 - Naive primary-venue Brier: 0.250
 - Log loss: 0.449
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/8 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
-- **Portfolio direction bias (at writing):** 15 below primary venue, 15 above primary venue.
+- **Portfolio direction bias (at writing):** 16 below primary venue, 15 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -87,6 +87,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-14 | [Cyprus Eurovision top 10](./reasoning/2026-05-14-cyprus-eurovision-2026-top-10.md) | 18% | — | — | 6.5% | 2026-05-16 | v3 |
 | 2026-05-14 | [Finland Eurovision top 3](./reasoning/2026-05-14-finland-eurovision-2026-top-3.md) | 58% | — | — | 80.0% | 2026-05-16 | v3 |
 | 2026-05-14 | [Finland Eurovision top 5](./reasoning/2026-05-14-finland-eurovision-2026-top-5.md) | 74% | — | — | 90.5% | 2026-05-16 | v3 |
+| 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
