@@ -13,4 +13,5 @@ __pycache__/
 # local automation runtime state / wake inboxes
 automation/state/
 automation/events/
+execution/tickets/
 .pi/wake/

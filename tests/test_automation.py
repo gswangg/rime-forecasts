@@ -7,6 +7,7 @@ from pathlib import Path
 from automation.clv import due_clv_checkpoints
 from automation.config import require_session_id
 from automation.daemon_core import default_state, generate_events, mark_emitted
+from automation.execution import ExecutionPolicy, MarketQuote, build_order_ticket, size_order
 from automation.horizons import horizon_decision
 from automation.kalshi import candidate_filter_reason as kalshi_candidate_filter_reason
 from automation.kalshi import normalize_market as normalize_kalshi_market
@@ -779,6 +780,80 @@ class AutomationTests(unittest.TestCase):
                 session_id="session-123",
             )
             self.assertEqual([event["type"] for event in emitted], ["price_moved"])
+
+
+class ExecutionTests(unittest.TestCase):
+    def test_max_payout_ticket_uses_executable_yes_ask(self):
+        quote = MarketQuote(
+            venue="Polymarket",
+            market_id="will-test-happen",
+            title="Will test happen?",
+            url="https://polymarket.com/market/will-test-happen",
+            yes_bid=0.19,
+            yes_ask=0.20,
+        )
+        ticket = build_order_ticket(
+            quote=quote,
+            forecast_yes=0.35,
+            policy=ExecutionPolicy(amount=100, max_cash_risk=100),
+            now=dt("2026-05-16T00:00:00Z"),
+        )
+        self.assertEqual(ticket.status, "draft")
+        self.assertEqual(ticket.side, "YES")
+        self.assertAlmostEqual(ticket.executable_price, 0.20)
+        self.assertAlmostEqual(ticket.edge, 0.15)
+        self.assertIsNotNone(ticket.sizing)
+        self.assertAlmostEqual(ticket.sizing.cost, 20.0)
+        self.assertAlmostEqual(ticket.sizing.max_payout, 100.0)
+
+    def test_no_side_can_use_complement_of_yes_book(self):
+        quote = MarketQuote(
+            venue="Polymarket",
+            market_id="will-test-happen",
+            title="Will test happen?",
+            url="https://polymarket.com/market/will-test-happen",
+            yes_bid=0.56,
+            yes_ask=0.62,
+        )
+        ticket = build_order_ticket(
+            quote=quote,
+            forecast_yes=0.35,
+            policy=ExecutionPolicy(amount=100, max_cash_risk=100),
+            now=dt("2026-05-16T00:00:00Z"),
+        )
+        self.assertEqual(ticket.status, "draft")
+        self.assertEqual(ticket.side, "NO")
+        self.assertAlmostEqual(ticket.executable_price, 0.44)
+        self.assertAlmostEqual(ticket.spread, 0.06)
+        self.assertAlmostEqual(ticket.edge, 0.21)
+        self.assertAlmostEqual(ticket.sizing.cost, 44.0)
+
+    def test_ticket_blocks_low_edge_wide_spread_and_risk_cap(self):
+        quote = MarketQuote(
+            venue="Polymarket",
+            market_id="wide-market",
+            title="Wide market",
+            url="https://polymarket.com/market/wide-market",
+            yes_bid=0.40,
+            yes_ask=0.60,
+        )
+        ticket = build_order_ticket(
+            quote=quote,
+            forecast_yes=0.65,
+            policy=ExecutionPolicy(amount=500, max_cash_risk=100, min_edge=0.10, max_spread=0.10),
+            side="YES",
+            now=dt("2026-05-16T00:00:00Z"),
+        )
+        self.assertEqual(ticket.status, "blocked")
+        self.assertTrue(any("spread" in reason for reason in ticket.blocked_reasons))
+        self.assertTrue(any("edge" in reason for reason in ticket.blocked_reasons))
+        self.assertTrue(any("max loss" in reason for reason in ticket.blocked_reasons))
+
+    def test_cash_sizing_stakes_requested_cash_amount(self):
+        sizing = size_order(0.20, ExecutionPolicy(sizing_mode="cash", amount=100))
+        self.assertAlmostEqual(sizing.cost, 100.0)
+        self.assertAlmostEqual(sizing.max_payout, 500.0)
+        self.assertAlmostEqual(sizing.shares, 500.0)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # rime-forecasts automation spec
 
-Status: v0.2 market MVP, 2026-04-26. Participant-signal automation is specified separately in [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md).
+Status: v0.2 market MVP, 2026-04-26. Participant-signal automation is specified separately in [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md); trade execution is specified separately in [`EXECUTION_SPEC.md`](./EXECUTION_SPEC.md).
 
 ## Goal
 
@@ -12,7 +12,7 @@ Cheap code polls markets and writes wake events. The model wakes only when judgm
 
 ## Non-goals
 
-- No autonomous trading or capital allocation.
+- No autonomous trading or capital allocation inside the market daemons. Trade execution, when enabled, is handled by a separate gated ticket/executor layer.
 - No model self-spin while idle.
 - No cwd-based wake routing.
 - No attempt to start pi if no pi process is running. `wake-pi` only wakes an already-running session.
