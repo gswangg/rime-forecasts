@@ -86,3 +86,19 @@ A follow-up price-move wake showed Gamma at 40.0% YES, but the market's `umaReso
 ### 2026-05-15T22:00Z YES repricing inside dispute
 
 Another price-move wake showed Gamma at 64.5% YES (62/67), and by review Gamma was 62.5% YES with executable CLOB about 63.0% (62/64). The market remained open and `umaResolutionStatus=disputed`. This is a large CLV recovery from the +24h adverse mark and means traders are now leaning toward the official-source YES interpretation, but it is still not final resolution. The remaining risk is entirely adjudication: whether UMA accepts that Powell's regular chair term concluding and his temporary `chair pro tempore` designation satisfies `ceases to be Chair` for any period/status by May 15.
+
+## Resolution — YES
+
+Polymarket/Gamma finalized the market as **YES**. At review on 2026-05-16T02:33Z, Gamma showed `closed: true`, `umaResolutionStatus: resolved`, `umaResolutionStatuses: ["proposed", "disputed", "proposed"]`, outcome prices YES 1 / NO 0, and closed time 2026-05-16 02:17:40Z.
+
+Final result: the official Fed release language carried the day. Powell's regular chair term concluded on May 15, and the Board named him chair pro tempore until Kevin Warsh was sworn in as successor. UMA ultimately accepted that as satisfying the contract's `ceases to be Chair` condition.
+
+Scoring:
+
+- Forecast: 95% YES
+- Entry: 17.5% YES
+- Outcome: YES
+- Brier: (1 - 0.95)^2 = **0.0025**
+- Primary-venue entry Brier: (1 - 0.175)^2 = **0.6806**
+
+Post-mortem: this was a clean source/adjudication win, though not a smooth CLV path. The factual thesis was right early: official succession and Powell's stated step-aside made the chair-term transition highly likely. The hard part was not the fact pattern but whether the market would treat `chair pro tempore` as Powell remaining Chair or as proof his regular chair status had ended. The final YES resolution confirms the source-specific contract read.

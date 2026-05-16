@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-15T23:41:45+00:00*
+*Last updated: 2026-05-16T02:33:24+00:00*
 
 ## Summary
 
 - Predictions made: 32 (8 v1 + 24 v2/v2.5.x/v3)
-- Resolved: 16
-- Brier score: 0.143
-- Naive primary-venue Brier: 0.250
-- Log loss: 0.449
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/8 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 3/3 YES)
+- Resolved: 17
+- Brier score: 0.134
+- Naive primary-venue Brier: 0.275
+- Log loss: 0.425
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/8 YES; 60-65% bucket: 1/2 YES; 80%+ bucket: 4/4 YES)
 - **Portfolio direction bias (at writing):** 17 below primary venue, 15 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -64,10 +64,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-03 | [Sonos non-GAAP EPS > $0.01](./reasoning/2026-05-03-sonos-nongaap-eps-q2-2026.md) | 30% YES | 56.5% YES | NO | 0.090 | 0.319 | Sonos reported Q2 non-GAAP diluted EPS of `($0.02)`, below the strict `>$0.01` strike. Fixed-strike/rule thesis beat the market. |
 | 2026-05-14 | [Cerebras IPO market cap < $50B](./reasoning/2026-05-14-cerebras-ipo-market-cap-less-than-50b.md) | 35% YES | 3.15% YES | NO | 0.123 | 0.001 | CBRS closed at $311.07; StockAnalysis/Yahoo showed ~215.23M shares out and ~$66.95B market cap, above $50B even on the outstanding-share interpretation. Source/rule thesis got the threshold right but underpriced the first-day IPO pop; market beat decisively. |
 | 2026-05-14 | [Trump says "Taiwan" or "Tibet" with Xi](./reasoning/2026-05-14-trump-say-taiwan-tibet-xi-events.md) | 18% YES | 28.5% YES | NO | 0.032 | 0.081 | Polymarket/UMA resolved NO. Taiwan was central in readouts, but no qualifying live/broadcast Trump utterance of `Taiwan`/`Tibet` at an event featuring both Trump and Xi was counted. Rule-specific NO thesis beat the market. |
-
-## Source-decisive, awaiting market settlement
-
-- [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md): official Senate roll-call vote 120 confirmed Kevin Warsh as Chairman of the Federal Reserve Board on May 13, and PBS/AP reported Powell had stated he would step aside when his chair term ends May 15. On May 15 at 21:00Z, the Fed posted that `Powell's term as chair concludes` and named him `chair pro tempore` until Warsh is sworn in. Gamma later showed `umaResolutionStatus=disputed`; CLOB repriced to ~63% YES by 22:02Z. Waiting for Polymarket/UMA to decide whether chair pro tempore counts as Powell being out as Fed Chair.
+| 2026-05-14 | [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md) | 95% YES | 17.5% YES | YES | 0.003 | 0.681 | Polymarket/UMA finalized YES after official Fed release said Powell's chair term concludes and the Board named him chair pro tempore until Warsh is sworn in. Source/adjudication thesis beat stale entry price decisively despite interim dispute. |
 
 ## Pending predictions
 
@@ -83,7 +80,6 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-14 | [Confirmed Hantavirus case in US by May 15](./reasoning/2026-05-14-hantavirus-confirmed-us-by-may-15.md) | 35% | — | — | 19.5% | 2026-05-15 | v3 |
-| 2026-05-14 | [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md) | 95% | — | — | 17.5% | 2026-05-15 | v3 |
 | 2026-05-14 | [Cyprus Eurovision top 10](./reasoning/2026-05-14-cyprus-eurovision-2026-top-10.md) | 18% | — | — | 6.5% | 2026-05-16 | v3 |
 | 2026-05-14 | [Finland Eurovision top 3](./reasoning/2026-05-14-finland-eurovision-2026-top-3.md) | 58% | — | — | 80.0% | 2026-05-16 | v3 |
 | 2026-05-14 | [Finland Eurovision top 5](./reasoning/2026-05-14-finland-eurovision-2026-top-5.md) | 74% | — | — | 90.5% | 2026-05-16 | v3 |
