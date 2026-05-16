@@ -102,3 +102,9 @@ Source checks at review:
 - IDPH's Winnebago County page was Last-Modified 2026-05-15T22:46Z but still described a **potential** case: CDC confirmatory testing was pending, commercial serology was not considered definitive, and confirmation could take up to 10 days.
 
 So the move looks like adjudication/speculation rather than a discovered primary-source YES. The live dispute is probably whether `laboratory-confirmed hantavirus infection identified within U.S. territory` can be satisfied by commercial serology / the potential Illinois case / prior shipboard positive language despite CDC and state health sources saying no definitive confirmation yet. Final scoring still waits for Gamma/UMA resolution.
+
+### 2026-05-16T01:32Z UMA proposed / near-YES repricing
+
+A follow-up price-move wake showed the market much closer to YES: event payload YES 95.55% (94.4/96.7), and by review Gamma was 97.05% with `umaResolutionStatus=proposed`. The live CLOB was about 99.0/99.4, midpoint **99.2% YES**.
+
+This is now a market-adjudication/proposal event, not just a thin-book move. I still did not find a new CDC/IDPH/NBC/Yahoo source overturning the source checks above. The proposed outcome appears to be YES, but the unresolved question is whether the proposal relies on a source I have not surfaced or on a loose reading of potential/commercial-serology reporting. Do not final-score until Gamma/UMA finalizes; if finalized YES, this becomes a source/adjudication win despite ugly interim CLV.
