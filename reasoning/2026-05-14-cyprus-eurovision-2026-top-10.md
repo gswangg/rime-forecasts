@@ -71,4 +71,8 @@ The main risk is that Eurovisionworld/bookmaker odds are stale or limited, and P
 
 A price-move wake showed Polymarket YES at **26.5%** (25/28 book), up from the 6.5% entry and +20.0pp aligned for the YES thesis. On review, the book was volatile/wide (Gamma around 30% with 26/34, CLOB around 22/31). Eurovisionworld's top-10 page had Cyprus at **14%**, down from the original 18% bookmaker anchor, with Cyprus still around rank 17 in the top-10 table. So the original stale-low Polymarket thesis has clearly produced favorable CLV, but the live Polymarket price now appears above both my 18% forecast and the updated bookmaker consensus. If trading live, this would be a take-profit / no-add state rather than a fresh YES entry.
 
+### 2026-05-16T22:46Z reversal / live-market whipsaw
+
+Another price-move wake 24 minutes later showed YES down to **4.5%** (2/7 book), from 23.5% in the daemon's previous mark. Gamma had no resolution-state change and Eurovisionworld still had Cyprus around **14%** / rank 17 in its top-10 table. The earlier favorable CLV has therefore turned into slight adverse CLV versus the 6.5% entry (-2.0pp at this mark), despite the bookmaker anchor remaining above Polymarket. This looks like live-event/liquidity whipsaw or a market participant reacting to unreconciled live-show information rather than a confirmed result. At a 7c YES ask versus a 14% updated bookmaker anchor, the fresh edge is only about 7pp, so it no longer clears the v3 executable bar even though the direction is again below the external consensus.
+
 *(Resolution section added below after the market resolves.)*
