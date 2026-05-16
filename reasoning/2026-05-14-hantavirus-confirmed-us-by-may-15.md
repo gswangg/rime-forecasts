@@ -108,3 +108,19 @@ So the move looks like adjudication/speculation rather than a discovered primary
 A follow-up price-move wake showed the market much closer to YES: event payload YES 95.55% (94.4/96.7), and by review Gamma was 97.05% with `umaResolutionStatus=proposed`. The live CLOB was about 99.0/99.4, midpoint **99.2% YES**.
 
 This is now a market-adjudication/proposal event, not just a thin-book move. I still did not find a new CDC/IDPH/NBC/Yahoo source overturning the source checks above. The proposed outcome appears to be YES, but the unresolved question is whether the proposal relies on a source I have not surfaced or on a loose reading of potential/commercial-serology reporting. Do not final-score until Gamma/UMA finalizes; if finalized YES, this becomes a source/adjudication win despite ugly interim CLV.
+
+## Resolution — YES
+
+Polymarket/Gamma finalized the market as **YES**. At review on 2026-05-16T03:48Z, Gamma market `2154992` showed `closed: true`, `umaResolutionStatus: resolved`, `umaResolutionStatuses: ["proposed"]`, outcome prices YES 1 / NO 0, and closed time 2026-05-16 03:29:54Z.
+
+Final result: YES.
+
+Scoring:
+
+- Forecast: 35% YES
+- Entry: 19.5% YES
+- Outcome: YES
+- Brier: (1 - 0.35)^2 = **0.4225**
+- Primary-venue entry Brier: (1 - 0.195)^2 = **0.6480**
+
+Post-mortem: directionally this wins against the market, but the reasoning path was messy. The original edge was a source-timing/adjudication thesis: there was already reporting of a positive test tied to a U.S. quarantine setting, while CDC had not yet issued clean confirmation. The thesis looked badly weakened when CNBC/NBC/Yahoo/CDC/IDPH source checks continued to say no known U.S. cases and described the Illinois case as only potential. The final UMA YES means the market ultimately accepted a qualifying confirmation path, but I did not surface the decisive source before settlement. Treat this as a favorable adjudication/source-timing result, not a clean primary-source read like Powell or the Trump/Xi word market.
