@@ -74,4 +74,10 @@ A price-move wake showed Polymarket YES down to **88.0%** from a prior 95.0% mar
 
 This is a favorable move for the NO-side fade relative to the 90.5% entry (+2.5pp aligned at the event mark, roughly +3.0pp at Gamma), reversing the adverse +6h/+24h marks. It supports the thesis that Polymarket was overpricing Finland as a near-lock, but the current executable NO price only offers about 6pp gross edge versus a 23% fair NO from the updated bookmaker anchor, so it is not a fresh v3-clear entry on its own.
 
+### 2026-05-16T23:17Z proposed-NO collapse
+
+A later price-move wake showed YES down to **0.4%** and Gamma `umaResolutionStatus=proposed`; live CLOB was effectively 0.0/0.1 YES and 99.9/100 NO. Eurovisionworld's final voting data had the contest complete (`ongoing=false`) with Finland **6th** on 279 points: Bulgaria 1st, Israel 2nd, Romania 3rd, Australia 4th, Italy 5th, Finland 6th. That source state makes the top-5 market a clean NO barring an adjudication anomaly.
+
+This is strong validation of the original favorite-overpricing fade: entry YES was 90.5%, my fair was 74%, and the live/proposed mark is +90pp aligned for the NO side. Do not update final scorecard until the Polymarket/Gamma resolution finalizes, but the result source is now clear.
+
 *(Resolution section added below after the market resolves.)*
