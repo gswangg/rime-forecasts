@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from automation.execution import ExecutionPolicy, MarketQuote, build_order_ticket, ticket_summary, write_ticket
+from automation.reasoning import extract_polymarket_watches
 
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
@@ -122,8 +123,9 @@ def manual_quote(args: argparse.Namespace) -> MarketQuote:
 
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Build a dry-run rime execution ticket from a live or manual quote.")
-    p.add_argument("--venue", choices=["polymarket", "manual"], required=True)
-    p.add_argument("--forecast-yes", type=float, required=True, help="Rime fair YES probability, 0-1.")
+    p.add_argument("--venue", choices=["polymarket", "manual"], default="polymarket")
+    p.add_argument("--reasoning", help="Reasoning markdown file; for Polymarket, infers slug and forecast probability.")
+    p.add_argument("--forecast-yes", type=float, help="Rime fair YES probability, 0-1. Inferred from --reasoning if omitted.")
     p.add_argument("--side", choices=["YES", "NO"], help="Override side; default chooses best positive edge.")
     p.add_argument("--sizing-mode", choices=["max_payout", "cash"], default="max_payout")
     p.add_argument("--amount", type=float, default=100.0)
@@ -150,12 +152,30 @@ def parser() -> argparse.ArgumentParser:
     return p
 
 
+def _watch_from_reasoning(path: str):
+    reasoning_path = Path(path).resolve()
+    watches = extract_polymarket_watches(reasoning_path.parent)
+    for watch in watches:
+        if watch.path.resolve() == reasoning_path:
+            return watch
+    raise SystemExit(f"could not extract Polymarket watch from {path}")
+
+
 def main() -> int:
     args = parser().parse_args()
+    watch = _watch_from_reasoning(args.reasoning) if args.reasoning else None
+    forecast_yes = args.forecast_yes if args.forecast_yes is not None else (watch.prediction if watch else None)
+    if forecast_yes is None:
+        raise SystemExit("--forecast-yes is required unless --reasoning contains a Prediction field")
+
+    notes = args.notes
+    if watch and not notes:
+        notes = f"reasoning={watch.path}"
+
     if args.venue == "polymarket":
-        identifier = args.gamma_id or args.slug
+        identifier = args.gamma_id or args.slug or (watch.slug if watch else None)
         if not identifier:
-            raise SystemExit("--slug or --gamma-id is required for --venue polymarket")
+            raise SystemExit("--slug or --gamma-id is required for --venue polymarket unless --reasoning provides a slug")
         quote = polymarket_quote(identifier)
     else:
         if args.yes_bid is None or args.yes_ask is None:
@@ -172,11 +192,11 @@ def main() -> int:
     )
     ticket = build_order_ticket(
         quote=quote,
-        forecast_yes=args.forecast_yes,
+        forecast_yes=forecast_yes,
         policy=policy,
         side=args.side,
         now=datetime.now(timezone.utc),
-        notes=args.notes,
+        notes=notes,
     )
     print(ticket_summary(ticket))
     print(ticket.to_json())

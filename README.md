@@ -52,7 +52,7 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 - [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) — one-shot or looped Kalshi poller. Writes short-horizon candidate `wake-pi` events; same explicit session-id rule.
 - [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) — one-shot or looped Polymarket public-trade observer. Writes `participant_signal_candidate` wakes only when score/economics gates pass; unscored cold-start observations aggregate locally without waking.
 - [`scripts/polymarket-participant-score.py`](./scripts/polymarket-participant-score.py) — bounded wallet backfill scorer. Fetches public wallet trades, marks them against current Gamma prices, subtracts a copy-delay penalty, applies shrinkage, and writes a `--score-fixture` JSON for the participant daemon. This is a triage proxy, not validated edge.
-- [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) — builds dry-run order tickets with side selection, executable price, edge, spread, sizing, and risk-cap checks. Live submission is intentionally not implemented yet.
+- [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) — builds dry-run order tickets with side selection, executable price, edge, spread, sizing, and risk-cap checks. It can infer Polymarket slug + forecast from `--reasoning reasoning/<file>.md`. Live submission is intentionally not implemented yet.
 - [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Manifold + Polymarket status, report resolved + pending.
 - [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) — reconstruct a Manifold market's price at any past timestamp via bet-history pagination.
 
