@@ -1,0 +1,28 @@
+# rime execution policy example.
+# Copy to execution/policy.yaml for local live/dry-run executor config.
+# execution/policy.yaml is gitignored because live config may include venue/account choices.
+
+sizing_mode: max_payout
+amount_per_trade: 100        # dollars max payout, not cash stake
+max_cash_risk_per_trade: 75
+max_open_exposure: 500
+max_daily_new_risk: 300
+max_daily_loss: 200
+min_edge_after_spread: 0.12  # 12pp
+max_spread: 0.08             # 8pp
+limit_orders_only: true
+allow_market_orders: false
+allow_adjudication_markets: true
+allow_live_submit: false
+
+venues:
+  kalshi:
+    enabled: true
+  polymarket:
+    enabled: false           # enable after adapter/reconciliation proves clean
+
+circuit_breakers:
+  max_consecutive_api_errors: 3
+  stop_on_reconciliation_mismatch: true
+  stop_on_daily_loss_cap: true
+  stop_on_daily_new_risk_cap: true

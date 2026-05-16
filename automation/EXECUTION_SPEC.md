@@ -91,6 +91,76 @@ Initial conservative defaults:
 
 A ticket that fails policy is still emitted as `blocked` for auditability, but no adapter may submit it.
 
+## Full-auto trading plan
+
+Greg's preferred target mode is full auto, but full auto means **policy-gated auto-execution**, not discretionary unlimited trading by the agent.
+
+Target loop:
+
+```text
+forecast clears edge
+  -> execution ticket generated
+  -> executor re-quotes live book
+  -> policy gate checks edge, spread, liquidity, risk, and stale data
+  -> limit order submitted if all gates pass
+  -> fills/positions reconciled
+  -> CLV, resolution, and realized P/L logged
+```
+
+Required before any live auto-submit:
+
+1. Legal venue access:
+   - Kalshi KYC complete.
+   - Polymarket only if legally available to Greg.
+2. Secrets out of repo:
+   - Kalshi API credentials.
+   - Polymarket wallet/CLOB credentials if used.
+   - No private keys, API keys, auth tokens, or wallet secrets in git.
+3. Explicit risk policy file, expected at `execution/policy.yaml` or equivalent local secret-backed config.
+4. Reconciliation path that can compare local open positions against venue-reported positions before and after submits.
+5. Kill switches/circuit breakers implemented and tested in dry-run.
+
+Recommended first live-auto pilot policy:
+
+```yaml
+sizing_mode: max_payout
+amount_per_trade: 100        # dollars max payout, not cash stake
+max_cash_risk_per_trade: 75
+max_open_exposure: 500
+max_daily_new_risk: 300
+max_daily_loss: 200
+min_edge_after_spread: 0.12  # 12pp
+max_spread: 0.08             # 8pp
+limit_orders_only: true
+allow_market_orders: false
+allow_adjudication_markets: true
+venues:
+  kalshi:
+    enabled: true
+  polymarket:
+    enabled: false           # enable after adapter/reconciliation proves clean
+```
+
+Circuit breakers:
+
+- stop live submits after any position reconciliation mismatch
+- stop live submits after daily loss cap is hit
+- stop live submits after daily new-risk cap is hit
+- stop live submits after N consecutive venue API/order errors
+- block tickets when book spread exceeds policy
+- block tickets when current executable edge falls below policy after re-quote
+- block tickets when market status is not active/open or resolution state is ambiguous beyond policy
+- block tickets when liquidity/order-book depth cannot support the requested size at the limit price
+
+Implementation order:
+
+1. Add `execution/policy.yaml.example` with safe defaults; keep real `execution/policy.yaml` gitignored.
+2. Add `trades.jsonl` schema/spec and append-only writer for submitted orders/fills.
+3. Add `scripts/executor-daemon.py` in dry-run mode: consumes draft tickets, re-quotes, applies policy, writes `would_submit` / `blocked` records.
+4. Add Kalshi live adapter first: auth, quote, limit order, cancel/replace, fills, positions.
+5. Add Polymarket live adapter second: CLOB auth/signing, token lookup, limit orders, fills, positions.
+6. Run full auto with tiny caps, then raise caps only after successful reconciliation and enough live-fill evidence.
+
 ## Live adapters
 
 Future live adapters must require all of:
