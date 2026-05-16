@@ -89,3 +89,16 @@ A price-move wake found Polymarket at **6.0% YES** (5/7 bid/ask), down from 19.5
 The central pending-test mechanism has deteriorated materially. New reporting after the forecast says CDC still sees no current U.S. hantavirus cases: CNBC's May 14 article headline is **"CDC says there are no U.S. hantavirus cases currently, 41 people being monitored"**, and Forbes' May 14 update says more than 40 people are monitored but there are no confirmed cases in the United States. Forbes also reports that Oregon doctor Stephen Kornfeld, the U.S. citizen who initially tested positive abroad and was isolated in Nebraska, was allowed to join fellow passengers after testing negative for hantavirus at least twice and remaining asymptomatic.
 
 This does not settle the market by itself: the rules run through May 15 and a late official/credible U.S.-territory lab confirmation could still resolve YES. But it directly weakens the main thesis from the original forecast. The Nebraska/NQU pending-retest branch now looks much less live; remaining YES probability is mostly late reporting from another monitored passenger or a separate U.S. confirmatory case.
+
+## Price-move / resolution-watch update — 2026-05-16T01:18Z
+
+A price-move wake fired with event payload YES at 38.6%, up from a 6.25% daemon baseline. By review the market had moved much further: Gamma showed 78.1% YES, while the live CLOB was about 90/94, midpoint **92.0% YES**. That is large favorable CLV versus the 19.5% entry for my YES prediction, but I do **not** see a clean source confirmation yet.
+
+Source checks at review:
+
+- CDC's `Hantavirus: Current Situation` page still showed the May 12 language: `To date, no cases of Andes virus have been confirmed in the United States as a result of this outbreak.`
+- NBC's May 15 update, modified 2026-05-15T21:37Z, said there were `no known cases of hantavirus in the United States as of Friday` after a new round of testing at UNMC. It also said Kornfeld's shipboard positive was likely false positive / no antibodies, and the reported global case count had fallen.
+- Yahoo's May 15 live update similarly said no known U.S. cases as of Friday morning, with one Emory patient having mild symptoms but testing negative.
+- IDPH's Winnebago County page was Last-Modified 2026-05-15T22:46Z but still described a **potential** case: CDC confirmatory testing was pending, commercial serology was not considered definitive, and confirmation could take up to 10 days.
+
+So the move looks like adjudication/speculation rather than a discovered primary-source YES. The live dispute is probably whether `laboratory-confirmed hantavirus infection identified within U.S. territory` can be satisfied by commercial serology / the potential Illinois case / prior shipboard positive language despite CDC and state health sources saying no definitive confirmation yet. Final scoring still waits for Gamma/UMA resolution.
