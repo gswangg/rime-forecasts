@@ -66,4 +66,12 @@ This clears the v3 bar because the spread is large, the external consensus is di
 
 ---
 
-*(Resolution section added below after the market resolves, never editing above.)*
+## Resolution / watch notes (added after writing, never editing above)
+
+### 2026-05-16T22:48Z live price move
+
+A price-move wake showed Polymarket YES down to **61.0%** from a prior 82.5% mark. On review, Gamma was 61.0% and the live CLOB was very wide around **51/72** for YES (NO ask ~49c), with no Gamma resolution-state change. Eurovisionworld's top-3 page showed the event closed to odds updates and had Finland at **64%**, up from the original 58% anchor but still far below the original Polymarket entry.
+
+This is a large favorable move for the NO-side fade relative to the 80.0% entry: about **+19.0pp aligned CLV** at the event/Gamma mark, reversing the earlier adverse +1h/+6h/+24h marks. It supports the favorite-overpricing thesis. But after the move, Polymarket is roughly in line with the updated bookmaker anchor and the book is wide, so this is a validation / hold-to-resolution note, not a fresh v3-clear trade entry.
+
+*(Resolution section added below after the market resolves.)*
