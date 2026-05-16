@@ -79,4 +79,8 @@ I do not see a new source update or resolution signal here. The move mostly look
 
 A later price-move wake showed YES down to **3.5%** (CLOB about 3.1/4.0), a large favorable move for the NO-side prediction: +30.0pp aligned CLV versus the 33.5% entry. Factba.se/Roll Call's schedule now shows no transcript links for May 16, only Executive Time / pool call / closed press; Friday May 15 had a full lid after returning to the White House. This strengthens the remaining-schedule part of the thesis. The main residual risk is still a late public recording/social video before the market window closes or adjudication counting a non-exact earlier phrase.
 
+### 2026-05-16T17:30Z retrace / wide book note
+
+A follow-up price-move wake retraced YES to **16.05%** on a very wide 7.1/25.0 book, with last trade still 9%. I found no new Factba.se/Roll Call transcript or schedule change and no Gamma resolution-state change. This mostly marks the 3.5% print as microstructure/noisy rather than a durable consensus. CLV remains favorable versus the 33.5% entry (+17.45pp aligned for NO at the Gamma midpoint), but the current executable NO ask near 92.9c is no longer attractive against my 85% fair.
+
 *(Resolution section added below after the market resolves.)*
