@@ -67,4 +67,12 @@ Liquidity is thin (~$550-700 on Gamma during review) and the CLOB was wider than
 
 ---
 
-*(Resolution section added below after the market resolves, never editing above.)*
+## Resolution / watch notes (added after writing, never editing above)
+
+### 2026-05-16T00:16Z price-move watch
+
+A price-move wake fired about 35 minutes after writing: Gamma marked YES at 14.5%, down from the 33.5% entry mark. Current CLOB was very wide (YES 6/23, NO 77/94; last trade 24), so the exact executable mark is noisy, but the midpoint is now essentially at my 15% forecast and is +19.0pp aligned CLV for the NO-side thesis.
+
+I do not see a new source update or resolution signal here. The move mostly looks like the market correcting toward the exact-phrase interpretation: `MAGA`, `made America great again`, and `making America great again` are not the listed term. Continue watching for new public Trump recordings through the window and for any loose adjudication that treats the non-exact May 11 Hoosiers phrase as valid.
+
+*(Resolution section added below after the market resolves.)*
