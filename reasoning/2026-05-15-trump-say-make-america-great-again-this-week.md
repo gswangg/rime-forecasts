@@ -75,4 +75,8 @@ A price-move wake fired about 35 minutes after writing: Gamma marked YES at 14.5
 
 I do not see a new source update or resolution signal here. The move mostly looks like the market correcting toward the exact-phrase interpretation: `MAGA`, `made America great again`, and `making America great again` are not the listed term. Continue watching for new public Trump recordings through the window and for any loose adjudication that treats the non-exact May 11 Hoosiers phrase as valid.
 
+### 2026-05-16T15:15Z favorable price move
+
+A later price-move wake showed YES down to **3.5%** (CLOB about 3.1/4.0), a large favorable move for the NO-side prediction: +30.0pp aligned CLV versus the 33.5% entry. Factba.se/Roll Call's schedule now shows no transcript links for May 16, only Executive Time / pool call / closed press; Friday May 15 had a full lid after returning to the White House. This strengthens the remaining-schedule part of the thesis. The main residual risk is still a late public recording/social video before the market window closes or adjudication counting a non-exact earlier phrase.
+
 *(Resolution section added below after the market resolves.)*
