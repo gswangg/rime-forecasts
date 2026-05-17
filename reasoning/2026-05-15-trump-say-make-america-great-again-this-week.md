@@ -83,4 +83,8 @@ A later price-move wake showed YES down to **3.5%** (CLOB about 3.1/4.0), a larg
 
 A follow-up price-move wake retraced YES to **16.05%** on a very wide 7.1/25.0 book, with last trade still 9%. I found no new Factba.se/Roll Call transcript or schedule change and no Gamma resolution-state change. This mostly marks the 3.5% print as microstructure/noisy rather than a durable consensus. CLV remains favorable versus the 33.5% entry (+17.45pp aligned for NO at the Gamma midpoint), but the current executable NO ask near 92.9c is no longer attractive against my 85% fair.
 
+### 2026-05-17T00:40Z +24h checkpoint
+
+The +24h checkpoint marked YES at **32.5%** versus the 33.5% entry, only **+1.0pp aligned CLV** for the NO-side fade. The book was extremely wide/noisy: event payload 10/55 YES, review Gamma 11/54.9 with CLOB midpoint 32.95 and last trade 40.8. I found no new Factba.se/Roll Call transcript or schedule change: May 16 and May 17 still show Executive Time / pool-call items with closed press, and the only recent transcript link remains the May 15 Air Force One gaggle. This is therefore not a source-thesis reversal, but the CLV has mostly evaporated because the market is illiquid and unresolved near the deadline.
+
 *(Resolution section added below after the market resolves.)*
