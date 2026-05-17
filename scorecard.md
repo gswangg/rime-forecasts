@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-16T03:48:24+00:00*
+*Last updated: 2026-05-17T00:37:48+00:00*
 
 ## Summary
 
-- Predictions made: 32 (8 v1 + 24 v2/v2.5.x/v3)
+- Predictions made: 33 (8 v1 + 25 v2/v2.5.x/v3)
 - Resolved: 18
 - Brier score: 0.150
 - Naive primary-venue Brier: 0.296
 - Log loss: 0.460
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/1 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 40-50% bucket: 1/3 YES; 60-70% bucket: 1/2 YES; 80%+ bucket: 4/4 YES)
-- **Portfolio direction bias (at writing):** 17 below primary venue, 15 above primary venue.
+- **Portfolio direction bias (at writing):** 18 below primary venue, 15 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -85,6 +85,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-14 | [Finland Eurovision top 5](./reasoning/2026-05-14-finland-eurovision-2026-top-5.md) | 74% | — | — | 90.5% | 2026-05-16 | v3 |
 | 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
 | 2026-05-15 | [Trump says "Make America Great Again" this week](./reasoning/2026-05-15-trump-say-make-america-great-again-this-week.md) | 15% | — | — | 33.5% | 2026-05-17 | v3 |
+| 2026-05-17 | [Michael 4th weekend box office $22m-$25m](./reasoning/2026-05-17-michael-fourth-weekend-box-office-22m-25m.md) | 38% | — | — | 55.5% | 2026-05-18 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
