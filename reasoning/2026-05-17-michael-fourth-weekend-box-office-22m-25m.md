@@ -79,4 +79,12 @@ Confidence is 3/5. The edge is a concrete source/projection thesis from The Numb
 
 ---
 
+## Post-writing watch notes
+
+### 2026-05-17T01:06Z favorable price move
+
+A price-move wake fired less than an hour after writing: the daemon payload marked this bracket down from 56.0% to **48.0% YES**, while a live CLOB check was even lower at roughly **40/43 YES** (mid **41.5%**) and the sibling `>$25m` market was roughly **56/61 YES** (mid **58.5%**). Against the 55.5% entry mark, that is about **+7.5pp aligned CLV** using Gamma's payload mark, or about **+14.0pp** using the live executable/mid book.
+
+No resolution-state change: Gamma still shows the market active/open. The Numbers is still Friday-only for the target weekend, with May 15 at **$7.0m**. While reviewing the move, I found Deadline's early Saturday update from May 16 projecting **$27m** for Michael's fourth weekend after a roughly **$7m** Friday, with IMAX/PLF screens helping. That is not a final source print, but it reinforces the original mechanism that `>$25m` is more likely than the `$22m-$25m` bracket.
+
 *(Resolution section added below after the market resolves, never editing above.)*
