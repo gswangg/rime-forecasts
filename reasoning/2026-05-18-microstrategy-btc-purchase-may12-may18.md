@@ -97,4 +97,10 @@ The +6h checkpoint was essentially flat but still slightly adverse: daemon paylo
 
 Official source state is still unchanged. Strategy's purchase page still has **May 11 / 535 BTC** as the latest row and no May 18 purchase entry. This remains before the recent Monday ~12:00Z purchase-page/Saylor-post cadence, so I am not treating it as failed timing yet. The useful learning is that the market has not repriced toward my 97% despite the Sunday chart and STRC.live estimate; it is carrying far more announcement-timing/form uncertainty than I assigned.
 
+### 2026-05-18T10:20Z favorable pre-announcement move
+
+A later price-move wake repriced YES to **93.5%** from 85.45% in the daemon payload, or **+8.85pp aligned CLV** versus the 84.65% entry. Live CLOB review was very wide: the direct order book showed about **88.1/95.6** YES (mid **91.85%**), while Gamma showed **91.1/95.9**. Using the direct live midpoint, CLV is about **+7.2pp aligned**. The executable YES ask near 95.6c leaves little fresh edge versus my 97% fair, but the move is finally in the forecast direction.
+
+I still do not see official resolution evidence. Strategy's purchase page remains unchanged with latest **May 11 / 535 BTC**, no May 18 row, and no Gamma UMA status. Search did not surface a Saylor/Strategy `has acquired ... BTC` post yet. This looks like market pre-positioning into the usual Monday announcement window, not final source publication.
+
 *(Resolution section added below after the market resolves, never editing above.)*
