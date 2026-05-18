@@ -87,6 +87,8 @@ A price-move wake fired less than an hour after writing: the daemon payload mark
 
 No resolution-state change: Gamma still shows the market active/open. The Numbers is still Friday-only for the target weekend, with May 15 at **$7.0m**. While reviewing the move, I found Deadline's early Saturday update from May 16 projecting **$27m** for Michael's fourth weekend after a roughly **$7m** Friday, with IMAX/PLF screens helping. That is not a final source print, but it reinforces the original mechanism that `>$25m` is more likely than the `$22m-$25m` bracket.
 
+CLV bookkeeping: this early price-move review is the closest available +1h backfill. A formal `1h` checkpoint wake later arrived after the market had already collapsed to ~1%, so I am not treating that next-day source-state mark as the actual one-hour market reaction.
+
 ### 2026-05-18T03:28Z price collapse / source-state check
 
 A second price-move wake marked this bracket down to **1.05% YES** from the prior 48% payload mark; live Gamma/CLOB during review was even lower at about **0.75% YES** (0.4/1.1 book). Against the 55.5% entry, that is roughly **+54.5pp to +54.8pp aligned CLV** for the NO-side forecast. The sibling `>$25m` market was roughly **99.1% YES**.
