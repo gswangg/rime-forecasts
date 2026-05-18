@@ -74,4 +74,12 @@ A price-move wake showed Polymarket YES down to **61.0%** from a prior 82.5% mar
 
 This is a large favorable move for the NO-side fade relative to the 80.0% entry: about **+19.0pp aligned CLV** at the event/Gamma mark, reversing the earlier adverse +1h/+6h/+24h marks. It supports the favorite-overpricing thesis. But after the move, Polymarket is roughly in line with the updated bookmaker anchor and the book is wide, so this is a validation / hold-to-resolution note, not a fresh v3-clear trade entry.
 
-*(Resolution section added below after the market resolves.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma now shows the market closed with outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, and a closed time of 2026-05-17T02:49:39Z. Eurovisionworld's final Finland page says Finland / Linda Lampenius & Pete Parkkonen - `Liekinheitin` finished **6th** at Eurovision 2026 with **279 points**, outside the top 3. Direct eurovision.tv result pages were 403 from this environment, but the venue has finalized NO and the credible-results source agrees with the non-podium outcome.
+
+Forecast: **58% YES**. Outcome: **NO**. Brier: **0.3364**. The primary market entry at 80.0% YES had Brier **0.6400**, so the forecast beat the market despite assigning YES as the modal outcome.
+
+Post-mortem: the favorite-overpricing fade was directionally right versus Polymarket. The bookmaker top-3 anchor, Polymarket's inflated top-3 group sum, and the late collapse from 80%+ toward 61% were all useful signals. The miss is absolute calibration: I still left Finland above 50% for top 3 when the final result was 6th. For Eurovision favorite category markets, the edge may be better expressed as relative value / NO fade than as a confident event-level probability; live final volatility can turn a clear favorite into a non-podium result faster than the pre-final bookmaker consensus implies.

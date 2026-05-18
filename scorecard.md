@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-18T02:27:00+00:00*
+*Last updated: 2026-05-18T02:20:18+00:00*
 
 ## Summary
 
 - Predictions made: 33 (8 v1 + 25 v2/v2.5.x/v3)
-- Resolved: 19
-- Brier score: 0.144
-- Naive primary-venue Brier: 0.281
-- Log loss: 0.446
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/2 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 40-50% bucket: 1/3 YES; 60-70% bucket: 1/2 YES; 80%+ bucket: 4/4 YES)
+- Resolved: 20
+- Brier score: 0.154
+- Naive primary-venue Brier: 0.299
+- Log loss: 0.467
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/2 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 80%+ bucket: 4/4 YES)
 - **Portfolio direction bias (at writing):** 18 below primary venue, 15 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -67,6 +67,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-14 | [Trump says "Taiwan" or "Tibet" with Xi](./reasoning/2026-05-14-trump-say-taiwan-tibet-xi-events.md) | 18% YES | 28.5% YES | NO | 0.032 | 0.081 | Polymarket/UMA resolved NO. Taiwan was central in readouts, but no qualifying live/broadcast Trump utterance of `Taiwan`/`Tibet` at an event featuring both Trump and Xi was counted. Rule-specific NO thesis beat the market. |
 | 2026-05-14 | [Jerome Powell out as Fed Chair by May 15](./reasoning/2026-05-14-powell-out-as-fed-chair-by-may-15.md) | 95% YES | 17.5% YES | YES | 0.003 | 0.681 | Polymarket/UMA finalized YES after official Fed release said Powell's chair term concludes and the Board named him chair pro tempore until Warsh is sworn in. Source/adjudication thesis beat stale entry price decisively despite interim dispute. |
 | 2026-05-14 | [Cyprus Eurovision top 10](./reasoning/2026-05-14-cyprus-eurovision-2026-top-10.md) | 18% YES | 6.5% YES | NO | 0.032 | 0.004 | Polymarket/UMA finalized NO; Eurovisionworld final results show Cyprus 19th with 75 points, outside the top 10. Cross-market bookmaker-anchor thesis lost to the lower Polymarket entry despite favorable interim CLV. |
+| 2026-05-14 | [Finland Eurovision top 3](./reasoning/2026-05-14-finland-eurovision-2026-top-3.md) | 58% YES | 80.0% YES | NO | 0.336 | 0.640 | Polymarket/UMA finalized NO; Eurovisionworld final results show Finland 6th with 279 points, outside the top 3. Favorite-overpricing fade beat the market, though the absolute forecast still had YES as the modal outcome. |
 
 ## Pending predictions
 
@@ -81,7 +82,6 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-19 | [Patel FBI Director June 30](./reasoning/2026-04-19-patel-fbi-director-june-30.md) | 58% | 49% | — | ~94% stays¹ | 2026-06-30 | v1 |
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
-| 2026-05-14 | [Finland Eurovision top 3](./reasoning/2026-05-14-finland-eurovision-2026-top-3.md) | 58% | — | — | 80.0% | 2026-05-16 | v3 |
 | 2026-05-14 | [Finland Eurovision top 5](./reasoning/2026-05-14-finland-eurovision-2026-top-5.md) | 74% | — | — | 90.5% | 2026-05-16 | v3 |
 | 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
 | 2026-05-15 | [Trump says "Make America Great Again" this week](./reasoning/2026-05-15-trump-say-make-america-great-again-this-week.md) | 15% | — | — | 33.5% | 2026-05-17 | v3 |
