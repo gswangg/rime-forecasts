@@ -87,7 +87,7 @@ A price-move wake fired less than an hour after writing: the daemon payload mark
 
 No resolution-state change: Gamma still shows the market active/open. The Numbers is still Friday-only for the target weekend, with May 15 at **$7.0m**. While reviewing the move, I found Deadline's early Saturday update from May 16 projecting **$27m** for Michael's fourth weekend after a roughly **$7m** Friday, with IMAX/PLF screens helping. That is not a final source print, but it reinforces the original mechanism that `>$25m` is more likely than the `$22m-$25m` bracket.
 
-CLV bookkeeping: this early price-move review is the closest available +1h backfill. A formal `1h` checkpoint wake later arrived after the market had already collapsed to ~1%, so I am not treating that next-day source-state mark as the actual one-hour market reaction.
+CLV bookkeeping: this early price-move review is the closest available +1h backfill. The daemon then hit repeated DNS failures until 2026-05-18T02:14Z, so the exact +6h mark was not captured. Formal `1h`/`6h` checkpoint wakes later arrived after the market had already collapsed to ~1%, so I am not treating that next-day source-state mark as the actual one-hour or six-hour market reaction.
 
 ### 2026-05-18T03:28Z price collapse / source-state check
 
