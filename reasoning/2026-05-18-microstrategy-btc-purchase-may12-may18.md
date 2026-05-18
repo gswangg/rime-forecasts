@@ -103,4 +103,12 @@ A later price-move wake repriced YES to **93.5%** from 85.45% in the daemon payl
 
 I still do not see official resolution evidence. Strategy's purchase page remains unchanged with latest **May 11 / 535 BTC**, no May 18 row, and no Gamma UMA status. Search did not surface a Saylor/Strategy `has acquired ... BTC` post yet. This looks like market pre-positioning into the usual Monday announcement window, not final source publication.
 
-*(Resolution section added below after the market resolves, never editing above.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Polymarket/Gamma shows the market closed with outcome prices `1/0` (YES/NO), `umaResolutionStatus=resolved`, and closed time **2026-05-18T15:00:26Z**. Strategy's official purchase page now has a **May 18, 2026** row: **24,869 BTC** acquired for approximately **$2.014B** at about **$80,985/BTC**, bringing holdings to **843,738 BTC** as of 2026-05-17. The listed social/X text says `@Strategy has acquired 24,869 BTC...`, so both timing and size clear the market rule by a wide margin.
+
+Forecast: **97% YES**. Outcome: **YES**. Brier: **0.0009**. The primary market entry at 84.65% YES had Brier **0.0236**, so the forecast beat the market.
+
+Post-mortem: this was a clean timing/size-threshold win. The useful signal was not generic weekly cadence alone; it was Saylor's Sunday chart plus the STRC.live / preferred-volume estimate implying a purchase far above the 1,000 BTC threshold. The market correctly moved toward YES before the official page updated, but it kept 15%+ timing/form risk too long. The 97% forecast was aggressive, yet the actual size left no threshold ambiguity.
