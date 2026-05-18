@@ -87,4 +87,12 @@ A price-move wake fired less than an hour after writing: the daemon payload mark
 
 No resolution-state change: Gamma still shows the market active/open. The Numbers is still Friday-only for the target weekend, with May 15 at **$7.0m**. While reviewing the move, I found Deadline's early Saturday update from May 16 projecting **$27m** for Michael's fourth weekend after a roughly **$7m** Friday, with IMAX/PLF screens helping. That is not a final source print, but it reinforces the original mechanism that `>$25m` is more likely than the `$22m-$25m` bracket.
 
+### 2026-05-18T03:28Z price collapse / source-state check
+
+A second price-move wake marked this bracket down to **1.05% YES** from the prior 48% payload mark; live Gamma/CLOB during review was even lower at about **0.75% YES** (0.4/1.1 book). Against the 55.5% entry, that is roughly **+54.5pp to +54.8pp aligned CLV** for the NO-side forecast. The sibling `>$25m` market was roughly **99.1% YES**.
+
+This move is now source-supported, not just flow. The Numbers movie page and weekend chart show *Michael*'s May 15-17 weekend at **$26,125,000**, above the $25m boundary. The daily table shows **$7,035,000** Friday, **$10,910,000** Saturday, and **$8,180,000** Sunday, summing to the same weekend total. If those values survive final revision, this `22m-25m` bracket resolves NO and the sibling `>$25m` resolves YES.
+
+Gamma still shows this market active/open with no UMA resolution status, so this is not final scorecard resolution yet. Residual risk is a final The Numbers/studio revision cutting more than about **$1.125m** from the current weekend total, enough to move it below or exactly to the $25m boundary; otherwise the original `>$25m` mechanism has landed.
+
 *(Resolution section added below after the market resolves, never editing above.)*
