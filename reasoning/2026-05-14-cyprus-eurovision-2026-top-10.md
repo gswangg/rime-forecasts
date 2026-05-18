@@ -75,4 +75,12 @@ A price-move wake showed Polymarket YES at **26.5%** (25/28 book), up from the 6
 
 Another price-move wake 24 minutes later showed YES down to **4.5%** (2/7 book), from 23.5% in the daemon's previous mark. Gamma had no resolution-state change and Eurovisionworld still had Cyprus around **14%** / rank 17 in its top-10 table. The earlier favorable CLV has therefore turned into slight adverse CLV versus the 6.5% entry (-2.0pp at this mark), despite the bookmaker anchor remaining above Polymarket. This looks like live-event/liquidity whipsaw or a market participant reacting to unreconciled live-show information rather than a confirmed result. At a 7c YES ask versus a 14% updated bookmaker anchor, the fresh edge is only about 7pp, so it no longer clears the v3 executable bar even though the direction is again below the external consensus.
 
-*(Resolution section added below after the market resolves.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma now shows the market closed with outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, and a closed time of 2026-05-17T02:57:54Z. Eurovisionworld's final country page says Cyprus / Antigoni - `Jalla` finished **19th** at Eurovision 2026 with **75 points**, outside the top 10. Direct eurovision.tv result pages were 403 from this environment, but the venue has finalized NO and the credible-results source agrees with the non-top-10 outcome.
+
+Forecast: **18% YES**. Outcome: **NO**. Brier: **0.0324**. The primary market entry at 6.5% YES had Brier **0.0042**, so the forecast lost to the market.
+
+Post-mortem: this was a cross-market anchor failure. Eurovisionworld's pre-final top-10 bookmaker consensus looked like a clean stale-price signal, and the trade initially got favorable CLV, but the final result put Cyprus well outside the top 10. The live Polymarket whipsaw was the warning: the market briefly repriced toward the bookmaker anchor, then collapsed before finality. For Eurovision props, bookmaker top-N consensus needs stronger live-show/jury qualification context before treating a Polymarket-discounted mid-tier entry as executable edge.
