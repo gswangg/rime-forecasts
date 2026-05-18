@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-18T02:21:50+00:00*
+*Last updated: 2026-05-18T02:26:07+00:00*
 
 ## Summary
 
-- Predictions made: 33 (8 v1 + 25 v2/v2.5.x/v3)
+- Predictions made: 34 (8 v1 + 26 v2/v2.5.x/v3)
 - Resolved: 21
 - Brier score: 0.173
 - Naive primary-venue Brier: 0.323
 - Log loss: 0.509
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/2 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 70-80% bucket: 0/1 YES; 80%+ bucket: 4/4 YES)
-- **Portfolio direction bias (at writing):** 18 below primary venue, 15 above primary venue.
+- **Portfolio direction bias (at writing):** 18 below primary venue, 16 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -86,6 +86,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
 | 2026-05-15 | [Trump says "Make America Great Again" this week](./reasoning/2026-05-15-trump-say-make-america-great-again-this-week.md) | 15% | — | — | 33.5% | 2026-05-17 | v3 |
 | 2026-05-17 | [Michael 4th weekend box office $22m-$25m](./reasoning/2026-05-17-michael-fourth-weekend-box-office-22m-25m.md) | 38% | — | — | 55.5% | 2026-05-18 | v3 |
+| 2026-05-18 | [MicroStrategy announces >1000 BTC purchase May 12-18](./reasoning/2026-05-18-microstrategy-btc-purchase-may12-may18.md) | 97% | — | — | 84.65% | 2026-05-19 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
