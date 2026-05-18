@@ -62,4 +62,10 @@ This clears the v3 bar: ≥10pp edge with confidence 3/5. I would still size thi
 
 ---
 
+### 2026-05-18T20:37Z +1h checkpoint
+
+The +1h checkpoint was flat: daemon payload marked YES at **74.5%**, unchanged from the 74.5% entry midpoint (**+0.0pp aligned CLV**, raw YES +0.0pp). Live review was also **74.5%** midpoint on a wider **73/76 YES** book.
+
+This is not positive confirmation yet. It says the market has not newly repriced the leak/setup thesis in the first hour after writing; the edge remains mainly my interpretation of the public/SEO leak complex and episode-7 setup, not new post-entry information.
+
 *(Resolution section added below after the market resolves, never editing above.)*
