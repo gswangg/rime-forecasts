@@ -91,4 +91,10 @@ The +1h checkpoint was mildly adverse: daemon payload marked YES at **83.0%**, d
 
 Official source state has not changed. Strategy's purchase page still shows the latest row as the May 11 **535 BTC** acquisition and no May 18 entry. Recent Strategy purchase-page rows have tended to publish around 12:00Z Mondays, so this is still before the normal announcement window rather than a missed 8-K/source failure. The move mainly says the market is still assigning meaningful timing/form risk despite the Saylor Sunday chart and STRC.live size estimate. If the usual Monday morning window passes without a Saylor/Strategy post, that would be a real thesis hit; at this checkpoint it is only early adverse CLV.
 
+### 2026-05-18T08:33Z +6h checkpoint
+
+The +6h checkpoint was essentially flat but still slightly adverse: daemon payload marked YES at **84.15%**, versus the 84.65% entry midpoint (**-0.50pp aligned CLV**, raw YES -0.50pp). Live review was **84.2% YES** on a wide **81.6/86.8** book, about **-0.45pp aligned CLV**.
+
+Official source state is still unchanged. Strategy's purchase page still has **May 11 / 535 BTC** as the latest row and no May 18 purchase entry. This remains before the recent Monday ~12:00Z purchase-page/Saylor-post cadence, so I am not treating it as failed timing yet. The useful learning is that the market has not repriced toward my 97% despite the Sunday chart and STRC.live estimate; it is carrying far more announcement-timing/form uncertainty than I assigned.
+
 *(Resolution section added below after the market resolves, never editing above.)*
