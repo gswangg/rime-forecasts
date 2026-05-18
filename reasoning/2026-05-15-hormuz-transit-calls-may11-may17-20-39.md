@@ -97,4 +97,10 @@ A later price-move wake marked YES back near the entry level. The daemon payload
 
 The IMF PortWatch ArcGIS source still only published `chokepoint6` through **2026-05-10**. No May 11-May 17 target-week data was available, and Gamma still showed the market active/open with no UMA resolution status. This retrace weakens the +24h adverse CLV signal but does not resolve the source question; final scoring still waits for PortWatch/Gamma finality.
 
+### 2026-05-18T10:02Z adverse rebound / source still stale
+
+Another price-move wake put YES back at **72.0%** after a prior **65.5%** mark, with a live **71/73** YES book (mid **72.0%**) and NO at **27/29**. Against the 62.0% entry this is **-10.0pp aligned CLV** for the NO-side forecast (raw YES +10.0pp), worse than the original +24h adverse mark.
+
+The exact source still has not resolved the question. A fresh ArcGIS query for `portid = 'chokepoint6'` still returned latest data only through **2026-05-10** (`[3, 1, 0, 2, 0, 1, 4]` for May 4-May 10, total 11), with no May 11-May 17 target-week days. Gamma remained active/open with no UMA resolution status. This move is therefore market/live-AIS or positioning information, not source finality; the thesis is now clearly losing on CLV but still waits on PortWatch publication.
+
 *(Resolution section added below after the market resolves.)*
