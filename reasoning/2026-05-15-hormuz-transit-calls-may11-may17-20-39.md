@@ -91,4 +91,10 @@ Confidence is 3/5: the edge is source-specific and quantified from exact PortWat
 
 The +24h checkpoint marked YES at **68.5%** (67/70 book), versus the 62.0% entry and my 35% forecast. That is **-6.5pp aligned CLV** for the NO-side fade (raw YES +6.5pp). The IMF PortWatch ArcGIS source still only published `chokepoint6` through **2026-05-10**, so there was no target-week PortWatch data explaining the adverse move. This is likely the market/live-AIS side becoming more confident that the week lands in `20-39`, or just narrowing toward the modal bin as the event nears close. The core source-staleness thesis remains testable, but the market has moved against it.
 
+### 2026-05-18T03:25Z price retrace
+
+A later price-move wake marked YES back near the entry level. The daemon payload saw **62.0% YES** after a prior **73.0%** mark; a live check during review showed Gamma at **61.0% YES** with a **60/62** YES book. Relative to the 62.0% entry, that is roughly flat to **+1.0pp aligned CLV** for the NO-side fade, depending on whether the payload or live midpoint is used.
+
+The IMF PortWatch ArcGIS source still only published `chokepoint6` through **2026-05-10**. No May 11-May 17 target-week data was available, and Gamma still showed the market active/open with no UMA resolution status. This retrace weakens the +24h adverse CLV signal but does not resolve the source question; final scoring still waits for PortWatch/Gamma finality.
+
 *(Resolution section added below after the market resolves.)*
