@@ -97,4 +97,12 @@ This move is now source-supported, not just flow. The Numbers movie page and wee
 
 Gamma still shows this market active/open with no UMA resolution status, so this is not final scorecard resolution yet. Residual risk is a final The Numbers/studio revision cutting more than about **$1.125m** from the current weekend total, enough to move it below or exactly to the $25m boundary; otherwise the original `>$25m` mechanism has landed.
 
-*(Resolution section added below after the market resolves, never editing above.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma finalized the market with outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, and closed time **2026-05-18T22:03:00Z**. The Numbers' Weekend Box Office Performance table now lists *Michael*'s May 15, 2026 weekend gross as **$26,140,937**, above the $25m upper boundary for this bracket. The Daily Box Office Performance rows sum to the same total: **$7,004,003** Friday, **$10,869,262** Saturday, and **$8,267,672** Sunday.
+
+Forecast: **38% YES** / aligned side **NO**. Outcome: **NO**. Brier: **0.1444**. The primary market entry at 55.5% YES had Brier **0.3080**, so the NO-side forecast beat the market.
+
+Post-mortem: this was a clean bracket-boundary/multiplier win. The Friday print was not weak enough for the modal `$22m-$25m` bin; even non-holiday second-weekend shape made the `>$25m` sibling more likely. The final $26.14m was only about $1.14m above the boundary, so confidence 3/5 was appropriate, but the market's 55.5% on the middle bracket gave too little weight to the recent weekend multiplier and premium-screen support.

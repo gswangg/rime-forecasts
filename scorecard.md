@@ -1,15 +1,15 @@
 # Scorecard
 
-*Last updated: 2026-05-18T19:27:59+00:00*
+*Last updated: 2026-05-18T22:09:23+00:00*
 
 ## Summary
 
 - Predictions made: 35 (8 v1 + 27 v2/v2.5.x/v3)
-- Resolved: 23
-- Brier score: 0.159
-- Naive primary-venue Brier: 0.301
-- Log loss: 0.473
-- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/3 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/6 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 70-80% bucket: 0/1 YES; 80%+ bucket: 5/5 YES)
+- Resolved: 24
+- Brier score: 0.158
+- Naive primary-venue Brier: 0.302
+- Log loss: 0.474
+- Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/3 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 70-80% bucket: 0/1 YES; 80%+ bucket: 5/5 YES)
 - **Portfolio direction bias (at writing):** 18 below primary venue, 17 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
@@ -70,6 +70,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-05-14 | [Finland Eurovision top 3](./reasoning/2026-05-14-finland-eurovision-2026-top-3.md) | 58% YES | 80.0% YES | NO | 0.336 | 0.640 | Polymarket/UMA finalized NO; Eurovisionworld final results show Finland 6th with 279 points, outside the top 3. Favorite-overpricing fade beat the market, though the absolute forecast still had YES as the modal outcome. |
 | 2026-05-14 | [Finland Eurovision top 5](./reasoning/2026-05-14-finland-eurovision-2026-top-5.md) | 74% YES | 90.5% YES | NO | 0.548 | 0.819 | Polymarket/UMA finalized NO; Eurovisionworld final results show Finland 6th with 279 points, just outside the top 5. NO-side favorite-overpricing fade beat the market, but the high absolute YES forecast was still badly overconfident. |
 | 2026-05-15 | [Trump says "Make America Great Again" this week](./reasoning/2026-05-15-trump-say-make-america-great-again-this-week.md) | 15% YES | 33.5% YES | NO | 0.023 | 0.112 | Polymarket/UMA finalized NO. Exact-phrase/source thesis was right: `MAGA`, `We've made America great again`, Xi's `making America great again`, and written/image uses did not satisfy the verbal exact-term rule. |
+| 2026-05-17 | [Michael 4th weekend box office $22m-$25m](./reasoning/2026-05-17-michael-fourth-weekend-box-office-22m-25m.md) | 38% YES | 55.5% YES | NO | 0.144 | 0.308 | Polymarket/UMA finalized NO after The Numbers listed the May 15-17 weekend at $26.141m, above the $25m boundary. Friday-to-weekend multiplier / sibling `>25m` thesis beat the modal middle bracket. |
 | 2026-05-18 | [MicroStrategy announces >1000 BTC purchase May 12-18](./reasoning/2026-05-18-microstrategy-btc-purchase-may12-may18.md) | 97% YES | 84.65% YES | YES | 0.001 | 0.024 | Polymarket/UMA finalized YES after Strategy's purchase page posted a May 18 row for 24,869 BTC. Saylor-chart + STRC.live size-threshold thesis resolved cleanly; the market carried too much timing/form risk. |
 
 ## Pending predictions
@@ -86,7 +87,6 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-19 | [WTI crude $150 before June](./reasoning/2026-04-19-wti-crude-150-by-june.md) | 5% | 20.5% | — | — | 2026-05-31 | v2 |
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
-| 2026-05-17 | [Michael 4th weekend box office $22m-$25m](./reasoning/2026-05-17-michael-fourth-weekend-box-office-22m-25m.md) | 38% | — | — | 55.5% | 2026-05-18 | v3 |
 | 2026-05-18 | [The Deep dies in The Boys Season 5](./reasoning/2026-05-18-the-deep-dies-the-boys-season-5.md) | 88% | — | — | 74.5% | 2026-05-20 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
