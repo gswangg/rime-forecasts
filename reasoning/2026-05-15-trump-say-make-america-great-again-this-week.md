@@ -93,4 +93,12 @@ Another price-move wake arrived near the end of the market window: daemon payloa
 
 Source-state check: the Sunday **Rededicate 250** event did happen, which weakens my earlier schedule note that Sunday only had executive time / pool-call items. Fox's live page says a Trump prerecorded video aired at the event; its quoted Trump content was a 2 Chronicles 7 passage (`If my people...`) and I found no `Make America Great Again`, `MAGA`, or `great again` hits in the page text. Search snippets around the event likewise point to a prerecorded scripture clip, with one Newsmax snippet saying it was the same footage used during a Bible-reading event last month, which would also be outside the market window if accurate. So the event is a source-risk item, but I still do not see a qualifying exact Trump mention. Residual risk is now mostly a late/full video transcript surfacing before adjudication or UMA treating a written/social/image slogan as verbal, contrary to the rules.
 
-*(Resolution section added below after the market resolves.)*
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma shows the market closed with outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, and closed time **2026-05-18T06:30:04Z**. The source/adjudication path matched the exact-phrase thesis: the market did not count `MAGA`, Trump's May 11 `We've made America great again`, Xi's `making America great again`, or written/image uses. The late Rededicate 250 risk did not produce a qualifying Trump verbal mention of the exact listed term.
+
+Forecast: **15% YES**. Outcome: **NO**. Brier: **0.0225**. The primary market entry at 33.5% YES had Brier **0.1122**, so the exact-phrase NO-side forecast beat the market.
+
+Post-mortem: this was a clean rule/source win. The key was resisting the narrative compression from `MAGA-adjacent Trump week` to the actual resolution contract: a public recorded Trump utterance of the exact phrase `Make America Great Again`. The +24h CLV was noisy because the book was illiquid and wide, but final settlement validated the thesis. For future weekly word markets, keep separating semantic/topic probability from exact qualifying utterance probability, and treat written/social/image slogans as non-events unless the rules explicitly count them.
