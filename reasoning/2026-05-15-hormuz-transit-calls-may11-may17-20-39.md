@@ -103,4 +103,12 @@ Another price-move wake put YES back at **72.0%** after a prior **65.5%** mark, 
 
 The exact source still has not resolved the question. A fresh ArcGIS query for `portid = 'chokepoint6'` still returned latest data only through **2026-05-10** (`[3, 1, 0, 2, 0, 1, 4]` for May 4-May 10, total 11), with no May 11-May 17 target-week days. Gamma remained active/open with no UMA resolution status. This move is therefore market/live-AIS or positioning information, not source finality; the thesis is now clearly losing on CLV but still waits on PortWatch publication.
 
+### 2026-05-19T01:26Z partial retrace / low-tail market collapsed
+
+A new price-move wake marked YES down from a prior **73.5%** daemon mark to **66.5%**. Live review showed Gamma still active/open with no UMA status; Gamma prices were **64/69** YES with outcome midpoint **66.5%**, while the live CLOB book was roughly **65/71** YES (mid **68.0%**) and **29/35** NO. Relative to the 62.0% entry, that is still adverse for the NO-side forecast: **-4.5pp aligned CLV** by payload/Gamma midpoint or about **-6.0pp** by live CLOB midpoint.
+
+The sibling bracket board is now more informative than the single-market move: `<20` is around **0.45%**, `40-59` around **25.5%**, `60-79` around **1.05%**, and `80+` around **0.75%**. That implies traders/live-AIS watchers have almost completely rejected my original low-tail path, with the remaining uncertainty mostly between `20-39` and `40-59`.
+
+The exact source still has not printed target-week data. An explicit ArcGIS query for `portid = 'chokepoint6' AND date >= DATE '2026-05-11'` returned zero features, and the latest available `chokepoint6` record remains **2026-05-10**. So this is a meaningful adverse thesis update, but still not a resolution or scorecard event; final scoring waits for IMF PortWatch publication and Gamma/UMA finality.
+
 *(Resolution section added below after the market resolves.)*
