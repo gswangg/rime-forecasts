@@ -124,8 +124,18 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket price-move alerts suppress books wider than 50pp regardless of move size.
 
+### Manifold is not a validation source
+
+**Observed:** Manifold-only predictions were useful early for calibration practice and backtesting, but they are paper-money markets and do not answer the project's economic tradeability question.
+
+**Lesson:** do not use Manifold as deal flow, a primary venue, or a source that can satisfy the edge/economics gate. Keep legacy Manifold records for historical calibration context only.
+
+**Implementation:** methodology docs now name Kalshi and Polymarket as the only active primary sources. Existing Manifold scripts remain as legacy resolution/backtest helpers, not live source infrastructure.
+
 ## Pending / watchlist
 
 ### Kalshi category quality
 
-Kalshi's public feed includes many multi-leg MVE/parlay markets with poor/no pricing. If actionable-spread filtering is insufficient, explicitly downrank or filter `KXMVE*` tickers unless they have real bid/ask, volume, and a clean resolution rule.
+Kalshi's public feed currently produces no normal candidate flow under the real-money/actionability filters. A 2026-05-19 diagnostic scan of the first 600 open markets found **0** markets passing filters: 320 had no usable YES price, 235 were generic `KXMVE*`/comma-joined multileg sports parlays, 43 were outside the 5%–95% candidate price band, and the remaining two were not actionable/open. The four historical Kalshi candidate wakes were all `KXMVECROSSCATEGORY-*` / `KXMVESPORTSMULTIGAMEEXTENDED-*` multileg products and are now filtered.
+
+If Kalshi remains barren, improve the scanner rather than assuming there is no Kalshi edge: search deeper than the first generic pages, add category/series allowlists for economics/weather/company events, and preserve the current bid/ask/volume/horizon gates.

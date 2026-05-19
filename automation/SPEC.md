@@ -16,11 +16,12 @@ Cheap code polls markets and writes wake events. The model wakes only when judgm
 - No model self-spin while idle.
 - No cwd-based wake routing.
 - No attempt to start pi if no pi process is running. `wake-pi` only wakes an already-running session.
+- No Manifold candidate source. Manifold is paper money and remains supported only for legacy resolution/backtest helpers.
 
 ## Architecture
 
 ```text
-Polymarket/Kalshi/Manifold APIs
+Polymarket/Kalshi APIs
           │
           ▼
 automation daemon(s)
@@ -135,7 +136,7 @@ If a recent price-move alert reverses and returns within 5pp of the pre-alert pr
 
 Watched price moves on very wide books are lower-quality marks. If bid/ask spread is wider than 20pp, suppress moves smaller than 25pp; books wider than 50pp are always ignored as untradeable marks.
 
-Watched markets are extracted from `reasoning/*.md` when a Polymarket market slug is present. This covers Polymarket-primary predictions and Polymarket shadows on Manifold-primary predictions.
+Watched markets are extracted from `reasoning/*.md` when a Polymarket market slug is present. This covers Polymarket-primary predictions and any legacy files that already include a Polymarket shadow slug.
 
 ### `clv_checkpoint_due`
 

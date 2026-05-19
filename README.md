@@ -4,7 +4,7 @@ A validation experiment: can rime (an AI agent) produce forecasting calibration 
 
 ## What this is
 
-rime is an AI agent that makes predictions on real-money and play-money prediction markets (Manifold, Kalshi, Polymarket), with full reasoning written before resolution. This repo is the public ledger.
+rime is an AI agent that makes predictions on real-money prediction markets (Kalshi, Polymarket), with full reasoning written before resolution. Legacy Manifold/paper-money predictions remain in the archive for calibration context, but Manifold is no longer a deal-flow or validation source.
 
 The goal is not to bet yet. The experiment is pundit-style — predictions without capital — to validate whether rime's reasoning produces real edge. If it does, a follow-up project graduates to capitalized positions on Kalshi + Polymarket and subscription publishing. If it doesn't, the idea returns to the archive with documented lessons.
 
@@ -12,10 +12,10 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 
 *As of 2026-05-19.*
 
-- **36 predictions placed; 24 resolved**: 8 v1 baseline, 1 v2 Manifold prediction (WTI crude $150), 1 v2.5.2 Polymarket-primary prediction (Tottenham relegation), and 26 v3 short-horizon Polymarket predictions. Latest new prediction: Target Q1 comparable sales `<-1%` at 30% YES vs 65.5% Polymarket. Current resolved Brier: **0.158** vs primary-venue entry Brier **0.302**.
-- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v4. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, venue-equality principle, CLV checkpoints (+1h/+6h/+24h/close), and a new no-capital shadow participant-signal track for copy-after-delay validation.
+- **Real-money primary score**: 27 Kalshi/Polymarket-primary predictions placed, 23 resolved, 4 pending. Real-money resolved Brier: **0.161** vs primary-venue entry Brier **0.309**. Full historical ledger including legacy paper-money Manifold: 36 predictions placed, 24 resolved, total Brier **0.158** vs entry **0.302**.
+- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v4. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, Kalshi/Polymarket real-money source policy, CLV checkpoints (+1h/+6h/+24h/close), and a new no-capital shadow participant-signal track for copy-after-delay validation.
 - **Back-test (N=9)**: v2.5.1 methodology retrospectively tested on resolved Manifold markets. 6-for-6 prediction wins (+1.63 cumulative Brier advantage), 3-for-3 correct skips. See [`backtest/SUMMARY.md`](./backtest/SUMMARY.md).
-- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Manifold-primary and Polymarket-primary predictions plus Polymarket shadows, [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) reconstructs historical Manifold prices, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events, [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) is the MVP shadow participant-signal daemon, [`scripts/polymarket-participant-score.py`](./scripts/polymarket-participant-score.py) builds conservative wallet score fixtures from bounded public-trade backfills, and [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) creates dry-run order tickets from live Polymarket or manual quotes.
+- **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Polymarket-primary predictions and legacy Manifold files, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events, [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) is the MVP shadow participant-signal daemon, [`scripts/polymarket-participant-score.py`](./scripts/polymarket-participant-score.py) builds conservative wallet score fixtures from bounded public-trade backfills, and [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) creates dry-run order tickets from live Polymarket or manual quotes.
 
 ## Structure
 
@@ -53,8 +53,8 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 - [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) — one-shot or looped Polymarket public-trade observer. Writes `participant_signal_candidate` wakes only when score/economics gates pass; unscored cold-start observations aggregate locally without waking.
 - [`scripts/polymarket-participant-score.py`](./scripts/polymarket-participant-score.py) — bounded wallet backfill scorer. Fetches public wallet trades, marks them against current Gamma prices, subtracts a copy-delay penalty, applies shrinkage, and writes a `--score-fixture` JSON for the participant daemon. This is a triage proxy, not validated edge.
 - [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) — builds dry-run order tickets with side selection, executable price, edge, spread, sizing, and risk-cap checks. It can infer Polymarket slug + forecast from `--reasoning reasoning/<file>.md`. Live submission is intentionally not implemented yet.
-- [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Manifold + Polymarket status, report resolved + pending.
-- [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) — reconstruct a Manifold market's price at any past timestamp via bet-history pagination.
+- [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) — scan all reasoning files, fetch current Polymarket status and legacy Manifold status, report resolved + pending.
+- [`scripts/manifold-price-at.py`](./scripts/manifold-price-at.py) — legacy helper to reconstruct a Manifold market's price at any past timestamp via bet-history pagination. Manifold is no longer a source for new predictions.
 
 ## Validation criteria
 

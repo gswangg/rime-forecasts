@@ -1,16 +1,19 @@
 # Scorecard
 
-*Last updated: 2026-05-19T00:16:05+00:00*
+*Last updated: 2026-05-19T03:16:03+00:00*
 
 ## Summary
 
-- Predictions made: 36 (8 v1 + 28 v2/v2.5.x/v3)
-- Resolved: 24
-- Brier score: 0.158
-- Naive primary-venue Brier: 0.302
+- Real-money primary predictions: 27 Kalshi/Polymarket-primary (23 resolved, 4 pending)
+- Real-money primary Brier score: 0.161
+- Real-money primary-venue Brier: 0.309
+- Full historical ledger: 36 predictions made (8 legacy v1 + 28 v2/v2.5.x/v3), 24 resolved
+- Full historical Brier score: 0.158
+- Full historical primary-venue Brier: 0.302
+- Legacy paper-money Manifold-primary predictions: 9 total (1 resolved, 8 pending), retained for archive/backtest context but excluded from the active source policy going forward.
 - Log loss: 0.474
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/3 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 70-80% bucket: 0/1 YES; 80%+ bucket: 5/5 YES)
-- **Portfolio direction bias (at writing):** 19 below primary venue, 17 above primary venue.
+- **Portfolio direction bias (full historical, at writing):** 19 below primary venue, 17 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 

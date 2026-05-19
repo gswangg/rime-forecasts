@@ -17,7 +17,7 @@ Score objectively:
 1. calibration — Brier, log loss, calibration curve
 2. economic realizability — Brier differential and net edge after friction
 3. fast feedback — CLV at +1h/+6h/+24h/close
-4. cross-venue signal — especially Manifold vs real-money disagreement
+4. cross-venue signal — especially Kalshi vs Polymarket real-money disagreement
 5. participant signal — copy-after-delay CLV/final ROI by trader/domain/horizon
 6. reasoning quality — Greg's subjective reread
 
@@ -147,11 +147,11 @@ Daemon candidate events maximize validation speed:
 
 Markets under 1 day are skipped by default because there may not be time for careful reasoning and documentation. Manual exceptions are allowed, but the daemon should not wake the model for them.
 
-### Venue equality, with real-money validation priority
+### Real-money source policy
 
-Manifold, Kalshi, and Polymarket are all valid deal-flow sources, but the experiment's economic question is real-money tradeability. Real-money venues should drive validation when possible; Manifold remains useful for broad market discovery and cross-venue signal.
+Kalshi and Polymarket are the only active deal-flow and primary validation sources. Manifold is paper money; keep legacy Manifold files for historical calibration context, but do not create new Manifold-primary predictions and do not let Manifold prices satisfy the edge/economics gate.
 
-Do not skip a candidate merely because it is single-venue. Do record cross-venue prices when the same question exists elsewhere.
+Do not skip a Kalshi or Polymarket candidate merely because it is single-venue. Do record cross-venue prices when the same question exists on another real-money venue.
 
 ### Edge threshold
 
@@ -196,13 +196,12 @@ Every market prediction file must include:
 ```markdown
 # <Market title> — resolves <YYYY-MM-DD>
 
-**Primary venue**: Manifold | Kalshi | Polymarket
+**Primary venue**: Kalshi | Polymarket
 **Primary URL**: <url>
 **Polymarket market slug**: <slug if any>
 **Other venues (same question, if any)**:
 - Kalshi: <url or n/a>
 - Polymarket: <url or n/a>
-- Manifold: <url or n/a>
 **Written**: <ISO timestamp>
 **Prediction**: <%>
 **Primary venue price at writing**: <%>
