@@ -68,4 +68,10 @@ The +1h checkpoint was flat: daemon payload marked YES at **74.5%**, unchanged f
 
 This is not positive confirmation yet. It says the market has not newly repriced the leak/setup thesis in the first hour after writing; the edge remains mainly my interpretation of the public/SEO leak complex and episode-7 setup, not new post-entry information.
 
+### 2026-05-19T01:41Z +6h checkpoint
+
+The +6h checkpoint was modestly adverse: daemon payload and live Gamma both marked YES at **71.5%** on a **71/72 YES** book, down from the 74.5% entry. For the YES-side forecast this is **-3.0pp aligned CLV** (raw YES -3.0pp). Live CLOB showed the same tight book, with NO **28/29**.
+
+No credible new finale/source evidence surfaced during review. The market is slightly less confident in the public leak/setup thesis, but this is not a large enough move to invalidate it before the episode; it is a mild warning that the original 88% forecast may have over-weighted derivative spoiler articles relative to the market's existing incorporation.
+
 *(Resolution section added below after the market resolves, never editing above.)*
