@@ -17,13 +17,23 @@ from automation.options import (
     contract_quote_filter_reason,
     evaluate_structure_edge,
     filter_contracts,
+    find_opportunities_for_thesis,
+    generate_structures_for_thesis,
     load_option_chain_snapshot,
+    model_fair_value_from_thesis,
     normalize_contract,
+    normalize_thesis,
+    option_markout,
+    option_ticket_from_event,
+    options_ledger_row,
     parse_option_chain_snapshot,
+    payoff_at_price,
     risk_neutral_probability_above,
     risk_neutral_probability_between,
     single_leg_spread_limit,
     time_to_expiry_years,
+    add_option_markout,
+    write_option_ticket,
 )
 
 
@@ -342,6 +352,106 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertTrue(any("max loss" in reason for reason in blocked.blocked_reasons))
         self.assertTrue(any("probability margin" in reason for reason in blocked.blocked_reasons))
 
+    def test_normalize_thesis_and_generate_upside_structures(self):
+        contracts = [
+            normalize_contract(raw_contract(symbol="NVDA260522C00245000", strike=245, bid=2.00, ask=2.10)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00250000", strike=250, bid=1.20, ask=1.28)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00260000", strike=260, bid=0.42, ask=0.48)),
+            normalize_contract(raw_contract(symbol="NVDA260522P00220000", right="put", strike=220, bid=2.30, ask=2.40)),
+        ]
+        thesis = normalize_thesis(
+            {
+                "id": "nvda-guidance-upside",
+                "direction": "up",
+                "targetPrice": 260,
+                "targetProbability": 0.35,
+                "eventDate": "2026-05-22",
+                "maxLossCap": 150,
+                "minRewardRisk": 2.0,
+                "minEdgePctOfRisk": 0.20,
+                "allowedStructures": ["debit_vertical", "long_call"],
+                "thesis": "guidance is underpriced",
+            }
+        )
+        structures = generate_structures_for_thesis(
+            contracts,
+            thesis,
+            now=dt("2026-05-19T03:25:00Z"),
+            config=OptionQuoteFilterConfig(),
+        )
+        self.assertTrue(any(s.structure_type == "long_call" for s in structures))
+        self.assertTrue(any(s.structure_type == "debit_vertical" for s in structures))
+        self.assertTrue(all(s.right == "call" for s in structures))
+        self.assertTrue(all(s.expiry.isoformat() == "2026-05-22" for s in structures))
+
+    def test_payoff_and_model_fair_value_from_thesis(self):
+        long_call = normalize_contract(raw_contract(symbol="NVDA260522C00250000", strike=250, bid=1.20, ask=1.28))
+        short_call = normalize_contract(raw_contract(symbol="NVDA260522C00260000", strike=260, bid=0.42, ask=0.48))
+        structure = build_debit_vertical(long_call, short_call)
+        thesis = normalize_thesis({"id": "t", "direction": "up", "targetPrice": 260, "targetProbability": 0.35, "maxLossCap": 100})
+        self.assertAlmostEqual(payoff_at_price(structure, 260), 1000.0)
+        fair, payoff, rr = model_fair_value_from_thesis(structure, thesis)
+        self.assertAlmostEqual(payoff, 1000.0)
+        self.assertAlmostEqual(fair, 350.0)
+        self.assertAlmostEqual(rr, (1000.0 - 86.0) / 86.0)
+
+    def test_find_opportunities_for_thesis_ranks_asymmetric_debit_verticals(self):
+        contracts = [
+            normalize_contract(raw_contract(symbol="NVDA260522C00245000", strike=245, bid=2.00, ask=2.10)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00250000", strike=250, bid=1.20, ask=1.28)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00260000", strike=260, bid=0.42, ask=0.48)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00270000", strike=270, bid=0.12, ask=0.16)),
+        ]
+        thesis = normalize_thesis(
+            {
+                "id": "nvda-upside",
+                "direction": "up",
+                "targetPrice": 260,
+                "targetProbability": 0.35,
+                "eventDate": "2026-05-22",
+                "maxLossCap": 150,
+                "minRewardRisk": 3.0,
+                "minEdgePctOfRisk": 0.20,
+                "minProbabilityMargin": 0.05,
+                "allowedStructures": ["debit_vertical", "long_call"],
+            }
+        )
+        opportunities = find_opportunities_for_thesis(
+            contracts,
+            thesis,
+            now=dt("2026-05-19T03:25:00Z"),
+            config=OptionQuoteFilterConfig(),
+        )
+        self.assertGreaterEqual(len(opportunities), 1)
+        self.assertTrue(all(opp.evaluation.passes for opp in opportunities))
+        self.assertTrue(all(opp.structure.max_loss <= 150 for opp in opportunities if opp.structure.max_loss is not None))
+        self.assertGreaterEqual(opportunities[0].score, opportunities[-1].score)
+        self.assertGreater(opportunities[0].reward_risk, 3.0)
+        self.assertEqual(opportunities[0].thesis.id, "nvda-upside")
+
+    def test_find_opportunities_for_downside_thesis_uses_puts(self):
+        contracts = [
+            normalize_contract(raw_contract(symbol="NVDA260522P00220000", right="put", strike=220, bid=2.30, ask=2.40)),
+            normalize_contract(raw_contract(symbol="NVDA260522P00210000", right="put", strike=210, bid=1.10, ask=1.18)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00250000", right="call", strike=250, bid=1.20, ask=1.28)),
+        ]
+        thesis = normalize_thesis(
+            {
+                "id": "nvda-downside",
+                "direction": "down",
+                "targetPrice": 210,
+                "targetProbability": 0.40,
+                "eventDate": "2026-05-22",
+                "maxLossCap": 150,
+                "minRewardRisk": 3.0,
+                "allowedStructures": ["debit_vertical"],
+            }
+        )
+        opportunities = find_opportunities_for_thesis(contracts, thesis, now=dt("2026-05-19T03:25:00Z"))
+        self.assertEqual(len(opportunities), 1)
+        self.assertEqual(opportunities[0].structure.right, "put")
+        self.assertEqual(opportunities[0].structure.structure_type, "debit_vertical")
+
     def options_fixture(self):
         return {
             "chain": {
@@ -356,6 +466,22 @@ class OptionsCoreTests(unittest.TestCase):
                     raw_contract(symbol="NVDA260522C00350000", strike=350, bid=0.01, ask=0.04, volume=10, open_interest=20),
                 ],
             },
+            "theses": [
+                {
+                    "id": "nvda-generated-upside",
+                    "direction": "up",
+                    "targetPrice": 260,
+                    "targetProbability": 0.35,
+                    "eventDate": "2026-05-22",
+                    "maxLossCap": 100,
+                    "minRewardRisk": 3.0,
+                    "allowedStructures": ["debit_vertical"],
+                    "thesis": "generated fixture upside thesis",
+                    "catalyst": "earnings guidance",
+                    "plannedExit": "post-event mark",
+                    "falsifier": "guide unchanged",
+                }
+            ],
             "signals": [
                 {
                     "id": "nvda-upside-spread",
@@ -380,8 +506,10 @@ class OptionsCoreTests(unittest.TestCase):
         }
 
     def test_options_daemon_generates_fixture_candidate_event_and_rejections(self):
+        fixture = self.options_fixture()
+        fixture["theses"] = []
         events, rejections = options_daemon.generate_options_events(
-            fixture=self.options_fixture(),
+            fixture=fixture,
             now=dt("2026-05-19T03:25:00Z"),
             session_id="session-123",
             state={"emitted_signals": {}},
@@ -405,9 +533,34 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(rejections[0]["signalId"], "bad-lottery-ticket")
         self.assertIn("leg quote filter failed", rejections[0]["reason"])
 
-    def test_options_daemon_dedupes_emitted_signals(self):
+    def test_options_daemon_generates_events_from_thesis_search(self):
+        fixture = self.options_fixture()
+        fixture["signals"] = []
         events, rejections = options_daemon.generate_options_events(
-            fixture=self.options_fixture(),
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.20,
+            min_probability_margin=0.05,
+            max_loss_cap=100.0,
+            max_events=5,
+        )
+        self.assertGreaterEqual(len(events), 1)
+        event = events[0]
+        self.assertEqual(event["type"], "options_signal_candidate")
+        self.assertEqual(event["payload"]["sourceMode"], "thesis_search")
+        self.assertEqual(event["payload"]["thesis"]["id"], "nvda-generated-upside")
+        self.assertEqual(event["payload"]["structure"]["structure_type"], "debit_vertical")
+        self.assertTrue(event["payload"]["evaluation"]["passes"])
+        self.assertGreater(event["payload"]["rewardRisk"], 3.0)
+
+    def test_options_daemon_dedupes_emitted_signals(self):
+        fixture = self.options_fixture()
+        fixture["theses"] = []
+        events, rejections = options_daemon.generate_options_events(
+            fixture=fixture,
             now=dt("2026-05-19T03:25:00Z"),
             session_id="session-123",
             state={"emitted_signals": {"nvda-upside-spread": {"event_id": "old"}}},
@@ -420,9 +573,50 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertTrue(any(row.get("reason") == "already emitted" for row in rejections))
 
-    def test_options_daemon_dry_run_cli_prints_event(self):
+    def test_option_ticket_artifact_markout_and_ledger_row(self):
+        fixture = self.options_fixture()
+        fixture["signals"] = []
+        events, _ = options_daemon.generate_options_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.20,
+            min_probability_margin=0.05,
+            max_loss_cap=100.0,
+            max_events=1,
+        )
+        ticket = option_ticket_from_event(events[0], now=dt("2026-05-19T03:25:00Z"))
+        self.assertEqual(ticket["status"], "draft")
+        self.assertFalse(ticket["live_submit_allowed"])
+        self.assertEqual(ticket["source_mode"], "thesis_search")
+        self.assertEqual(ticket["underlying"], "NVDA")
+        self.assertIn("entry", ticket)
+        mark = option_markout(
+            ticket,
+            checkpoint="1h",
+            mark_value=120.0,
+            underlying_price=252.0,
+            now=dt("2026-05-19T04:25:00Z"),
+            notes="favorable early mark",
+        )
+        self.assertAlmostEqual(mark["pnl"], 34.0)
+        updated = add_option_markout(ticket, mark)
+        self.assertEqual(updated["status"], "paper_open")
+        self.assertIn("1h", updated["markouts"])
+        row = options_ledger_row(updated)
+        self.assertIn("NVDA", row)
+        self.assertIn("$120.00", row)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_option_ticket(updated, tmp)
+            saved = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(saved["ticket_id"], updated["ticket_id"])
+
+    def test_options_daemon_dry_run_cli_prints_event_and_can_write_tickets(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "fixture.json"
+            ticket_dir = Path(tmp) / "tickets"
             path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
             # Exercise parser/poll path without wake writes or state writes.
             parser = options_daemon.build_parser()
@@ -432,14 +626,21 @@ class OptionsCoreTests(unittest.TestCase):
                 "--dry-run",
                 "--now",
                 "2026-05-19T03:25:00Z",
+                "--write-tickets",
+                "--ticket-dir",
+                str(ticket_dir),
             ])
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 count = options_daemon.poll_once(args, session_id=None)
-        self.assertEqual(count, 1)
+            ticket_files = sorted(ticket_dir.glob("*.json"))
+        self.assertEqual(count, 2)
         payload = json.loads(output.getvalue())
-        self.assertEqual(payload["eventCount"], 1)
-        self.assertEqual(payload["events"][0]["payload"]["signalId"], "nvda-upside-spread")
+        self.assertEqual(payload["eventCount"], 2)
+        self.assertEqual(payload["events"][0]["payload"]["sourceMode"], "thesis_search")
+        self.assertEqual(payload["events"][1]["payload"]["signalId"], "nvda-upside-spread")
+        self.assertEqual(payload["ticketsWritten"], 2)
+        self.assertEqual(len(ticket_files), 2)
 
 
 if __name__ == "__main__":

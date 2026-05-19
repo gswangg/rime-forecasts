@@ -22,6 +22,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from automation.config import DEFAULT_WAKE_ROOT, require_session_id
 from automation.options import (
     OptionContract,
+    OptionOpportunity,
     OptionQuoteFilterConfig,
     OptionStructure,
     build_credit_vertical,
@@ -29,7 +30,11 @@ from automation.options import (
     build_long_option,
     contract_quote_filter_reason,
     evaluate_structure_edge,
+    find_opportunities_for_thesis,
+    normalize_thesis,
+    option_ticket_from_event,
     parse_option_chain_snapshot,
+    write_option_ticket,
 )
 from automation.state import save_state
 from automation.timeutil import isoformat_z, parse_iso, utcnow
@@ -52,6 +57,9 @@ def load_fixture(path: Path) -> dict[str, Any]:
     signals = data.get("signals", [])
     if not isinstance(signals, list):
         raise OptionsDaemonError("options fixture signals must be a list")
+    theses = data.get("theses", [])
+    if not isinstance(theses, list):
+        raise OptionsDaemonError("options fixture theses must be a list")
     return data
 
 
@@ -98,12 +106,19 @@ def build_structure_from_signal(signal: dict[str, Any], symbols: dict[str, Optio
     raise OptionsDaemonError(f"unsupported option structure: {structure_type!r}")
 
 
+def _structure_leg_part(structure: OptionStructure) -> str:
+    return "-".join(f"{leg.quantity}:{leg.contract.symbol}" for leg in structure.legs)
+
+
 def _signal_id(signal: dict[str, Any], structure: OptionStructure) -> str:
     explicit = signal.get("id") or signal.get("signalId")
     if explicit:
         return safe_part(str(explicit), max_len=80)
-    leg_part = "-".join(f"{leg.quantity}:{leg.contract.symbol}" for leg in structure.legs)
-    return safe_part(f"{structure.underlying}:{structure.structure_type}:{leg_part}", max_len=80)
+    return safe_part(f"{structure.underlying}:{structure.structure_type}:{_structure_leg_part(structure)}", max_len=80)
+
+
+def _opportunity_signal_id(opportunity: OptionOpportunity) -> str:
+    return safe_part(f"{opportunity.thesis.id}:{opportunity.structure.structure_type}:{_structure_leg_part(opportunity.structure)}", max_len=80)
 
 
 def _event_id(signal_id: str, now) -> str:
@@ -120,11 +135,23 @@ def _prompt(signal: dict[str, Any], structure: OptionStructure, edge_pct: float 
     )
 
 
+def _opportunity_prompt(opportunity: OptionOpportunity) -> str:
+    edge_pct = opportunity.evaluation.edge_pct_of_risk
+    edge_text = "unknown edge" if edge_pct is None else f"{edge_pct * 100:.1f}% of max risk model edge"
+    return (
+        f"Evaluate this generated shadow options candidate for {opportunity.structure.underlying} "
+        f"({opportunity.structure.structure_type}, {edge_text}, reward/risk {opportunity.reward_risk}). "
+        "Use automation/OPTIONS_SPEC.md. If useful, update options-ledger.md/journal; no live order. "
+        f"Thesis: {opportunity.thesis.thesis}"
+    )
+
+
 def _signal_payload(signal: dict[str, Any], structure: OptionStructure, evaluation, leg_filter_reasons: list[dict[str, Any]]) -> dict[str, Any]:
     signal_id = _signal_id(signal, structure)
     return {
         "signalId": signal_id,
         "underlying": structure.underlying,
+        "sourceMode": "signal",
         "structure": structure.to_dict(),
         "evaluation": evaluation.to_dict(),
         "thesis": signal.get("thesis"),
@@ -135,6 +162,34 @@ def _signal_payload(signal: dict[str, Any], structure: OptionStructure, evaluati
         "legFilterReasons": leg_filter_reasons,
         "dedupeKey": f"options_signal:{signal_id}",
     }
+
+
+def _opportunity_payload(opportunity: OptionOpportunity, leg_filter_reasons: list[dict[str, Any]]) -> dict[str, Any]:
+    signal_id = _opportunity_signal_id(opportunity)
+    return {
+        "signalId": signal_id,
+        "underlying": opportunity.structure.underlying,
+        "sourceMode": "thesis_search",
+        "thesis": opportunity.thesis.to_dict(),
+        "structure": opportunity.structure.to_dict(),
+        "evaluation": opportunity.evaluation.to_dict(),
+        "modelPayoffIfHit": opportunity.model_payoff_if_hit,
+        "rewardRisk": opportunity.reward_risk,
+        "score": opportunity.score,
+        "catalyst": opportunity.thesis.catalyst,
+        "plannedExit": opportunity.thesis.planned_exit,
+        "falsifier": opportunity.thesis.falsifier,
+        "legFilterReasons": leg_filter_reasons,
+        "dedupeKey": f"options_signal:{signal_id}",
+    }
+
+
+def _leg_filter_reasons(structure: OptionStructure, *, now, config: OptionQuoteFilterConfig) -> list[dict[str, Any]]:
+    reasons: list[dict[str, Any]] = []
+    for leg in structure.legs:
+        ok, reason = contract_quote_filter_reason(leg.contract, now=now, config=config)
+        reasons.append({"symbol": leg.contract.symbol, "ok": ok, "reason": reason})
+    return reasons
 
 
 def generate_options_events(
@@ -155,6 +210,42 @@ def generate_options_events(
     events: list[dict[str, Any]] = []
     rejections: list[dict[str, Any]] = []
 
+    for raw_thesis in fixture.get("theses", []):
+        if len(events) >= max_events:
+            break
+        if not isinstance(raw_thesis, dict):
+            rejections.append({"thesis": raw_thesis, "reason": "thesis must be an object"})
+            continue
+        try:
+            thesis = normalize_thesis(raw_thesis)
+            opportunities = find_opportunities_for_thesis(snapshot.contracts, thesis, now=now, config=config)
+        except Exception as exc:
+            rejections.append({"thesis": raw_thesis.get("id") if isinstance(raw_thesis, dict) else None, "reason": str(exc)})
+            continue
+        if not opportunities:
+            rejections.append({"thesisId": thesis.id, "reason": "no generated structure passed gates"})
+            continue
+        for opportunity in opportunities[: max(0, max_events - len(events))]:
+            signal_id = _opportunity_signal_id(opportunity)
+            if signal_id in state.get("emitted_signals", {}):
+                rejections.append({"signalId": signal_id, "reason": "already emitted"})
+                continue
+            leg_reasons = _leg_filter_reasons(opportunity.structure, now=now, config=config)
+            payload = _opportunity_payload(opportunity, leg_reasons)
+            event = build_wake_event(
+                event_id=_event_id(signal_id, now),
+                session_id=session_id,
+                ts=isoformat_z(now),
+                event_type="options_signal_candidate",
+                priority=65,
+                prompt=_opportunity_prompt(opportunity),
+                payload=payload,
+                source=SOURCE,
+            )
+            events.append(event)
+            if len(events) >= max_events:
+                break
+
     for raw_signal in fixture.get("signals", []):
         if len(events) >= max_events:
             break
@@ -172,13 +263,8 @@ def generate_options_events(
             rejections.append({"signalId": signal_id, "reason": "already emitted"})
             continue
 
-        leg_reasons: list[dict[str, Any]] = []
-        leg_ok = True
-        for leg in structure.legs:
-            ok, reason = contract_quote_filter_reason(leg.contract, now=now, config=config)
-            leg_reasons.append({"symbol": leg.contract.symbol, "ok": ok, "reason": reason})
-            leg_ok = leg_ok and ok
-        if not leg_ok:
+        leg_reasons = _leg_filter_reasons(structure, now=now, config=config)
+        if not all(row["ok"] for row in leg_reasons):
             rejections.append({"signalId": signal_id, "reason": "leg quote filter failed", "legFilterReasons": leg_reasons})
             continue
 
@@ -261,6 +347,13 @@ def poll_once(args, *, session_id: str | None) -> int:
         max_events=args.max_events,
     )
 
+    ticket_paths: list[str] = []
+    if args.write_tickets:
+        for event in events:
+            ticket = option_ticket_from_event(event, now=now, status=args.ticket_status)
+            path = write_option_ticket(ticket, args.ticket_dir)
+            ticket_paths.append(str(path))
+
     if args.dry_run:
         print(
             json.dumps(
@@ -271,6 +364,8 @@ def poll_once(args, *, session_id: str | None) -> int:
                     "eventCount": len(events),
                     "rejections": rejections,
                     "rejectionCount": len(rejections),
+                    "ticketPaths": ticket_paths,
+                    "ticketsWritten": len(ticket_paths),
                 },
                 indent=2,
                 sort_keys=True,
@@ -285,7 +380,7 @@ def poll_once(args, *, session_id: str | None) -> int:
         written += 1
     mark_options_events_emitted(state, events, now=now)
     save_state(args.state_path, state)
-    print(json.dumps({"ts": isoformat_z(now), "eventsWritten": written, "rejections": len(rejections)}, sort_keys=True))
+    print(json.dumps({"ts": isoformat_z(now), "eventsWritten": written, "rejections": len(rejections), "ticketsWritten": len(ticket_paths)}, sort_keys=True))
     return written
 
 
@@ -301,6 +396,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval-sec", type=int, default=900, help="loop interval seconds (default: 900)")
     parser.add_argument("--now", help="override current ISO timestamp for deterministic tests")
     parser.add_argument("--max-events", type=int, default=5, help="max events emitted per poll (default: 5)")
+    parser.add_argument("--write-tickets", action="store_true", help="write dry-run option ticket JSON artifacts for emitted candidates")
+    parser.add_argument("--ticket-dir", type=Path, default=Path("execution/options-tickets"), help="option ticket artifact directory")
+    parser.add_argument("--ticket-status", choices=["draft", "blocked", "paper_open", "paper_closed"], default="draft")
 
     filters = parser.add_argument_group("quote filters")
     filters.add_argument("--allow-underlying", action="append", help="allow only this underlying; repeatable")

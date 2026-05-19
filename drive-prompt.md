@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.2 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.3 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -9,6 +9,7 @@
 - *v4 (2026-04-30): add shadow participant intelligence. Track wallets/traders as noisy signals, simulate copy-after-delay economics, and score participant CLV/final results. No capital allocation and no live copy execution.*
 - *v4.1 (2026-05-19): add shadow-only listed-options expansion. Options chains can be used for implied distributions and paper options signals; no live options trading without broker approval, explicit policy, and reconciliation.*
 - *v4.2 (2026-05-19): Greg requested options funnel buildout. Prediction-market wake daemons are paused; AC work should prioritize the shadow options opportunity system.*
+- *v4.3 (2026-05-19): next options-build phase. Add thesis-to-structure search, dry-run options tickets, provider interfaces, and CLV/ledger markouts while keeping prediction-market daemons paused.*
 
 ## Goal
 
@@ -90,7 +91,7 @@ Participant event handling:
 - `participant_clv_checkpoint_due`: update participant-ledger CLV for the simulated copy entry.
 - `participant_resolution_changed`: update participant-ledger final outcome and any trader scorecard summaries.
 
-Options event handling is shadow-only until implemented:
+Options event handling remains shadow-only:
 
 - `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. Write to `options-ledger.md` only if useful; do not mix options P/L into prediction-market Brier.
 - `options_clv_checkpoint_due`: update `options-ledger.md` with mark-to-market P/L, underlying move, IV/Greek changes if available, and quote-delay caveats.
@@ -107,7 +108,7 @@ If this prompt is invoked without a wake event and without an AC task, do not pe
 
 ## Starting daemons
 
-Prediction-market daemons are intentionally paused during v4.2 options-build mode. Do not restart `scripts/polymarket-daemon.py` or `scripts/kalshi-daemon.py` unless Greg asks.
+Prediction-market daemons are intentionally paused during v4.3 options-build mode. Do not restart `scripts/polymarket-daemon.py` or `scripts/kalshi-daemon.py` unless Greg asks.
 
 Requires an explicit pi session id. No cwd/latest-session fallback.
 
@@ -297,10 +298,12 @@ Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events and da
 - `automation/SPEC.md`
 - `automation/PARTICIPANT_SPEC.md` when participant-related
 - `automation/LESSONS.md`
+- `automation/OPTIONS_SPEC.md` when options-related
 - Relevant `reasoning/*.md`
 - `scorecard.md`
 - `clv-ledger.md`
 - `participant-ledger.md` when participant-related
+- `options-ledger.md` when options-related
 - `journal.jsonl` tail
 
 ## Find-work on AC drain
@@ -309,13 +312,15 @@ When AC injects this prompt because the queue is empty:
 
 1. Check for unprocessed wake events only if they were explicitly delivered as `[wake:<id>]`; do not scan wake inbox manually as a polling substitute.
 2. Inspect `git status --short` and recent `journal.jsonl` tail.
-3. If the v4.2 options scaffold is incomplete, push one concrete next task to AC and execute it. Incomplete means any of:
-   - `automation/options.py` missing schema/parser/filter/analytics support
-   - `tests/test_options.py` missing or failing
-   - `scripts/options-daemon.py` missing fixture dry-run support
+3. If the v4.3 options scaffold is incomplete, push one concrete next task to AC and execute it. Incomplete means any of:
+   - thesis fixtures cannot auto-generate candidate long/debit-vertical structures from target/move/probability assumptions
+   - `scripts/options-daemon.py` only handles hand-authored structures and not thesis-driven structure search
+   - no dry-run options ticket artifact exists for accepted shadow candidates
+   - no CLV/markout helper exists for +1h/+6h/+24h option marks
+   - provider interfaces are not documented or code-shaped enough to plug in a real chain source behind local credentials
    - `automation/OPTIONS_SPEC.md`, `options-ledger.md`, or `execution/policy.yaml.example` stale relative to implementation
    - tests fail
-4. If the options scaffold is complete and committed/pushed, call `ac off` and stop.
+4. If the v4.3 options scaffold is complete and committed/pushed, call `ac off` and stop.
 
 ## Post-validation path
 

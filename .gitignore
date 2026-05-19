@@ -14,5 +14,6 @@ __pycache__/
 automation/state/
 automation/events/
 execution/tickets/
+execution/options-tickets/
 execution/policy.yaml
 .pi/wake/

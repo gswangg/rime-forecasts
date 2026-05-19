@@ -5,12 +5,15 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 import json
 import math
+import re
 from typing import Any, Iterable, Literal
 
 from .timeutil import isoformat_z, parse_iso
 
 OptionRight = Literal["call", "put"]
 OptionStructureType = Literal["long_call", "long_put", "debit_vertical", "credit_vertical"]
+OptionThesisDirection = Literal["up", "down"]
+OptionTicketStatus = Literal["draft", "blocked", "paper_open", "paper_closed"]
 
 
 @dataclass(frozen=True)
@@ -178,6 +181,63 @@ class OptionEdgeEvaluation:
             "breakeven_probability": self.breakeven_probability,
             "passes": self.passes,
             "blocked_reasons": list(self.blocked_reasons),
+        }
+
+
+@dataclass(frozen=True)
+class OptionThesis:
+    id: str
+    direction: OptionThesisDirection
+    target_price: float
+    target_probability: float
+    event_date: date | None
+    max_loss_cap: float
+    min_reward_risk: float
+    min_edge_pct_of_risk: float
+    min_probability_margin: float | None
+    allowed_structures: tuple[OptionStructureType, ...]
+    thesis: str
+    catalyst: str | None = None
+    planned_exit: str | None = None
+    falsifier: str | None = None
+    raw: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "direction": self.direction,
+            "target_price": self.target_price,
+            "target_probability": self.target_probability,
+            "event_date": self.event_date.isoformat() if self.event_date else None,
+            "max_loss_cap": self.max_loss_cap,
+            "min_reward_risk": self.min_reward_risk,
+            "min_edge_pct_of_risk": self.min_edge_pct_of_risk,
+            "min_probability_margin": self.min_probability_margin,
+            "allowed_structures": list(self.allowed_structures),
+            "thesis": self.thesis,
+            "catalyst": self.catalyst,
+            "planned_exit": self.planned_exit,
+            "falsifier": self.falsifier,
+        }
+
+
+@dataclass(frozen=True)
+class OptionOpportunity:
+    thesis: OptionThesis
+    structure: OptionStructure
+    evaluation: OptionEdgeEvaluation
+    model_payoff_if_hit: float | None
+    reward_risk: float | None
+    score: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "thesis": self.thesis.to_dict(),
+            "structure": self.structure.to_dict(),
+            "evaluation": self.evaluation.to_dict(),
+            "model_payoff_if_hit": self.model_payoff_if_hit,
+            "reward_risk": self.reward_risk,
+            "score": self.score,
         }
 
 
@@ -575,6 +635,7 @@ def _net_greek(legs: Iterable[OptionLeg], attr: str) -> float | None:
         value = getattr(leg.contract, attr)
         if value is None:
             continue
+        # Short option positions have opposite Greek exposure from the quoted long-contract Greek.
         total += leg.quantity * value
         seen = True
     return total if seen else None
@@ -762,3 +823,407 @@ def evaluate_structure_edge(
         passes=not blocked,
         blocked_reasons=tuple(blocked),
     )
+
+
+def normalize_thesis(raw: dict[str, Any]) -> OptionThesis:
+    if not isinstance(raw, dict):
+        raise TypeError("option thesis must be a mapping")
+    thesis_id = str(raw.get("id") or raw.get("thesisId") or "").strip()
+    if not thesis_id:
+        raise ValueError("option thesis id is required")
+    direction = str(raw.get("direction") or "").strip().lower()
+    if direction not in {"up", "down"}:
+        raise ValueError("option thesis direction must be 'up' or 'down'")
+    target_price = _float_or_none(_first(raw.get("targetPrice"), raw.get("target_price"), raw.get("target")))
+    if target_price is None or target_price <= 0:
+        raise ValueError("option thesis target price must be positive")
+    target_probability = _float_or_none(_first(raw.get("targetProbability"), raw.get("target_probability"), raw.get("probability")))
+    if target_probability is None or not (0 < target_probability < 1):
+        raise ValueError("option thesis target probability must be inside (0, 1)")
+    event_date_raw = _first(raw.get("eventDate"), raw.get("event_date"), raw.get("expiry"))
+    event_date = _parse_expiry(event_date_raw) if event_date_raw else None
+    allowed_raw = raw.get("allowedStructures") or raw.get("allowed_structures") or ("debit_vertical", "long_call", "long_put")
+    if isinstance(allowed_raw, str):
+        allowed_values = (allowed_raw,)
+    else:
+        allowed_values = tuple(allowed_raw)
+    allowed: list[OptionStructureType] = []
+    for value in allowed_values:
+        text = str(value).strip().lower()
+        if text not in {"long_call", "long_put", "debit_vertical", "credit_vertical"}:
+            raise ValueError(f"unsupported allowed structure: {text!r}")
+        allowed.append(text)  # type: ignore[arg-type]
+    return OptionThesis(
+        id=thesis_id,
+        direction=direction,  # type: ignore[arg-type]
+        target_price=target_price,
+        target_probability=target_probability,
+        event_date=event_date,
+        max_loss_cap=float(_first(raw.get("maxLossCap"), raw.get("max_loss_cap"), 100.0)),
+        min_reward_risk=float(_first(raw.get("minRewardRisk"), raw.get("min_reward_risk"), 2.0)),
+        min_edge_pct_of_risk=float(_first(raw.get("minEdgePctOfRisk"), raw.get("min_edge_pct_of_risk"), 0.20)),
+        min_probability_margin=(
+            float(_first(raw.get("minProbabilityMargin"), raw.get("min_probability_margin")))
+            if _first(raw.get("minProbabilityMargin"), raw.get("min_probability_margin")) is not None
+            else 0.05
+        ),
+        allowed_structures=tuple(allowed),
+        thesis=str(raw.get("thesis") or raw.get("mechanism") or thesis_id),
+        catalyst=str(raw.get("catalyst")) if raw.get("catalyst") is not None else None,
+        planned_exit=str(_first(raw.get("plannedExit"), raw.get("planned_exit"))) if _first(raw.get("plannedExit"), raw.get("planned_exit")) is not None else None,
+        falsifier=str(raw.get("falsifier")) if raw.get("falsifier") is not None else None,
+        raw=dict(raw),
+    )
+
+
+def payoff_at_price(structure: OptionStructure, underlying_price: float) -> float:
+    total = 0.0
+    for leg in structure.legs:
+        contract = leg.contract
+        if contract.right == "call":
+            intrinsic = max(0.0, underlying_price - contract.strike)
+        else:
+            intrinsic = max(0.0, contract.strike - underlying_price)
+        total += leg.quantity * intrinsic * contract.multiplier
+    return max(0.0, total)
+
+
+def model_fair_value_from_thesis(structure: OptionStructure, thesis: OptionThesis) -> tuple[float, float | None, float | None]:
+    payoff_if_hit = payoff_at_price(structure, thesis.target_price)
+    model_fair_value = thesis.target_probability * payoff_if_hit
+    reward_risk = None
+    if structure.max_loss is not None and structure.max_loss > 0:
+        reward_risk = (payoff_if_hit - structure.max_loss) / structure.max_loss
+    return model_fair_value, payoff_if_hit, reward_risk
+
+
+def _candidate_contracts_for_thesis(
+    contracts: Iterable[OptionContract],
+    thesis: OptionThesis,
+    *,
+    now: datetime,
+    config: OptionQuoteFilterConfig,
+) -> tuple[OptionContract, ...]:
+    right: OptionRight = "call" if thesis.direction == "up" else "put"
+    candidates: list[OptionContract] = []
+    for contract in contracts:
+        if contract.right != right:
+            continue
+        if thesis.event_date is not None and contract.expiry != thesis.event_date:
+            continue
+        ok, _ = contract_quote_filter_reason(contract, now=now, config=config)
+        if ok:
+            candidates.append(contract)
+    return tuple(sorted(candidates, key=lambda c: (c.expiry, c.strike)))
+
+
+def generate_structures_for_thesis(
+    contracts: Iterable[OptionContract],
+    thesis: OptionThesis,
+    *,
+    now: datetime,
+    config: OptionQuoteFilterConfig | None = None,
+) -> tuple[OptionStructure, ...]:
+    config = config or OptionQuoteFilterConfig()
+    candidates = _candidate_contracts_for_thesis(contracts, thesis, now=now, config=config)
+    structures: list[OptionStructure] = []
+    allow = set(thesis.allowed_structures)
+    long_type = "long_call" if thesis.direction == "up" else "long_put"
+    if long_type in allow:
+        for contract in candidates:
+            try:
+                structures.append(build_long_option(contract))
+            except ValueError:
+                pass
+    if "debit_vertical" in allow:
+        for long_contract in candidates:
+            for short_contract in candidates:
+                if long_contract is short_contract:
+                    continue
+                if thesis.direction == "up":
+                    if not (long_contract.strike < short_contract.strike <= thesis.target_price):
+                        continue
+                else:
+                    if not (long_contract.strike > short_contract.strike >= thesis.target_price):
+                        continue
+                try:
+                    structures.append(build_debit_vertical(long_contract, short_contract))
+                except ValueError:
+                    continue
+    return tuple(structures)
+
+
+def find_opportunities_for_thesis(
+    contracts: Iterable[OptionContract],
+    thesis: OptionThesis,
+    *,
+    now: datetime,
+    config: OptionQuoteFilterConfig | None = None,
+) -> tuple[OptionOpportunity, ...]:
+    opportunities: list[OptionOpportunity] = []
+    for structure in generate_structures_for_thesis(contracts, thesis, now=now, config=config):
+        model_fair, payoff_if_hit, reward_risk = model_fair_value_from_thesis(structure, thesis)
+        evaluation = evaluate_structure_edge(
+            structure,
+            model_fair_value=model_fair,
+            min_edge_pct_of_risk=thesis.min_edge_pct_of_risk,
+            model_probability=thesis.target_probability,
+            min_probability_margin=thesis.min_probability_margin,
+            max_loss_cap=thesis.max_loss_cap,
+        )
+        if reward_risk is None or reward_risk < thesis.min_reward_risk:
+            blocked = tuple(evaluation.blocked_reasons) + (f"reward/risk {reward_risk if reward_risk is not None else 'unknown'} below min {thesis.min_reward_risk:.3f}",)
+            evaluation = OptionEdgeEvaluation(
+                structure=evaluation.structure,
+                model_fair_value=evaluation.model_fair_value,
+                edge_dollars=evaluation.edge_dollars,
+                edge_pct_of_risk=evaluation.edge_pct_of_risk,
+                model_probability=evaluation.model_probability,
+                breakeven_probability=evaluation.breakeven_probability,
+                passes=False,
+                blocked_reasons=blocked,
+            )
+        if not evaluation.passes:
+            continue
+        spread_penalty = (structure.executable_spread or 0.0) / structure.max_loss if structure.max_loss else 0.0
+        score = (evaluation.edge_pct_of_risk or 0.0) + 0.05 * (reward_risk or 0.0) - 0.25 * spread_penalty
+        opportunities.append(
+            OptionOpportunity(
+                thesis=thesis,
+                structure=structure,
+                evaluation=evaluation,
+                model_payoff_if_hit=_round_money(payoff_if_hit),
+                reward_risk=_round_metric(reward_risk),
+                score=_round_metric(score) or 0.0,
+            )
+        )
+    return tuple(
+        sorted(
+            opportunities,
+            key=lambda opp: (
+                opp.score,
+                opp.evaluation.edge_pct_of_risk or -999,
+                -(opp.structure.executable_spread or 999),
+            ),
+            reverse=True,
+        )
+    )
+
+
+def _safe_ticket_part(value: str, *, max_len: int = 80) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "-", value.strip().lower()).strip("-._")
+    return (cleaned or "option")[:max_len]
+
+
+def option_ticket_id(signal_id: str, now: datetime) -> str:
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    stamp = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return f"rime-options-ticket-{_safe_ticket_part(signal_id, max_len=70)}-{stamp}"
+
+
+def build_option_ticket_artifact(
+    *,
+    signal_id: str,
+    source_mode: str,
+    structure: dict[str, Any],
+    evaluation: dict[str, Any],
+    thesis: dict[str, Any] | str | None,
+    now: datetime,
+    status: OptionTicketStatus = "draft",
+    catalyst: str | None = None,
+    planned_exit: str | None = None,
+    falsifier: str | None = None,
+    notes: str = "",
+) -> dict[str, Any]:
+    created_at = isoformat_z(now)
+    if isinstance(thesis, str):
+        thesis_payload: dict[str, Any] = {"thesis": thesis}
+    elif isinstance(thesis, dict):
+        thesis_payload = dict(thesis)
+    else:
+        thesis_payload = {}
+    return {
+        "ticket_id": option_ticket_id(signal_id, now),
+        "created_at": created_at,
+        "status": status,
+        "instrument_type": "listed_option_structure",
+        "signal_id": signal_id,
+        "source_mode": source_mode,
+        "underlying": structure.get("underlying"),
+        "structure": structure,
+        "evaluation": evaluation,
+        "thesis": thesis_payload,
+        "catalyst": catalyst,
+        "planned_exit": planned_exit,
+        "falsifier": falsifier,
+        "entry": {
+            "net_debit": structure.get("net_debit"),
+            "net_credit": structure.get("net_credit"),
+            "max_loss": structure.get("max_loss"),
+            "max_gain": structure.get("max_gain"),
+            "breakeven": structure.get("breakeven"),
+            "edge_dollars": evaluation.get("edge_dollars"),
+            "edge_pct_of_risk": evaluation.get("edge_pct_of_risk"),
+            "model_probability": evaluation.get("model_probability"),
+            "breakeven_probability": evaluation.get("breakeven_probability"),
+        },
+        "markouts": {},
+        "notes": notes,
+        "live_submit_allowed": False,
+    }
+
+
+def option_ticket_from_event(event: dict[str, Any], *, now: datetime | None = None, status: OptionTicketStatus = "draft") -> dict[str, Any]:
+    now = now or utcnow_like()
+    payload = event.get("payload", {}) if isinstance(event, dict) else {}
+    if not isinstance(payload, dict):
+        raise ValueError("options event payload must be a mapping")
+    signal_id = str(payload.get("signalId") or event.get("id") or "option-signal")
+    thesis_payload = payload.get("thesis")
+    return build_option_ticket_artifact(
+        signal_id=signal_id,
+        source_mode=str(payload.get("sourceMode") or "event"),
+        structure=dict(payload.get("structure") or {}),
+        evaluation=dict(payload.get("evaluation") or {}),
+        thesis=thesis_payload if isinstance(thesis_payload, (dict, str)) else None,
+        now=now,
+        status=status,
+        catalyst=payload.get("catalyst"),
+        planned_exit=payload.get("plannedExit"),
+        falsifier=payload.get("falsifier"),
+        notes=str(event.get("prompt") or ""),
+    )
+
+
+def utcnow_like() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def write_option_ticket(ticket: dict[str, Any], ticket_dir: str | Path) -> Path:
+    directory = Path(ticket_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    ticket_id = _safe_ticket_part(str(ticket.get("ticket_id") or "option-ticket"), max_len=120)
+    path = directory / f"{ticket_id}.json"
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(ticket, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+    return path
+
+
+def option_markout(
+    ticket: dict[str, Any],
+    *,
+    checkpoint: str,
+    mark_value: float,
+    underlying_price: float | None,
+    now: datetime,
+    iv: float | None = None,
+    delta: float | None = None,
+    gamma: float | None = None,
+    theta: float | None = None,
+    vega: float | None = None,
+    notes: str = "",
+) -> dict[str, Any]:
+    entry = ticket.get("entry", {}) if isinstance(ticket.get("entry"), dict) else {}
+    net_debit = _float_or_none(entry.get("net_debit"))
+    net_credit = _float_or_none(entry.get("net_credit"))
+    max_loss = _float_or_none(entry.get("max_loss"))
+    if net_debit is not None:
+        pnl = mark_value - net_debit
+    elif net_credit is not None:
+        # For credit structures, mark_value is interpreted as current cost to close.
+        pnl = net_credit - mark_value
+    else:
+        pnl = None
+    return_on_risk = pnl / max_loss if pnl is not None and max_loss and max_loss > 0 else None
+    return {
+        "checkpoint": checkpoint,
+        "ts": isoformat_z(now),
+        "mark_value": _round_money(mark_value),
+        "underlying_price": _round_money(underlying_price),
+        "pnl": _round_money(pnl),
+        "return_on_risk": _round_metric(return_on_risk),
+        "iv": _round_metric(iv),
+        "delta": _round_metric(delta),
+        "gamma": _round_metric(gamma),
+        "theta": _round_metric(theta),
+        "vega": _round_metric(vega),
+        "notes": notes,
+    }
+
+
+def add_option_markout(ticket: dict[str, Any], markout: dict[str, Any]) -> dict[str, Any]:
+    updated = json.loads(json.dumps(ticket))
+    checkpoint = str(markout.get("checkpoint") or "mark")
+    updated.setdefault("markouts", {})[checkpoint] = markout
+    if checkpoint in {"exit", "expiry", "close"}:
+        updated["status"] = "paper_closed"
+    elif updated.get("status") == "draft":
+        updated["status"] = "paper_open"
+    return updated
+
+
+def _fmt_money(value: Any) -> str:
+    parsed = _float_or_none(value)
+    return "" if parsed is None else f"${parsed:.2f}"
+
+
+def _fmt_pct(value: Any) -> str:
+    parsed = _float_or_none(value)
+    return "" if parsed is None else f"{parsed * 100:.1f}%"
+
+
+def _pipe_escape(value: Any) -> str:
+    return str(value or "").replace("|", "\\|").replace("\n", " ")
+
+
+def option_structure_label(structure: dict[str, Any]) -> str:
+    structure_type = str(structure.get("structure_type") or "option_structure")
+    legs = structure.get("legs") if isinstance(structure.get("legs"), list) else []
+    leg_labels = []
+    for leg in legs:
+        contract = leg.get("contract", {}) if isinstance(leg, dict) else {}
+        qty = leg.get("quantity") if isinstance(leg, dict) else None
+        leg_labels.append(f"{qty:+d} {contract.get('right')} {contract.get('strike')}" if isinstance(qty, int) else str(contract.get("symbol") or "leg"))
+    return f"{structure_type} {' / '.join(leg_labels)}".strip()
+
+
+def options_ledger_row(ticket: dict[str, Any]) -> str:
+    entry = ticket.get("entry", {}) if isinstance(ticket.get("entry"), dict) else {}
+    markouts = ticket.get("markouts", {}) if isinstance(ticket.get("markouts"), dict) else {}
+    thesis = ticket.get("thesis", {}) if isinstance(ticket.get("thesis"), dict) else {}
+    thesis_text = thesis.get("thesis") or ticket.get("notes") or ticket.get("signal_id")
+    entry_text = "; ".join(
+        part
+        for part in (
+            f"debit {_fmt_money(entry.get('net_debit'))}" if entry.get("net_debit") is not None else None,
+            f"credit {_fmt_money(entry.get('net_credit'))}" if entry.get("net_credit") is not None else None,
+            f"max loss {_fmt_money(entry.get('max_loss'))}" if entry.get("max_loss") is not None else None,
+            f"max gain {_fmt_money(entry.get('max_gain'))}" if entry.get("max_gain") is not None else None,
+            f"edge {_fmt_money(entry.get('edge_dollars'))} / {_fmt_pct(entry.get('edge_pct_of_risk'))}" if entry.get("edge_dollars") is not None else None,
+        )
+        if part
+    )
+    def mark_text(key: str) -> str:
+        mark = markouts.get(key)
+        if not isinstance(mark, dict):
+            return ""
+        return f"{_fmt_money(mark.get('mark_value'))} ({_fmt_money(mark.get('pnl'))})"
+    latest_exit = markouts.get("exit") or markouts.get("expiry") or markouts.get("close")
+    exit_text = "" if not isinstance(latest_exit, dict) else f"{_fmt_money(latest_exit.get('mark_value'))} ({_fmt_money(latest_exit.get('pnl'))})"
+    pnl_text = "" if not isinstance(latest_exit, dict) else _fmt_money(latest_exit.get("pnl"))
+    cols = [
+        str(ticket.get("created_at") or "")[:10],
+        ticket.get("underlying") or "",
+        option_structure_label(ticket.get("structure", {}) if isinstance(ticket.get("structure"), dict) else {}),
+        thesis_text,
+        entry_text,
+        mark_text("1h"),
+        mark_text("6h"),
+        mark_text("24h"),
+        exit_text,
+        pnl_text,
+        ticket.get("status") or "",
+    ]
+    return "| " + " | ".join(_pipe_escape(col) for col in cols) + " |"
