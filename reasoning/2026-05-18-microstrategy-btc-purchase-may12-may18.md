@@ -112,3 +112,7 @@ Polymarket/Gamma shows the market closed with outcome prices `1/0` (YES/NO), `um
 Forecast: **97% YES**. Outcome: **YES**. Brier: **0.0009**. The primary market entry at 84.65% YES had Brier **0.0236**, so the forecast beat the market.
 
 Post-mortem: this was a clean timing/size-threshold win. The useful signal was not generic weekly cadence alone; it was Saylor's Sunday chart plus the STRC.live / preferred-volume estimate implying a purchase far above the 1,000 BTC threshold. The market correctly moved toward YES before the official page updated, but it kept 15%+ timing/form risk too long. The 97% forecast was aggressive, yet the actual size left no threshold ambiguity.
+
+### 2026-05-19T02:26Z +24h checkpoint after resolution
+
+The formal +24h CLV wake arrived after final resolution. It observed the already-closed YES market at **100.0%** with outcome prices `1/0`, which is the same final mark already recorded above. Relative to the 84.65% entry, that is **+15.35pp aligned CLV** / raw YES +15.35pp, but it should be read as post-resolution final-price confirmation rather than an independent pre-resolution +24h signal.
