@@ -80,13 +80,15 @@ For spreads, store each leg plus derived net debit/credit, max loss, max gain, b
 
 v0.1 can use fixture files and delayed public data for research, but every record must label provider and delay. Candidate wakes that imply executable economics require a real-time or explicitly accepted delayed quote source.
 
-Provider interfaces are code-shaped before credentials exist via `automation/options.py::OptionChainProvider` and `FixtureOptionProvider`:
+Provider interfaces are code-shaped before credentials exist via `automation/options.py::OptionChainProvider` and `FixtureOptionProvider`; `automation/options_providers.py::TradierOptionProvider` implements a read-only Tradier market-data adapter:
 
 - `list_expiries(underlying) -> tuple[date, ...]`
 - `fetch_chain(underlying, expiry | None) -> OptionChainSnapshot`
 - `fetch_quote(symbol) -> OptionContract`
 - `provider`, `quote_ts`, `quote_delay_seconds`, and raw response metadata on every normalized record
 - no credentials or account identifiers in repo fixtures, state, tickets, or logs
+
+Tradier usage requires `TRADIER_TOKEN` in the local environment; optional `TRADIER_BASE_URL` can point at sandbox or an alternate endpoint. The adapter uses market-data endpoints only and never submits orders.
 
 Candidate provider order:
 
@@ -289,7 +291,7 @@ Live options orders require all existing execution safeguards plus broker-specif
 6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, event date, model probability, and max-risk constraints. **Implemented.**
 7. Extend `scripts/options-daemon.py` so `theses[]` can auto-generate and rank structures, not only consume hand-authored `signals[]`. **Implemented.**
 8. Add dry-run options ticket artifacts under `execution/options-tickets/` plus ledger/markout helpers. **Implemented:** `option_ticket_from_event`, `write_option_ticket`, `option_markout`, `add_option_markout`, `options_ledger_row`, `scripts/options-daemon.py --write-tickets`, and `scripts/options-markout.py`.
-9. Add provider interfaces behind local credentials. **Partially implemented:** `OptionChainProvider` protocol and `FixtureOptionProvider`; live/provider adapters remain future work.
+9. Add provider interfaces behind local credentials. **Implemented for fixture + Tradier market data:** `OptionChainProvider`, `FixtureOptionProvider`, `TradierOptionProvider`, and `scripts/options-chain-fetch.py`. Additional providers remain future work.
 10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]` and generated `theses[]`; provider inputs remain future work.**
 11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
 12. Only then consider broker live adapter design.
@@ -366,13 +368,22 @@ Candidate dry-run:
 ```bash
 scripts/options-daemon.py --fixture path/to/fixture.json --dry-run
 scripts/options-daemon.py --fixture-dir options/theses --dry-run
+# provider-backed thesis files that omit embedded chain data:
+TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --dry-run
+```
+
+Fetch a normalized current chain:
+
+```bash
+TRADIER_TOKEN=... scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry 2026-05-22 --output /tmp/nvda-chain.json --pretty
 ```
 
 Wake-producing loop, pinned to the rime session:
 
 ```bash
-scripts/options-daemon.py \
+TRADIER_TOKEN=... scripts/options-daemon.py \
   --fixture-dir options/theses \
+  --provider tradier \
   --session-id 019dc71a-53fa-73ff-85a7-46f8e5d3c671 \
   --loop \
   --interval-sec 900 \

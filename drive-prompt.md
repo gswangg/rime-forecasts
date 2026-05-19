@@ -132,8 +132,9 @@ Options daemon smoke / loop:
 
 ```bash
 scripts/options-daemon.py --fixture-dir options/theses --dry-run
-scripts/options-daemon.py --fixture-dir options/theses --session-id <pi-session-id> --once
-scripts/options-daemon.py --fixture-dir options/theses --session-id <pi-session-id> --loop --interval-sec 900 --write-tickets --ticket-status paper_open
+TRADIER_TOKEN=... scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry <YYYY-MM-DD> --output /tmp/current-chain.json
+TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --once
+TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --loop --interval-sec 900 --write-tickets --ticket-status paper_open
 ```
 
 Options markout:

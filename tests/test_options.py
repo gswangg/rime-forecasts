@@ -38,6 +38,7 @@ from automation.options import (
     add_option_markout,
     write_option_ticket,
 )
+from automation.options_providers import TradierOptionProvider
 
 
 _OPTIONS_DAEMON_PATH = Path(__file__).resolve().parents[1] / "scripts" / "options-daemon.py"
@@ -51,6 +52,12 @@ _OPTIONS_MARKOUT_SPEC = importlib.util.spec_from_file_location("options_markout"
 assert _OPTIONS_MARKOUT_SPEC and _OPTIONS_MARKOUT_SPEC.loader
 options_markout = importlib.util.module_from_spec(_OPTIONS_MARKOUT_SPEC)
 _OPTIONS_MARKOUT_SPEC.loader.exec_module(options_markout)
+
+_OPTIONS_CHAIN_FETCH_PATH = Path(__file__).resolve().parents[1] / "scripts" / "options-chain-fetch.py"
+_OPTIONS_CHAIN_FETCH_SPEC = importlib.util.spec_from_file_location("options_chain_fetch", _OPTIONS_CHAIN_FETCH_PATH)
+assert _OPTIONS_CHAIN_FETCH_SPEC and _OPTIONS_CHAIN_FETCH_SPEC.loader
+options_chain_fetch = importlib.util.module_from_spec(_OPTIONS_CHAIN_FETCH_SPEC)
+_OPTIONS_CHAIN_FETCH_SPEC.loader.exec_module(options_chain_fetch)
 
 
 def dt(value: str) -> datetime:
@@ -175,6 +182,64 @@ class OptionsCoreTests(unittest.TestCase):
             snapshot = load_option_chain_snapshot(path)
         self.assertEqual(snapshot.underlying, "NVDA")
         self.assertEqual(len(snapshot.contracts), 1)
+
+    def test_tradier_option_provider_normalizes_expiries_chain_and_quote(self):
+        def fake_fetch(path, params):
+            if path == "markets/options/expirations":
+                return {"expirations": {"date": ["2026-05-22", "2026-05-29"]}}
+            if path == "markets/quotes" and params.get("symbols") == "NVDA":
+                return {"quotes": {"quote": {"symbol": "NVDA", "bid": 224.40, "ask": 224.45}}}
+            if path == "markets/options/chains":
+                return {
+                    "options": {
+                        "option": [
+                            {
+                                "symbol": "NVDA260522C00250000",
+                                "root_symbol": "NVDA",
+                                "expiration_date": "2026-05-22",
+                                "option_type": "call",
+                                "strike": 250,
+                                "bid": 1.20,
+                                "ask": 1.28,
+                                "last": 1.25,
+                                "volume": 1200,
+                                "open_interest": 5400,
+                                "bid_date": 1779160800000,
+                                "greeks": {"delta": 0.31, "gamma": 0.02, "theta": -0.11, "vega": 0.08, "mid_iv": 0.62},
+                            }
+                        ]
+                    }
+                }
+            if path == "markets/quotes" and params.get("symbols") == "NVDA260522C00250000":
+                return {
+                    "quotes": {
+                        "quote": {
+                            "symbol": "NVDA260522C00250000",
+                            "root_symbol": "NVDA",
+                            "expiration_date": "2026-05-22",
+                            "option_type": "call",
+                            "strike": 250,
+                            "bid": 1.20,
+                            "ask": 1.28,
+                            "volume": 1200,
+                            "open_interest": 5400,
+                            "greeks": {"delta": 0.31},
+                        }
+                    }
+                }
+            raise AssertionError((path, params))
+
+        provider = TradierOptionProvider(token="test-token", fetch_json=fake_fetch)
+        self.assertEqual([d.isoformat() for d in provider.list_expiries("nvda")], ["2026-05-22", "2026-05-29"])
+        chain = provider.fetch_chain("NVDA", datetime.fromisoformat("2026-05-22").date())
+        self.assertEqual(chain.provider, "tradier")
+        self.assertEqual(len(chain.contracts), 1)
+        self.assertEqual(chain.contracts[0].symbol, "NVDA260522C00250000")
+        self.assertAlmostEqual(chain.contracts[0].underlying_bid, 224.40)
+        self.assertAlmostEqual(chain.contracts[0].delta, 0.31)
+        quote = provider.fetch_quote("NVDA260522C00250000")
+        self.assertEqual(quote.underlying, "NVDA")
+        self.assertEqual(quote.right, "call")
 
     def test_fixture_option_provider_interface(self):
         provider = FixtureOptionProvider.from_mapping(
@@ -592,6 +657,41 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertTrue(event["payload"]["evaluation"]["passes"])
         self.assertGreater(event["payload"]["rewardRisk"], 3.0)
 
+    def test_options_daemon_materializes_provider_backed_thesis_fixture(self):
+        chain_fixture = self.options_fixture()["chain"]
+        provider = FixtureOptionProvider.from_mapping({"chain": chain_fixture})
+        provider_fixture = {
+            "underlying": "NVDA",
+            "theses": [
+                {
+                    "id": "provider-upside",
+                    "direction": "up",
+                    "targetPrice": 260,
+                    "targetProbability": 0.35,
+                    "eventDate": "2026-05-22",
+                    "maxLossCap": 100,
+                    "minRewardRisk": 3.0,
+                    "allowedStructures": ["debit_vertical"],
+                }
+            ],
+        }
+        materialized = options_daemon.materialize_provider_fixture(provider_fixture, provider)
+        self.assertIn("chain", materialized)
+        events, rejections = options_daemon.generate_options_events(
+            fixture=materialized,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.20,
+            min_probability_margin=0.05,
+            max_loss_cap=100.0,
+            max_events=5,
+        )
+        self.assertEqual(rejections, [])
+        self.assertGreaterEqual(len(events), 1)
+        self.assertEqual(events[0]["payload"]["sourceMode"], "thesis_search")
+
     def test_options_daemon_dedupes_emitted_signals(self):
         fixture = self.options_fixture()
         fixture["theses"] = []
@@ -754,6 +854,34 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertIn("$400.00", ledger_text)
         self.assertIn("1h", saved["markouts"])
         self.assertAlmostEqual(saved["markouts"]["1h"]["pnl"], 314.0)
+
+    def test_options_chain_fetch_cli_uses_fixture_provider(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_path = Path(tmp) / "fixture.json"
+            output_path = Path(tmp) / "chain.json"
+            fixture_path.write_text(json.dumps({"chain": self.options_fixture()["chain"]}), encoding="utf-8")
+            old_argv = __import__("sys").argv
+            try:
+                __import__("sys").argv = [
+                    "options-chain-fetch.py",
+                    "--provider",
+                    "fixture",
+                    "--fixture",
+                    str(fixture_path),
+                    "--underlying",
+                    "NVDA",
+                    "--expiry",
+                    "2026-05-22",
+                    "--output",
+                    str(output_path),
+                ]
+                rc = options_chain_fetch.main()
+            finally:
+                __import__("sys").argv = old_argv
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+        self.assertEqual(rc, 0)
+        self.assertEqual(payload["underlying"], "NVDA")
+        self.assertGreaterEqual(len(payload["contracts"]), 2)
 
     def test_options_daemon_dry_run_cli_prints_event_and_can_write_tickets(self):
         with tempfile.TemporaryDirectory() as tmp:

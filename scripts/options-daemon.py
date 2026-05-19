@@ -22,6 +22,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from automation.config import DEFAULT_WAKE_ROOT, require_session_id
 from automation.options import (
+    OptionChainProvider,
     OptionContract,
     OptionOpportunity,
     OptionQuoteFilterConfig,
@@ -38,6 +39,7 @@ from automation.options import (
     parse_option_chain_snapshot,
     write_option_ticket,
 )
+from automation.options_providers import TradierOptionProvider
 from automation.state import save_state
 from automation.timeutil import isoformat_z, parse_iso, utcnow
 from automation.wake import build_wake_event, safe_part, write_wake_event
@@ -54,14 +56,16 @@ def load_fixture(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise OptionsDaemonError("options fixture must be a JSON object")
-    if "chain" not in data and "contracts" not in data:
-        raise OptionsDaemonError("options fixture requires a chain object or top-level contracts list")
     signals = data.get("signals", [])
     if not isinstance(signals, list):
         raise OptionsDaemonError("options fixture signals must be a list")
     theses = data.get("theses", [])
     if not isinstance(theses, list):
         raise OptionsDaemonError("options fixture theses must be a list")
+    has_chain = "chain" in data or "contracts" in data
+    has_provider_theses = bool(data.get("underlying") and theses)
+    if not has_chain and not has_provider_theses:
+        raise OptionsDaemonError("options fixture requires chain/contracts or underlying plus theses[] for provider-backed loading")
     data.setdefault("_fixturePath", str(path))
     return data
 
@@ -91,6 +95,58 @@ def load_options_state(path: Path) -> dict[str, Any]:
 
 def _contract_by_symbol(contracts: tuple[OptionContract, ...]) -> dict[str, OptionContract]:
     return {contract.symbol: contract for contract in contracts}
+
+
+def build_provider(name: str | None) -> OptionChainProvider | None:
+    if not name:
+        return None
+    normalized = name.strip().lower()
+    if normalized == "tradier":
+        return TradierOptionProvider.from_env()
+    raise OptionsDaemonError(f"unsupported options provider: {name!r}")
+
+
+def materialize_provider_fixture(fixture: dict[str, Any], provider: OptionChainProvider | None) -> dict[str, Any]:
+    if "chain" in fixture or "contracts" in fixture:
+        return fixture
+    if provider is None:
+        raise OptionsDaemonError("provider-backed thesis fixture requires --provider")
+    underlying = str(fixture.get("underlying") or "").upper()
+    if not underlying:
+        raise OptionsDaemonError("provider-backed thesis fixture requires underlying")
+    expiries: set[Any] = set()
+    for row in fixture.get("theses", []):
+        if isinstance(row, dict):
+            expiry = row.get("eventDate") or row.get("event_date") or row.get("expiry")
+            if expiry:
+                expiries.add(expiry)
+    chains = []
+    if expiries:
+        for expiry_raw in sorted(expiries):
+            expiry = parse_iso(str(expiry_raw) + "T00:00:00Z").date() if "T" not in str(expiry_raw) else parse_iso(str(expiry_raw)).date()
+            chains.append(provider.fetch_chain(underlying, expiry))
+    else:
+        chains.append(provider.fetch_chain(underlying))
+    contracts = []
+    quote_ts = None
+    underlying_bid = None
+    underlying_ask = None
+    for chain in chains:
+        quote_ts = quote_ts or chain.quote_ts
+        underlying_bid = underlying_bid if underlying_bid is not None else chain.underlying_bid
+        underlying_ask = underlying_ask if underlying_ask is not None else chain.underlying_ask
+        contracts.extend(contract.to_dict() for contract in chain.contracts)
+    materialized = dict(fixture)
+    materialized["chain"] = {
+        "underlying": underlying,
+        "provider": provider.provider,
+        "quote_ts": isoformat_z(quote_ts) if quote_ts is not None else None,
+        "underlying_bid": underlying_bid,
+        "underlying_ask": underlying_ask,
+        "contracts": contracts,
+        "raw": {"source": "provider", "provider": provider.provider, "fixturePath": fixture.get("_fixturePath")},
+    }
+    return materialized
 
 
 def _get_contract(symbols: dict[str, OptionContract], symbol: str | None, field: str) -> OptionContract:
@@ -487,6 +543,7 @@ def mark_ticket_lifecycle_events_emitted(state: dict[str, Any], events: list[dic
 def poll_once(args, *, session_id: str | None) -> int:
     now = parse_iso(args.now) if args.now else utcnow()
     fixtures = load_fixtures(args.fixture, args.fixture_dir)
+    provider = build_provider(args.provider)
     state = load_options_state(args.state_path)
     config = OptionQuoteFilterConfig(
         allow_underlyings=tuple(args.allow_underlying or ()),
@@ -505,8 +562,13 @@ def poll_once(args, *, session_id: str | None) -> int:
     for fixture in fixtures:
         if len(events) >= args.max_events:
             break
+        try:
+            materialized_fixture = materialize_provider_fixture(fixture, provider)
+        except Exception as exc:
+            rejections.append({"fixture": fixture.get("_fixturePath"), "reason": str(exc)})
+            continue
         fixture_events, fixture_rejections = generate_options_events(
-            fixture=fixture,
+            fixture=materialized_fixture,
             now=now,
             session_id=effective_session_id,
             state=state,
@@ -590,6 +652,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Emit shadow options candidate/lifecycle wake events from fixture-defined thesis structures")
     parser.add_argument("--fixture", type=Path, action="append", help="fixture JSON with chain and signals/theses; repeatable")
     parser.add_argument("--fixture-dir", type=Path, default=Path("options/theses"), help="directory of active fixture/thesis JSON files (default: options/theses)")
+    parser.add_argument("--provider", choices=["tradier"], help="market-data provider for thesis files that omit an embedded chain")
     parser.add_argument("--session-id", help="explicit target pi session id; or set RIME_WAKE_SESSION_ID")
     parser.add_argument("--wake-root", type=Path, default=DEFAULT_WAKE_ROOT, help=f"wake root (default: {DEFAULT_WAKE_ROOT})")
     parser.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH, help=f"state path (default: {DEFAULT_STATE_PATH})")
