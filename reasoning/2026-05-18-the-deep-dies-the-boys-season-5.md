@@ -74,4 +74,10 @@ The +6h checkpoint was modestly adverse: daemon payload and live Gamma both mark
 
 No credible new finale/source evidence surfaced during review. The market is slightly less confident in the public leak/setup thesis, but this is not a large enough move to invalidate it before the episode; it is a mild warning that the original 88% forecast may have over-weighted derivative spoiler articles relative to the market's existing incorporation.
 
+### 2026-05-19T02:56Z favorable rebound
+
+A price-move wake then took YES back up to **78.5%** from the 71.5% checkpoint. Live Gamma and direct CLOB matched a tight **78/79 YES** book, with NO **21/22**, and the market still active/open with no UMA or inferred resolution. Versus the 74.5% entry this is **+4.0pp aligned CLV** for the YES-side forecast (raw YES +4.0pp); versus my 88% fair value the fresh executable edge at the 79c ask has shrunk to about 9pp.
+
+Search review surfaced no official finale result. It did surface more spoiler/recap ecology in the same direction: MEAWW's May 14 piece quotes Chace Crawford joking on TODAY about Polymarket wagers and refusing to confirm/deny, while noting the in-show setup that sea creatures threatened to kill him if he entered the ocean; VvipTimes' May 17 finale-leak piece explicitly says `The Deep Dies Immediately and Pathetically` / killed off very early. I treat those as derivative entertainment-spoiler evidence, not source finality. The useful update is mostly market-based: after the brief +6h dip, traders pushed back toward the death-leak thesis ahead of the limited 4DX / Prime finale window.
+
 *(Resolution section added below after the market resolves, never editing above.)*
