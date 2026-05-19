@@ -240,12 +240,48 @@ Live options orders require all existing execution safeguards plus broker-specif
 
 ## Implementation order
 
-1. Create fixture schema and parser for option-chain snapshots.
-2. Add quote-quality filters and unit tests.
-3. Add Black-Scholes / IV utility functions for distribution estimates; use fixtures first.
-4. Add `options-ledger.md` and journal event conventions.
-5. Build `scripts/options-daemon.py --dry-run` that prints candidates from fixtures only.
+1. Create fixture schema and parser for option-chain snapshots. **Implemented:** `automation/options.py::parse_option_chain_snapshot` / `load_option_chain_snapshot`.
+2. Add quote-quality filters and unit tests. **Implemented:** `OptionQuoteFilterConfig`, `contract_quote_filter_reason`, `tests/test_options.py`.
+3. Add Black-Scholes / IV utility functions for distribution estimates; use fixtures first. **Implemented:** Black-Scholes pricing, risk-neutral threshold/range helpers, capped-risk structure builders, and edge evaluation.
+4. Add `options-ledger.md` and journal event conventions. **Implemented.**
+5. Build `scripts/options-daemon.py --dry-run` that prints candidates from fixtures only. **Implemented:** fixture chain + `signals[]` flow; dry-run prints candidate events/rejections.
 6. Add provider adapter behind local credentials.
-7. Emit `options_signal_candidate` wakes only after filters are conservative.
+7. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture inputs; provider inputs remain future work.**
 8. Add dry-run execution tickets for defined-risk options structures.
 9. Only then consider broker live adapter design.
+
+## Fixture signal format
+
+`scripts/options-daemon.py --fixture <path> --dry-run` expects:
+
+```json
+{
+  "chain": {
+    "underlying": "NVDA",
+    "provider": "fixture",
+    "underlying_bid": 224.40,
+    "underlying_ask": 224.45,
+    "quote_ts": "2026-05-19T03:20:00Z",
+    "contracts": [
+      {"symbol":"NVDA260522C00250000","expiry":"2026-05-22","right":"call","strike":250,"bid":1.20,"ask":1.28,"volume":1200,"open_interest":5400},
+      {"symbol":"NVDA260522C00260000","expiry":"2026-05-22","right":"call","strike":260,"bid":0.42,"ask":0.48,"volume":1200,"open_interest":5400}
+    ]
+  },
+  "signals": [
+    {
+      "id": "nvda-upside-spread",
+      "structure": "debit_vertical",
+      "long": "NVDA260522C00250000",
+      "short": "NVDA260522C00260000",
+      "modelFairValue": 125.0,
+      "modelProbability": 0.25,
+      "thesis": "catalyst creates upside distribution mismatch",
+      "catalyst": "earnings guidance",
+      "plannedExit": "post-event mark",
+      "falsifier": "guide unchanged"
+    }
+  ]
+}
+```
+
+Supported structures in the fixture daemon: `long_call`, `long_put`, `debit_vertical`, `credit_vertical`. Values are dollars per one standard 100x option contract after multiplier, so `modelFairValue: 125.0` means $125.

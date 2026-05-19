@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.1 event-driven + participant intelligence + options shadow)
+# Drive prompt: rime-forecasts (validation experiment, v4.2 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -8,6 +8,7 @@
 - *v3.1 (2026-04-26): fast-feedback candidate ladder. Daemons prioritize 1–7d markets, then 8–21d, and only emit 22–45d markets when liquidity/volume is unusually high. Added Kalshi candidate daemon.*
 - *v4 (2026-04-30): add shadow participant intelligence. Track wallets/traders as noisy signals, simulate copy-after-delay economics, and score participant CLV/final results. No capital allocation and no live copy execution.*
 - *v4.1 (2026-05-19): add shadow-only listed-options expansion. Options chains can be used for implied distributions and paper options signals; no live options trading without broker approval, explicit policy, and reconciliation.*
+- *v4.2 (2026-05-19): Greg requested options funnel buildout. Prediction-market wake daemons are paused; AC work should prioritize the shadow options opportunity system.*
 
 ## Goal
 
@@ -28,13 +29,13 @@ Still no capital allocation. Pundit validation and shadow-copy research only.
 ## Architecture
 
 ```text
-scripts/polymarket-daemon.py / scripts/kalshi-daemon.py
+scripts/polymarket-daemon.py / scripts/kalshi-daemon.py (paused during options-build mode)
   -> market candidate / CLV / resolution wakes
 
 scripts/polymarket-participant-daemon.py (v4 scaffold)
   -> participant signal / participant CLV wakes
 
-scripts/options-daemon.py (planned, shadow-only)
+scripts/options-daemon.py (current build target, shadow-only)
   -> options signal / options CLV / expiry wakes
 
 all daemons
@@ -58,10 +59,10 @@ Core docs:
 
 ## Operating priorities
 
-1. **Wake events first.** If the user message starts with `[wake:<id>]`, process exactly that event before any build work.
-2. **Queued AC tasks second.** If auto-continue has a concrete task, execute it with tests/docs/commits as appropriate.
+1. **Queued AC options-build tasks first.** Build the shadow options funnel unless Greg explicitly interrupts or a directly delivered `[wake:<id>]` requires acknowledgment.
+2. **Wake events only if explicitly delivered.** Prediction-market daemons are paused in this mode; do not manually scan wake inboxes as a polling substitute.
 3. **Bounded maintenance third.** Check resolutions, daemon health, or docs only when explicitly queued or requested.
-4. **No idle market scanning.** Do not keep the model alive looking for markets. Cheap daemons do polling.
+4. **No idle market scanning.** Do not keep the model alive looking for markets. Cheap daemons do polling when enabled.
 
 ## Wake-event mode
 
@@ -105,6 +106,8 @@ If this prompt is invoked without a wake event and without an AC task, do not pe
 4. If no concrete work exists, call `ac off` and stop.
 
 ## Starting daemons
+
+Prediction-market daemons are intentionally paused during v4.2 options-build mode. Do not restart `scripts/polymarket-daemon.py` or `scripts/kalshi-daemon.py` unless Greg asks.
 
 Requires an explicit pi session id. No cwd/latest-session fallback.
 
@@ -306,13 +309,13 @@ When AC injects this prompt because the queue is empty:
 
 1. Check for unprocessed wake events only if they were explicitly delivered as `[wake:<id>]`; do not scan wake inbox manually as a polling substitute.
 2. Inspect `git status --short` and recent `journal.jsonl` tail.
-3. If the v4 participant scaffold is incomplete, push one concrete next task to AC and execute it. Incomplete means any of:
-   - `automation/PARTICIPANT_SPEC.md` missing or stale
-   - `participant-ledger.md` missing
-   - `automation/participants.py` missing tests for scoring/economics
-   - `scripts/polymarket-participant-daemon.py` missing dry-run/fixture support
+3. If the v4.2 options scaffold is incomplete, push one concrete next task to AC and execute it. Incomplete means any of:
+   - `automation/options.py` missing schema/parser/filter/analytics support
+   - `tests/test_options.py` missing or failing
+   - `scripts/options-daemon.py` missing fixture dry-run support
+   - `automation/OPTIONS_SPEC.md`, `options-ledger.md`, or `execution/policy.yaml.example` stale relative to implementation
    - tests fail
-4. If scaffold is complete and committed/pushed, call `ac off` and stop.
+4. If the options scaffold is complete and committed/pushed, call `ac off` and stop.
 
 ## Post-validation path
 
