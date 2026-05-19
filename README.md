@@ -13,7 +13,7 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 *As of 2026-05-19.*
 
 - **Real-money primary score**: 27 Kalshi/Polymarket-primary predictions placed, 23 resolved, 4 pending. Real-money resolved Brier: **0.161** vs primary-venue entry Brier **0.309**. Full historical ledger including legacy paper-money Manifold: 36 predictions placed, 24 resolved, total Brier **0.158** vs entry **0.302**.
-- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v4. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, Kalshi/Polymarket real-money source policy, CLV checkpoints (+1h/+6h/+24h/close), and a new no-capital shadow participant-signal track for copy-after-delay validation.
+- **Methodology**: [`drive-prompt.md`](./drive-prompt.md) v4.1. Event-driven market monitoring via `wake-pi`; fast-feedback horizon ladder (1–7d primary, 8–21d secondary, 22–45d tertiary only if high-liquidity), 10pp edge threshold with 3/5+ confidence, moved-market edge discount, Kalshi/Polymarket real-money source policy, CLV checkpoints (+1h/+6h/+24h/close), no-capital shadow participant-signal tracking, and a new shadow-only listed-options expansion spec.
 - **Back-test (N=9)**: v2.5.1 methodology retrospectively tested on resolved Manifold markets. 6-for-6 prediction wins (+1.63 cumulative Brier advantage), 3-for-3 correct skips. See [`backtest/SUMMARY.md`](./backtest/SUMMARY.md).
 - **Infrastructure**: [`scripts/check-resolutions.py`](./scripts/check-resolutions.py) batch-checks Polymarket-primary predictions and legacy Manifold files, [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) emits session-routed `wake-pi` events for Polymarket candidates/price moves/CLV/resolutions, [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) emits Kalshi candidate events, [`scripts/polymarket-participant-daemon.py`](./scripts/polymarket-participant-daemon.py) is the MVP shadow participant-signal daemon, [`scripts/polymarket-participant-score.py`](./scripts/polymarket-participant-score.py) builds conservative wallet score fixtures from bounded public-trade backfills, and [`scripts/execution-ticket.py`](./scripts/execution-ticket.py) creates dry-run order tickets from live Polymarket or manual quotes.
 
@@ -21,10 +21,11 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 
 ### Core files
 
-- [`drive-prompt.md`](./drive-prompt.md) — event-driven operating prompt. Methodology, wake-event handling, daemon operation, stop criteria. Currently v4.
+- [`drive-prompt.md`](./drive-prompt.md) — event-driven operating prompt. Methodology, wake-event handling, daemon operation, stop criteria. Currently v4.1.
 - [`scorecard.md`](./scorecard.md) — running calibration score. Summary + per-prediction detail. Updated on every resolution.
 - [`clv-ledger.md`](./clv-ledger.md) — fast-feedback ledger for +1h/+6h/+24h/close price movement before final resolution.
 - [`participant-ledger.md`](./participant-ledger.md) — shadow ledger for participant-signal / copy-after-delay validation.
+- [`options-ledger.md`](./options-ledger.md) — shadow ledger for options-contract signals/trades and options-derived distribution checks.
 - [`journal.jsonl`](./journal.jsonl) — append-only cycle log. One JSON object per cycle.
 
 ### Predictions
@@ -47,6 +48,7 @@ The goal is not to bet yet. The experiment is pundit-style — predictions witho
 - [`automation/SPEC.md`](./automation/SPEC.md) — event-driven market automation contract: exact `sessionId` wake routing, event types, state, and agent handling rules.
 - [`automation/PARTICIPANT_SPEC.md`](./automation/PARTICIPANT_SPEC.md) — no-capital participant intelligence contract: public data sources, scoring, copy-after-delay economics, quality gates, and participant wake types.
 - [`automation/EXECUTION_SPEC.md`](./automation/EXECUTION_SPEC.md) — dry-run-first execution ticket contract: sizing, edge/spread gates, live-submit safeguards, and future venue adapter requirements.
+- [`automation/OPTIONS_SPEC.md`](./automation/OPTIONS_SPEC.md) — shadow-only listed-options expansion: chain schema, quote filters, options-derived distributions, scoring, and live-trading gates.
 - [`automation/LESSONS.md`](./automation/LESSONS.md) — lessons from wake-driven operation and the daemon filters/tests they produced.
 - [`scripts/polymarket-daemon.py`](./scripts/polymarket-daemon.py) — one-shot or looped Polymarket poller. Writes candidate, price-move, CLV, and resolution `wake-pi` events; requires `--session-id` or `RIME_WAKE_SESSION_ID` unless `--dry-run`.
 - [`scripts/kalshi-daemon.py`](./scripts/kalshi-daemon.py) — one-shot or looped Kalshi poller. Writes short-horizon candidate `wake-pi` events; same explicit session-id rule.

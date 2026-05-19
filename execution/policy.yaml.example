@@ -20,6 +20,17 @@ venues:
     enabled: true
   polymarket:
     enabled: false           # enable after adapter/reconciliation proves clean
+  options:
+    enabled: false           # shadow-only until broker approval + adapter + reconciliation exist
+    allow_options_live_submit: false
+    allowed_structures:
+      - long_call
+      - long_put
+      - debit_vertical
+    forbid_uncovered_shorts: true
+    max_premium_risk_per_trade: 100
+    max_defined_risk_per_trade: 100
+    max_expiry_day_risk: 0
 
 circuit_breakers:
   max_consecutive_api_errors: 3

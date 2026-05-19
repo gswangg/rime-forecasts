@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4 event-driven + participant intelligence)
+# Drive prompt: rime-forecasts (validation experiment, v4.1 event-driven + participant intelligence + options shadow)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -7,10 +7,11 @@
 - *v3 (2026-04-26): event-driven architecture. Market polling moves to daemon(s); model work is triggered by `wake-pi` events. Adds CLV feedback loop (+1h/+6h/+24h/close). Avoids drain-time market scanning and idle model burn.*
 - *v3.1 (2026-04-26): fast-feedback candidate ladder. Daemons prioritize 1–7d markets, then 8–21d, and only emit 22–45d markets when liquidity/volume is unusually high. Added Kalshi candidate daemon.*
 - *v4 (2026-04-30): add shadow participant intelligence. Track wallets/traders as noisy signals, simulate copy-after-delay economics, and score participant CLV/final results. No capital allocation and no live copy execution.*
+- *v4.1 (2026-05-19): add shadow-only listed-options expansion. Options chains can be used for implied distributions and paper options signals; no live options trading without broker approval, explicit policy, and reconciliation.*
 
 ## Goal
 
-Accumulate 15–25 resolved market predictions with published reasoning **and** build a parallel shadow participant-signal ledger that tests whether observable Polymarket/Kalshi traders contain copyable residual edge after latency, spread, and liquidity.
+Accumulate 15–25 resolved market predictions with published reasoning, build a parallel shadow participant-signal ledger that tests whether observable Polymarket/Kalshi traders contain copyable residual edge after latency/spread/liquidity, and add a shadow-only options layer for implied-distribution signals and paper options-contract validation.
 
 Score objectively:
 
@@ -19,7 +20,8 @@ Score objectively:
 3. fast feedback — CLV at +1h/+6h/+24h/close
 4. cross-venue signal — especially Kalshi vs Polymarket real-money disagreement
 5. participant signal — copy-after-delay CLV/final ROI by trader/domain/horizon
-6. reasoning quality — Greg's subjective reread
+6. options layer — implied-distribution calibration and paper P/L after spread/fees
+7. reasoning quality — Greg's subjective reread
 
 Still no capital allocation. Pundit validation and shadow-copy research only.
 
@@ -31,6 +33,9 @@ scripts/polymarket-daemon.py / scripts/kalshi-daemon.py
 
 scripts/polymarket-participant-daemon.py (v4 scaffold)
   -> participant signal / participant CLV wakes
+
+scripts/options-daemon.py (planned, shadow-only)
+  -> options signal / options CLV / expiry wakes
 
 all daemons
   -> ~/.pi/agent/wake/inbox/*.json
@@ -44,9 +49,11 @@ Core docs:
 
 - [`automation/SPEC.md`](./automation/SPEC.md) — market daemon/wake contract
 - [`automation/PARTICIPANT_SPEC.md`](./automation/PARTICIPANT_SPEC.md) — participant intelligence contract
+- [`automation/OPTIONS_SPEC.md`](./automation/OPTIONS_SPEC.md) — shadow-only listed-options contract
 - [`automation/LESSONS.md`](./automation/LESSONS.md) — wake-loop lessons and implemented filter changes
 - [`clv-ledger.md`](./clv-ledger.md) — fast-feedback market ledger
 - [`participant-ledger.md`](./participant-ledger.md) — shadow participant-signal ledger
+- [`options-ledger.md`](./options-ledger.md) — options signal / paper-trade ledger
 - [`scorecard.md`](./scorecard.md) — final calibration ledger
 
 ## Operating priorities
@@ -81,6 +88,12 @@ Participant event handling:
 - `participant_signal_candidate`: evaluate whether the observed trader/wallet action is a useful **shadow signal** after detection delay and current executable price. If useful, append/update `participant-ledger.md` and `journal.jsonl`; do **not** write a normal prediction unless rime independently clears the market edge/confidence/economics bar.
 - `participant_clv_checkpoint_due`: update participant-ledger CLV for the simulated copy entry.
 - `participant_resolution_changed`: update participant-ledger final outcome and any trader scorecard summaries.
+
+Options event handling is shadow-only until implemented:
+
+- `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. Write to `options-ledger.md` only if useful; do not mix options P/L into prediction-market Brier.
+- `options_clv_checkpoint_due`: update `options-ledger.md` with mark-to-market P/L, underlying move, IV/Greek changes if available, and quote-delay caveats.
+- `options_expiry_or_exit`: update `options-ledger.md` final P/L / return on max risk and journal the thesis result.
 
 ## Maintenance/manual mode
 
@@ -149,9 +162,11 @@ Markets under 1 day are skipped by default because there may not be time for car
 
 ### Real-money source policy
 
-Kalshi and Polymarket are the only active deal-flow and primary validation sources. Manifold is paper money; keep legacy Manifold files for historical calibration context, but do not create new Manifold-primary predictions and do not let Manifold prices satisfy the edge/economics gate.
+Kalshi and Polymarket are the only active binary/event-contract deal-flow and primary validation sources. Manifold is paper money; keep legacy Manifold files for historical calibration context, but do not create new Manifold-primary predictions and do not let Manifold prices satisfy the edge/economics gate.
 
-Do not skip a Kalshi or Polymarket candidate merely because it is single-venue. Do record cross-venue prices when the same question exists on another real-money venue.
+Listed options are a separate instrument class, not a binary market source. Use them in shadow mode for implied distributions and paper options signals under [`automation/OPTIONS_SPEC.md`](./automation/OPTIONS_SPEC.md). Options live trading is disabled until broker approval, explicit policy, and reconciliation exist.
+
+Do not skip a Kalshi or Polymarket candidate merely because it is single-venue. Do record cross-venue prices when the same question exists on another real-money venue or can be priced from options-implied distributions.
 
 ### Edge threshold
 

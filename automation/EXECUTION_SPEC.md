@@ -13,6 +13,7 @@ The first milestone is **not** autonomous betting. It is the ability for rime to
 - No geo/KYC bypassing. Only use venues where Greg has lawful access.
 - No hidden live trading. Default mode is dry-run ticket generation.
 - No market orders in v0.1.
+- No live listed-options trading in v0.1. Options coverage is shadow-only until broker approval, explicit options policy, and reconciliation exist.
 - No autonomous sizing beyond explicit policy caps.
 - No use of stale wake payload prices when current executable bid/ask is available.
 
@@ -159,7 +160,9 @@ Implementation order:
 3. Add `scripts/executor-daemon.py` in dry-run mode: consumes draft tickets, re-quotes, applies policy, writes `would_submit` / `blocked` records.
 4. Add Kalshi live adapter first: auth, quote, limit order, cancel/replace, fills, positions.
 5. Add Polymarket live adapter second: CLOB auth/signing, token lookup, limit orders, fills, positions.
-6. Run full auto with tiny caps, then raise caps only after successful reconciliation and enough live-fill evidence.
+6. Add listed-options dry-run tickets only for long-premium or defined-risk structures after [`OPTIONS_SPEC.md`](./OPTIONS_SPEC.md) quote filters and ledger are implemented.
+7. Consider broker options live adapters only after account approval level, assignment-risk handling, Greeks/exposure caps, and reconciliation are tested.
+8. Run full auto with tiny caps, then raise caps only after successful reconciliation and enough live-fill evidence.
 
 ## Live adapters
 
@@ -171,7 +174,21 @@ Future live adapters must require all of:
 4. ticket status `draft` / not blocked
 5. venue-specific order response appended to the live trade ledger
 
-The implementation must never commit private keys, API secrets, addresses, or auth tokens.
+The implementation must never commit private keys, API secrets, addresses, auth tokens, broker session cookies, or market-data provider keys.
+
+## Listed options
+
+Listed-options execution is a separate instrument class governed by [`OPTIONS_SPEC.md`](./OPTIONS_SPEC.md). Until explicitly implemented, options signals remain paper-only in `options-ledger.md`.
+
+Additional gates before any live options order:
+
+1. Broker account has the required options approval level for the structure.
+2. Policy explicitly sets `allow_options_live_submit=true`.
+3. Structures are allow-listed; uncovered short options are forbidden.
+4. Max loss is computed before submit and fits per-trade and portfolio caps.
+5. Assignment/exercise risk is understood and blocked or explicitly allowed by structure.
+6. Position reconciliation includes contract symbol, expiry, strike, right, quantity, average price, and Greeks.
+7. Expiry-day and earnings-event exposure caps are enforced.
 
 ## Ledger
 
@@ -184,6 +201,7 @@ Real or simulated execution fills should append to `trades.jsonl` once live/manu
 - side, price, size, fees
 - realized cost
 - resulting position id / token id / contract count
+- for options: contract symbol(s), legs, expiry, strike, right, multiplier, max loss, and Greeks when available
 - resolution and realized P/L when known
 
 Until then, `execution/tickets/*.json` is the source of truth for dry-run intent.

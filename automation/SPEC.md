@@ -1,12 +1,12 @@
 # rime-forecasts automation spec
 
-Status: v0.2 market MVP, 2026-04-26. Participant-signal automation is specified separately in [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md); trade execution is specified separately in [`EXECUTION_SPEC.md`](./EXECUTION_SPEC.md).
+Status: v0.2 market MVP, 2026-04-26. Participant-signal automation is specified separately in [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md); options coverage is specified separately in [`OPTIONS_SPEC.md`](./OPTIONS_SPEC.md); trade execution is specified separately in [`EXECUTION_SPEC.md`](./EXECUTION_SPEC.md).
 
 ## Goal
 
 Move the forecasting validation loop from drain-time model polling to event-driven market monitoring.
 
-For shadow copytrading / participant intelligence, see [`automation/PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md). This file remains the market-candidate, CLV, and resolution daemon contract.
+For shadow copytrading / participant intelligence, see [`PARTICIPANT_SPEC.md`](./PARTICIPANT_SPEC.md). For listed-options chains, implied distributions, and paper options signals, see [`OPTIONS_SPEC.md`](./OPTIONS_SPEC.md). This file remains the binary/event-market candidate, CLV, and resolution daemon contract.
 
 Cheap code polls markets and writes wake events. The model wakes only when judgment or documentation is needed.
 
@@ -17,14 +17,15 @@ Cheap code polls markets and writes wake events. The model wakes only when judgm
 - No cwd-based wake routing.
 - No attempt to start pi if no pi process is running. `wake-pi` only wakes an already-running session.
 - No Manifold candidate source. Manifold is paper money and remains supported only for legacy resolution/backtest helpers.
+- No listed-options contract logic in this binary-market daemon contract; options use the separate shadow-only options spec.
 
 ## Architecture
 
 ```text
-Polymarket/Kalshi APIs
-          │
-          ▼
-automation daemon(s)
+Polymarket/Kalshi APIs                  Options data providers (planned)
+          │                                           │
+          ▼                                           ▼
+automation daemon(s)                       options daemon (shadow-only, separate spec)
           │ writes explicit session-id wake events
           ▼
 ~/.pi/agent/wake/inbox/*.json  or  ./.pi/wake/inbox/*.json
