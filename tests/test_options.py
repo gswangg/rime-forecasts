@@ -652,6 +652,61 @@ class OptionsCoreTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
 
+    def test_ticket_lifecycle_events_emit_clv_and_expiry_wakes(self):
+        ticket = self._sample_option_ticket()
+        ticket["status"] = "paper_open"
+        with tempfile.TemporaryDirectory() as tmp:
+            ticket_path = write_option_ticket(ticket, tmp)
+            events, rejections = options_daemon.generate_ticket_lifecycle_events(
+                ticket_dir=Path(tmp),
+                state={"clv_events": {}, "exit_events": {}},
+                now=dt("2026-05-19T04:26:00Z"),
+                session_id="session-123",
+                max_events=5,
+                schedule_statuses=("paper_open",),
+            )
+            self.assertEqual(rejections, [])
+            self.assertEqual(len(events), 1)
+            self.assertEqual(events[0]["type"], "options_clv_checkpoint_due")
+            self.assertEqual(events[0]["payload"]["checkpoint"], "1h")
+            self.assertEqual(events[0]["payload"]["ticketPath"], str(ticket_path))
+
+            exit_events, _ = options_daemon.generate_ticket_lifecycle_events(
+                ticket_dir=Path(tmp),
+                state={"clv_events": {}, "exit_events": {}},
+                now=dt("2026-05-22T21:30:00Z"),
+                session_id="session-123",
+                max_events=5,
+                schedule_statuses=("paper_open",),
+            )
+        self.assertTrue(any(event["type"] == "options_expiry_or_exit" for event in exit_events))
+
+    def test_options_daemon_can_run_lifecycle_only_from_ticket_dir(self):
+        ticket = self._sample_option_ticket()
+        ticket["status"] = "paper_open"
+        with tempfile.TemporaryDirectory() as tmp:
+            ticket_dir = Path(tmp) / "tickets"
+            fixture_dir = Path(tmp) / "empty-fixtures"
+            fixture_dir.mkdir()
+            write_option_ticket(ticket, ticket_dir)
+            parser = options_daemon.build_parser()
+            args = parser.parse_args([
+                "--fixture-dir",
+                str(fixture_dir),
+                "--ticket-dir",
+                str(ticket_dir),
+                "--dry-run",
+                "--now",
+                "2026-05-19T04:26:00Z",
+            ])
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                count = options_daemon.poll_once(args, session_id=None)
+        payload = json.loads(output.getvalue())
+        self.assertEqual(count, 1)
+        self.assertEqual(payload["lifecycleEventCount"], 1)
+        self.assertEqual(payload["events"][0]["type"], "options_clv_checkpoint_due")
+
     def test_mark_structure_value_from_chain_and_markout_cli(self):
         ticket = self._sample_option_ticket()
         mark_chain = {
@@ -684,14 +739,19 @@ class OptionsCoreTests(unittest.TestCase):
                     "1h",
                     "--now",
                     "2026-05-19T04:25:00Z",
+                    "--append-ledger",
+                    "--ledger",
+                    str(Path(tmp) / "ledger.md"),
                 ]
                 with contextlib.redirect_stdout(output):
                     rc = options_markout.main()
             finally:
                 __import__("sys").argv = old_argv
             saved = json.loads(ticket_path.read_text(encoding="utf-8"))
+            ledger_text = (Path(tmp) / "ledger.md").read_text(encoding="utf-8")
         self.assertEqual(rc, 0)
         self.assertIn("$400.00", output.getvalue())
+        self.assertIn("$400.00", ledger_text)
         self.assertIn("1h", saved["markouts"])
         self.assertAlmostEqual(saved["markouts"]["1h"]["pnl"], 314.0)
 

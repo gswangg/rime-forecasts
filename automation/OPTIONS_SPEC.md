@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.2 shadow funnel, 2026-05-19.
+Status: v0.3 shadow wake loop, 2026-05-19.
 
 ## Goal
 
@@ -13,7 +13,9 @@ Options enter the system in two roles:
 
 The first milestone is **shadow options coverage**: ingest chains, compute distributions, emit candidate/review events, and log paper marks. No live broker orders.
 
-v0.2 shifts from hand-authored option structures toward a thesis-driven funnel: a catalyst thesis specifies direction, target zone, event date, model probability, and risk caps; code searches liquid contracts for capped-risk structures that express it.
+v0.2 shifted from hand-authored option structures toward a thesis-driven funnel: a catalyst thesis specifies direction, target zone, event date, model probability, and risk caps; code searches liquid contracts for capped-risk structures that express it.
+
+v0.3 stitches that funnel into wake lifecycle operation: active thesis fixtures live in `options/theses/`, `scripts/options-daemon.py` can loop over them, accepted candidates can write local paper tickets, and open tickets can emit CLV/expiry wake events.
 
 ## Non-goals
 
@@ -197,7 +199,7 @@ Do not mix option P/L into prediction-market Brier. Keep `scorecard.md` for bina
 
 ## Wake events
 
-Options events use the same `wake-pi` routing and exact session-id policy.
+Options events use the same `wake-pi` routing and exact session-id policy. `scripts/options-daemon.py` emits candidate and lifecycle wakes in non-dry-run mode; `--dry-run` prints the same event payloads without writing wake files.
 
 ### `options_signal_candidate`
 
@@ -215,26 +217,27 @@ Payload includes:
 
 ### `options_clv_checkpoint_due`
 
-A tracked option signal/trade reached +1h/+6h/+24h.
+A tracked option signal/trade reached +1h/+6h/+24h. The daemon scans local `execution/options-tickets/*.json` and emits checkpoints for eligible statuses, default `paper_open`.
 
 Payload includes:
 
-- entry price and current mark
-- mark source/delay
-- P/L after spread/fees
-- underlying move
-- IV/Greek changes when available
+- ticket id/path and full ticket snapshot
+- checkpoint name and dedupe key
+- entry price/max loss/evaluation via ticket payload
+- instructions to mark with `scripts/options-markout.py`
+
+The mark itself is not guessed from stale data in the wake event; use current quote/fixture/manual mark at processing time.
 
 ### `options_expiry_or_exit`
 
-A tracked option signal/trade hit planned exit, expiry, or stop condition.
+A tracked option signal/trade hit planned exit, expiry, or stop condition. v0.3 detects option expiry from the ticket structure and emits one `options_expiry_or_exit` wake unless an exit/expiry/close markout already exists.
 
 Payload includes:
 
-- settlement/exit price
-- realized P/L
-- return on max risk
-- whether thesis mechanism was right
+- ticket id/path and full ticket snapshot
+- due reason / dedupe key
+- instructions to mark with `scripts/options-markout.py`
+- realized P/L and thesis correctness are filled during wake processing, not by the daemon
 
 ## Ledger
 
@@ -245,7 +248,7 @@ Minimum ledger columns:
 | Opened | Underlying | Structure | Thesis | Entry | +1h | +6h | +24h | Exit/expiry | P/L | Notes |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
 
-Paper ticket artifacts live under `execution/options-tickets/` and are gitignored. `scripts/options-daemon.py --write-tickets` writes them from accepted shadow candidates. `scripts/options-markout.py` updates a ticket from manual mark values or a current chain fixture and prints a ready-to-paste `options-ledger.md` row.
+Paper ticket artifacts live under `execution/options-tickets/` and are gitignored. `scripts/options-daemon.py --write-tickets` writes them from accepted shadow candidates. `scripts/options-markout.py` updates a ticket from manual mark values or a current chain fixture and prints a ready-to-paste `options-ledger.md` row; `--append-ledger` appends that row to `options-ledger.md` when review has accepted the mark.
 
 Ticket artifacts include:
 
@@ -283,12 +286,13 @@ Live options orders require all existing execution safeguards plus broker-specif
 3. Add Black-Scholes / IV utility functions for distribution estimates; use fixtures first. **Implemented:** Black-Scholes pricing, risk-neutral threshold/range helpers, capped-risk structure builders, and edge evaluation.
 4. Add `options-ledger.md` and journal event conventions. **Implemented.**
 5. Build `scripts/options-daemon.py --dry-run` that prints candidates from fixtures only. **Implemented:** fixture chain + `signals[]` flow; dry-run prints candidate events/rejections.
-6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, event date, model probability, and max-risk constraints.
-7. Extend `scripts/options-daemon.py` so `theses[]` can auto-generate and rank structures, not only consume hand-authored `signals[]`.
+6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, event date, model probability, and max-risk constraints. **Implemented.**
+7. Extend `scripts/options-daemon.py` so `theses[]` can auto-generate and rank structures, not only consume hand-authored `signals[]`. **Implemented.**
 8. Add dry-run options ticket artifacts under `execution/options-tickets/` plus ledger/markout helpers. **Implemented:** `option_ticket_from_event`, `write_option_ticket`, `option_markout`, `add_option_markout`, `options_ledger_row`, `scripts/options-daemon.py --write-tickets`, and `scripts/options-markout.py`.
 9. Add provider interfaces behind local credentials. **Partially implemented:** `OptionChainProvider` protocol and `FixtureOptionProvider`; live/provider adapters remain future work.
-10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]`; future work for generated thesis candidates and provider inputs.**
-11. Only then consider broker live adapter design.
+10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]` and generated `theses[]`; provider inputs remain future work.**
+11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
+12. Only then consider broker live adapter design.
 
 ## Fixture signal format
 
@@ -326,9 +330,9 @@ Live options orders require all existing execution safeguards plus broker-specif
 
 Supported structures in the fixture daemon: `long_call`, `long_put`, `debit_vertical`, `credit_vertical`. Values are dollars per one standard 100x option contract after multiplier, so `modelFairValue: 125.0` means $125.
 
-## Thesis fixture format (next phase)
+## Thesis fixture format
 
-Generated-structure fixtures should add `theses[]` alongside or instead of hand-authored `signals[]`:
+Generated-structure fixtures should add `theses[]` alongside or instead of hand-authored `signals[]`. Active files can live in `options/theses/*.json` and are loaded by default via `--fixture-dir options/theses`:
 
 ```json
 {
@@ -353,4 +357,48 @@ Generated-structure fixtures should add `theses[]` alongside or instead of hand-
 }
 ```
 
-The search should generate candidate structures, compute executable debit, max loss/gain, breakeven, reward/risk, model fair value from the thesis probability/payoff approximation, and rank accepted candidates by edge percent of risk then liquidity/spread quality.
+The search generates candidate structures, computes executable debit, max loss/gain, breakeven, reward/risk, model fair value from the thesis probability/payoff approximation, and ranks accepted candidates by edge percent of risk plus asymmetry/spread quality.
+
+## Daemon operation
+
+Candidate dry-run:
+
+```bash
+scripts/options-daemon.py --fixture path/to/fixture.json --dry-run
+scripts/options-daemon.py --fixture-dir options/theses --dry-run
+```
+
+Wake-producing loop, pinned to the rime session:
+
+```bash
+scripts/options-daemon.py \
+  --fixture-dir options/theses \
+  --session-id 019dc71a-53fa-73ff-85a7-46f8e5d3c671 \
+  --loop \
+  --interval-sec 900 \
+  --write-tickets \
+  --ticket-status paper_open
+```
+
+Lifecycle-only scan, useful after tickets exist:
+
+```bash
+scripts/options-daemon.py \
+  --fixture-dir options/theses \
+  --session-id 019dc71a-53fa-73ff-85a7-46f8e5d3c671 \
+  --once
+```
+
+`--schedule-status paper_open` is the default for CLV wakes. Add `--schedule-status draft` only when draft tickets should be marked before model review.
+
+Manual/current-fixture markout:
+
+```bash
+scripts/options-markout.py \
+  --ticket execution/options-tickets/<ticket>.json \
+  --checkpoint 1h \
+  --fixture path/to/current-chain.json \
+  --append-ledger
+```
+
+If no current chain fixture exists, pass `--mark-value` and `--underlying-price` manually.

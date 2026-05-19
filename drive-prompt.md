@@ -93,9 +93,9 @@ Participant event handling:
 
 Options event handling remains shadow-only:
 
-- `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. Write to `options-ledger.md` only if useful; do not mix options P/L into prediction-market Brier.
-- `options_clv_checkpoint_due`: update `options-ledger.md` with mark-to-market P/L, underlying move, IV/Greek changes if available, and quote-delay caveats.
-- `options_expiry_or_exit`: update `options-ledger.md` final P/L / return on max risk and journal the thesis result.
+- `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. If accepted for shadow tracking, ensure a local option ticket exists under `execution/options-tickets/` and update `options-ledger.md`; do not mix options P/L into prediction-market Brier.
+- `options_clv_checkpoint_due`: mark the referenced local ticket with `scripts/options-markout.py` using current/manual quotes, then update/append `options-ledger.md` if useful. Do not treat stale wake payload marks as executable.
+- `options_expiry_or_exit`: mark the referenced local ticket with checkpoint `exit` or `expiry`, update `options-ledger.md` final P/L / return on max risk, and journal the thesis result.
 
 ## Maintenance/manual mode
 
@@ -126,6 +126,20 @@ Participant daemon smoke (once implemented):
 ```bash
 scripts/polymarket-participant-daemon.py --dry-run --limit 100
 scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --once
+```
+
+Options daemon smoke / loop:
+
+```bash
+scripts/options-daemon.py --fixture-dir options/theses --dry-run
+scripts/options-daemon.py --fixture-dir options/theses --session-id <pi-session-id> --once
+scripts/options-daemon.py --fixture-dir options/theses --session-id <pi-session-id> --loop --interval-sec 900 --write-tickets --ticket-status paper_open
+```
+
+Options markout:
+
+```bash
+scripts/options-markout.py --ticket execution/options-tickets/<ticket>.json --checkpoint 1h --fixture path/to/current-chain.json --append-ledger
 ```
 
 Background loop:

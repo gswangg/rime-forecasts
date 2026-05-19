@@ -43,6 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--vega", type=float)
     parser.add_argument("--notes", default="")
     parser.add_argument("--no-write", action="store_true", help="print updated ticket/ledger row without writing back")
+    parser.add_argument("--append-ledger", action="store_true", help="append the generated row to options-ledger.md")
+    parser.add_argument("--ledger", type=Path, default=Path("options-ledger.md"), help="ledger path for --append-ledger")
     parser.add_argument("--print-json", action="store_true", help="print updated ticket JSON after the ledger row")
     return parser
 
@@ -77,7 +79,11 @@ def main() -> int:
     updated = add_option_markout(ticket, mark)
     if not args.no_write:
         args.ticket.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(options_ledger_row(updated))
+    row = options_ledger_row(updated)
+    if args.append_ledger:
+        with args.ledger.open("a", encoding="utf-8") as f:
+            f.write(row + "\n")
+    print(row)
     if args.print_json:
         print(json.dumps(updated, indent=2, sort_keys=True))
     return 0
