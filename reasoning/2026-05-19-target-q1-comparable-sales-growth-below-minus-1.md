@@ -76,4 +76,12 @@ This clears the v3 bar with confidence 3/5. I am not assigning 4/5 because I do 
 
 ---
 
-*(Resolution section added below after the market resolves, never editing above.)*
+## Resolution / watch notes (added after writing, never editing above)
+
+### 2026-05-19T01:26Z +1h CLV
+
+The +1h checkpoint was flat: daemon payload and live Gamma both showed **65.5% YES** with a **65/66** YES book, unchanged from the 65.5% entry. For the NO-side forecast this is **+0.0pp aligned CLV** (raw YES +0.0pp); live CLOB also showed NO **34/35**, so the executable NO price remained about 35c.
+
+No new source evidence surfaced in the checkpoint window. This is neutral fast feedback: the market has not immediately validated the revenue/guidance fade, but it also has not pushed further toward the weak-2025-history / `<-1%` side before earnings.
+
+*(Resolution section added below after the market resolves.)*
