@@ -1,16 +1,16 @@
 # Scorecard
 
-*Last updated: 2026-05-18T22:09:23+00:00*
+*Last updated: 2026-05-19T00:16:05+00:00*
 
 ## Summary
 
-- Predictions made: 35 (8 v1 + 27 v2/v2.5.x/v3)
+- Predictions made: 36 (8 v1 + 28 v2/v2.5.x/v3)
 - Resolved: 24
 - Brier score: 0.158
 - Naive primary-venue Brier: 0.302
 - Log loss: 0.474
 - Calibration: insufficient N (0-10% bucket: 0/1 YES; 10-20% bucket: 0/3 YES; 20-30% bucket: 0/1 YES; 30-40% bucket: 2/7 YES; 40-50% bucket: 1/3 YES; 50-60% bucket: 0/1 YES; 60-70% bucket: 1/2 YES; 70-80% bucket: 0/1 YES; 80%+ bucket: 5/5 YES)
-- **Portfolio direction bias (at writing):** 18 below primary venue, 17 above primary venue.
+- **Portfolio direction bias (at writing):** 19 below primary venue, 17 above primary venue.
 
 ## Cross-venue observations (from v1-baseline enrichment)
 
@@ -88,6 +88,7 @@ Completed retrospective Kalshi + Polymarket shadow for all 8 v1 predictions (see
 | 2026-04-26 | [Tottenham relegated from EPL](./reasoning/2026-04-26-tottenham-relegated-epl-2026.md) | 50% | 51% / 49.5% | — | 32.05% | 2026-05-27 | v2.5.2 |
 | 2026-05-15 | [Hormuz transit calls May 11-May 17, 20-39](./reasoning/2026-05-15-hormuz-transit-calls-may11-may17-20-39.md) | 35% | — | — | 62.0% | 2026-05-17 | v3 |
 | 2026-05-18 | [The Deep dies in The Boys Season 5](./reasoning/2026-05-18-the-deep-dies-the-boys-season-5.md) | 88% | — | — | 74.5% | 2026-05-20 | v3 |
+| 2026-05-19 | [Target Q1 comp sales below -1%](./reasoning/2026-05-19-target-q1-comparable-sales-growth-below-minus-1.md) | 30% | — | — | 65.5% | 2026-05-20 | v3 |
 
 ¹ Polymarket question is "leaves admin before 2027" at 19% YES; window-adjusted equivalent for my 72-day Manifold question is ~6% exit = 94% stays.
 
