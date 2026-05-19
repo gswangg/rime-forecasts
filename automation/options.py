@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 import math
 import re
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, Protocol
 
 from .timeutil import isoformat_z, parse_iso
 
@@ -71,6 +71,12 @@ class OptionChainSnapshot:
     raw: dict[str, Any]
 
     @property
+    def quote_delay_seconds(self) -> int | None:
+        if self.quote_ts is None:
+            return None
+        return max(0, int((datetime.now(timezone.utc) - self.quote_ts).total_seconds()))
+
+    @property
     def underlying_mid(self) -> float | None:
         if self.underlying_bid is None or self.underlying_ask is None:
             return None
@@ -83,11 +89,25 @@ class OptionChainSnapshot:
             "underlying": self.underlying,
             "provider": self.provider,
             "quote_ts": isoformat_z(self.quote_ts) if self.quote_ts is not None else None,
+            "quote_delay_seconds": self.quote_delay_seconds,
             "underlying_bid": self.underlying_bid,
             "underlying_ask": self.underlying_ask,
             "contracts": [contract.to_dict() for contract in self.contracts],
             "raw": self.raw,
         }
+
+
+class OptionChainProvider(Protocol):
+    provider: str
+
+    def list_expiries(self, underlying: str) -> tuple[date, ...]:
+        ...
+
+    def fetch_chain(self, underlying: str, expiry: date | None = None) -> OptionChainSnapshot:
+        ...
+
+    def fetch_quote(self, symbol: str) -> OptionContract:
+        ...
 
 
 @dataclass(frozen=True)
@@ -413,7 +433,67 @@ def parse_option_chain_snapshot(raw: dict[str, Any] | list[dict[str, Any]]) -> O
 
 
 def load_option_chain_snapshot(path: str | Path) -> OptionChainSnapshot:
-    return parse_option_chain_snapshot(json.loads(Path(path).read_text(encoding="utf-8")))
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "chain" in data:
+        data = data["chain"]
+    return parse_option_chain_snapshot(data)
+
+
+@dataclass(frozen=True)
+class FixtureOptionProvider:
+    """Credential-free provider adapter backed by a normalized fixture snapshot."""
+
+    snapshot: OptionChainSnapshot
+    provider: str = "fixture"
+
+    @classmethod
+    def from_file(cls, path: str | Path) -> "FixtureOptionProvider":
+        snapshot = load_option_chain_snapshot(path)
+        return cls(snapshot=snapshot, provider=snapshot.provider)
+
+    @classmethod
+    def from_mapping(cls, raw: dict[str, Any]) -> "FixtureOptionProvider":
+        snapshot = parse_option_chain_snapshot(raw.get("chain", raw))
+        return cls(snapshot=snapshot, provider=snapshot.provider)
+
+    def list_expiries(self, underlying: str) -> tuple[date, ...]:
+        normalized = _normalized_underlying(underlying)
+        expiries = {contract.expiry for contract in self.snapshot.contracts if contract.underlying == normalized}
+        return tuple(sorted(expiries))
+
+    def fetch_chain(self, underlying: str, expiry: date | None = None) -> OptionChainSnapshot:
+        normalized = _normalized_underlying(underlying)
+        contracts = tuple(
+            contract
+            for contract in self.snapshot.contracts
+            if contract.underlying == normalized and (expiry is None or contract.expiry == expiry)
+        )
+        if not contracts:
+            raise KeyError(f"no fixture option chain for {normalized} {expiry or ''}".strip())
+        first = contracts[0]
+        return OptionChainSnapshot(
+            underlying=normalized,
+            provider=self.provider,
+            quote_ts=self.snapshot.quote_ts or first.quote_ts,
+            underlying_bid=self.snapshot.underlying_bid or first.underlying_bid,
+            underlying_ask=self.snapshot.underlying_ask or first.underlying_ask,
+            contracts=contracts,
+            raw={"source": "fixture", "filtered_expiry": expiry.isoformat() if expiry else None},
+        )
+
+    def fetch_quote(self, symbol: str) -> OptionContract:
+        for contract in self.snapshot.contracts:
+            if contract.symbol == symbol:
+                return contract
+        raise KeyError(f"no fixture option quote for {symbol}")
+
+
+def quote_delay_seconds(quote_ts: datetime | None, *, now: datetime) -> int | None:
+    if quote_ts is None:
+        return None
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return max(0, int((now.astimezone(timezone.utc) - quote_ts).total_seconds()))
 
 
 def days_to_expiry(expiry: date, *, now: datetime) -> int:
@@ -1109,6 +1189,28 @@ def write_option_ticket(ticket: dict[str, Any], ticket_dir: str | Path) -> Path:
     tmp.write_text(json.dumps(ticket, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     tmp.replace(path)
     return path
+
+
+def mark_structure_value_from_chain(structure: dict[str, Any], snapshot: OptionChainSnapshot) -> float:
+    contracts = {contract.symbol: contract for contract in snapshot.contracts}
+    legs = structure.get("legs") if isinstance(structure.get("legs"), list) else []
+    total = 0.0
+    for leg in legs:
+        if not isinstance(leg, dict):
+            continue
+        quantity = int(leg.get("quantity", 0))
+        contract_payload = leg.get("contract", {}) if isinstance(leg.get("contract"), dict) else {}
+        symbol = str(contract_payload.get("symbol") or "")
+        if symbol not in contracts:
+            raise KeyError(f"missing mark quote for {symbol}")
+        mark_contract = contracts[symbol]
+        mid = mark_contract.mid
+        if mid is None:
+            raise ValueError(f"missing mark mid for {symbol}")
+        total += quantity * mid * mark_contract.multiplier
+    if structure.get("net_credit") is not None:
+        return _round_money(max(0.0, -total)) or 0.0
+    return _round_money(max(0.0, total)) or 0.0
 
 
 def option_markout(

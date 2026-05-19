@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from automation.options import (
+    FixtureOptionProvider,
     OptionQuoteFilterConfig,
     black_scholes_price,
     breakeven_probability,
@@ -20,6 +21,7 @@ from automation.options import (
     find_opportunities_for_thesis,
     generate_structures_for_thesis,
     load_option_chain_snapshot,
+    mark_structure_value_from_chain,
     model_fair_value_from_thesis,
     normalize_contract,
     normalize_thesis,
@@ -28,6 +30,7 @@ from automation.options import (
     options_ledger_row,
     parse_option_chain_snapshot,
     payoff_at_price,
+    quote_delay_seconds,
     risk_neutral_probability_above,
     risk_neutral_probability_between,
     single_leg_spread_limit,
@@ -42,6 +45,12 @@ _OPTIONS_DAEMON_SPEC = importlib.util.spec_from_file_location("options_daemon", 
 assert _OPTIONS_DAEMON_SPEC and _OPTIONS_DAEMON_SPEC.loader
 options_daemon = importlib.util.module_from_spec(_OPTIONS_DAEMON_SPEC)
 _OPTIONS_DAEMON_SPEC.loader.exec_module(options_daemon)
+
+_OPTIONS_MARKOUT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "options-markout.py"
+_OPTIONS_MARKOUT_SPEC = importlib.util.spec_from_file_location("options_markout", _OPTIONS_MARKOUT_PATH)
+assert _OPTIONS_MARKOUT_SPEC and _OPTIONS_MARKOUT_SPEC.loader
+options_markout = importlib.util.module_from_spec(_OPTIONS_MARKOUT_SPEC)
+_OPTIONS_MARKOUT_SPEC.loader.exec_module(options_markout)
 
 
 def dt(value: str) -> datetime:
@@ -166,6 +175,33 @@ class OptionsCoreTests(unittest.TestCase):
             snapshot = load_option_chain_snapshot(path)
         self.assertEqual(snapshot.underlying, "NVDA")
         self.assertEqual(len(snapshot.contracts), 1)
+
+    def test_fixture_option_provider_interface(self):
+        provider = FixtureOptionProvider.from_mapping(
+            {
+                "chain": {
+                    "underlying": "NVDA",
+                    "provider": "fixture",
+                    "underlying_bid": 224.40,
+                    "underlying_ask": 224.45,
+                    "quote_ts": "2026-05-19T03:20:00Z",
+                    "contracts": [
+                        raw_contract(symbol="NVDA260522C00250000", strike=250),
+                        raw_contract(symbol="NVDA260529C00260000", expiry="2026-05-29", strike=260),
+                    ],
+                }
+            }
+        )
+        self.assertEqual(provider.provider, "fixture")
+        self.assertEqual([d.isoformat() for d in provider.list_expiries("nvda")], ["2026-05-22", "2026-05-29"])
+        chain = provider.fetch_chain("NVDA", datetime.fromisoformat("2026-05-22").date())
+        self.assertEqual(len(chain.contracts), 1)
+        self.assertEqual(chain.contracts[0].symbol, "NVDA260522C00250000")
+        quote = provider.fetch_quote("NVDA260529C00260000")
+        self.assertEqual(quote.expiry.isoformat(), "2026-05-29")
+        self.assertEqual(quote_delay_seconds(quote.quote_ts, now=dt("2026-05-19T03:25:00Z")), 300)
+        with self.assertRaises(KeyError):
+            provider.fetch_quote("NOPE")
 
     def test_quote_filter_accepts_liquid_contract(self):
         now = dt("2026-05-19T03:25:00Z")
@@ -573,7 +609,7 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertTrue(any(row.get("reason") == "already emitted" for row in rejections))
 
-    def test_option_ticket_artifact_markout_and_ledger_row(self):
+    def _sample_option_ticket(self):
         fixture = self.options_fixture()
         fixture["signals"] = []
         events, _ = options_daemon.generate_options_events(
@@ -587,7 +623,10 @@ class OptionsCoreTests(unittest.TestCase):
             max_loss_cap=100.0,
             max_events=1,
         )
-        ticket = option_ticket_from_event(events[0], now=dt("2026-05-19T03:25:00Z"))
+        return option_ticket_from_event(events[0], now=dt("2026-05-19T03:25:00Z"))
+
+    def test_option_ticket_artifact_markout_and_ledger_row(self):
+        ticket = self._sample_option_ticket()
         self.assertEqual(ticket["status"], "draft")
         self.assertFalse(ticket["live_submit_allowed"])
         self.assertEqual(ticket["source_mode"], "thesis_search")
@@ -612,6 +651,49 @@ class OptionsCoreTests(unittest.TestCase):
             path = write_option_ticket(updated, tmp)
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
+
+    def test_mark_structure_value_from_chain_and_markout_cli(self):
+        ticket = self._sample_option_ticket()
+        mark_chain = {
+            "underlying": "NVDA",
+            "provider": "fixture",
+            "underlying_bid": 251.90,
+            "underlying_ask": 252.10,
+            "quote_ts": "2026-05-19T04:25:00Z",
+            "contracts": [
+                raw_contract(symbol="NVDA260522C00250000", strike=250, bid=5.90, ask=6.10, quote_ts="2026-05-19T04:25:00Z"),
+                raw_contract(symbol="NVDA260522C00260000", strike=260, bid=1.90, ask=2.10, quote_ts="2026-05-19T04:25:00Z"),
+            ],
+        }
+        snapshot = parse_option_chain_snapshot(mark_chain)
+        self.assertAlmostEqual(mark_structure_value_from_chain(ticket["structure"], snapshot), 400.0)
+        with tempfile.TemporaryDirectory() as tmp:
+            ticket_path = write_option_ticket(ticket, tmp)
+            fixture_path = Path(tmp) / "mark-chain.json"
+            fixture_path.write_text(json.dumps(mark_chain), encoding="utf-8")
+            old_argv = __import__("sys").argv
+            output = io.StringIO()
+            try:
+                __import__("sys").argv = [
+                    "options-markout.py",
+                    "--ticket",
+                    str(ticket_path),
+                    "--fixture",
+                    str(fixture_path),
+                    "--checkpoint",
+                    "1h",
+                    "--now",
+                    "2026-05-19T04:25:00Z",
+                ]
+                with contextlib.redirect_stdout(output):
+                    rc = options_markout.main()
+            finally:
+                __import__("sys").argv = old_argv
+            saved = json.loads(ticket_path.read_text(encoding="utf-8"))
+        self.assertEqual(rc, 0)
+        self.assertIn("$400.00", output.getvalue())
+        self.assertIn("1h", saved["markouts"])
+        self.assertAlmostEqual(saved["markouts"]["1h"]["pnl"], 314.0)
 
     def test_options_daemon_dry_run_cli_prints_event_and_can_write_tickets(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -78,10 +78,10 @@ For spreads, store each leg plus derived net debit/credit, max loss, max gain, b
 
 v0.1 can use fixture files and delayed public data for research, but every record must label provider and delay. Candidate wakes that imply executable economics require a real-time or explicitly accepted delayed quote source.
 
-Provider interfaces should be code-shaped before credentials exist:
+Provider interfaces are code-shaped before credentials exist via `automation/options.py::OptionChainProvider` and `FixtureOptionProvider`:
 
-- `list_expiries(underlying) -> list[date]`
-- `fetch_chain(underlying, expiry | expiry_window) -> OptionChainSnapshot`
+- `list_expiries(underlying) -> tuple[date, ...]`
+- `fetch_chain(underlying, expiry | None) -> OptionChainSnapshot`
 - `fetch_quote(symbol) -> OptionContract`
 - `provider`, `quote_ts`, `quote_delay_seconds`, and raw response metadata on every normalized record
 - no credentials or account identifiers in repo fixtures, state, tickets, or logs
@@ -245,7 +245,7 @@ Minimum ledger columns:
 | Opened | Underlying | Structure | Thesis | Entry | +1h | +6h | +24h | Exit/expiry | P/L | Notes |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
 
-Paper ticket artifacts live under `execution/options-tickets/` and are gitignored. `scripts/options-daemon.py --write-tickets` writes them from accepted shadow candidates.
+Paper ticket artifacts live under `execution/options-tickets/` and are gitignored. `scripts/options-daemon.py --write-tickets` writes them from accepted shadow candidates. `scripts/options-markout.py` updates a ticket from manual mark values or a current chain fixture and prints a ready-to-paste `options-ledger.md` row.
 
 Ticket artifacts include:
 
@@ -285,8 +285,8 @@ Live options orders require all existing execution safeguards plus broker-specif
 5. Build `scripts/options-daemon.py --dry-run` that prints candidates from fixtures only. **Implemented:** fixture chain + `signals[]` flow; dry-run prints candidate events/rejections.
 6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, event date, model probability, and max-risk constraints.
 7. Extend `scripts/options-daemon.py` so `theses[]` can auto-generate and rank structures, not only consume hand-authored `signals[]`.
-8. Add dry-run options ticket artifacts under `execution/options-tickets/` plus ledger/markout helpers. **Implemented:** `option_ticket_from_event`, `write_option_ticket`, `option_markout`, `add_option_markout`, `options_ledger_row`, and `scripts/options-daemon.py --write-tickets`.
-9. Add provider interfaces behind local credentials.
+8. Add dry-run options ticket artifacts under `execution/options-tickets/` plus ledger/markout helpers. **Implemented:** `option_ticket_from_event`, `write_option_ticket`, `option_markout`, `add_option_markout`, `options_ledger_row`, `scripts/options-daemon.py --write-tickets`, and `scripts/options-markout.py`.
+9. Add provider interfaces behind local credentials. **Partially implemented:** `OptionChainProvider` protocol and `FixtureOptionProvider`; live/provider adapters remain future work.
 10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]`; future work for generated thesis candidates and provider inputs.**
 11. Only then consider broker live adapter design.
 
