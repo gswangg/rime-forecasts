@@ -113,6 +113,18 @@ class AutomationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("generic team-match", reason)
 
+        generic_halftime_draw = normalize_market(
+            raw_market(question="Shanghai Shenhua FC vs. Wuhan San Zhen FC: Draw at halftime?")
+        )
+        ok, reason = candidate_filter_reason(generic_halftime_draw, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
+        generic_halftime_leader = normalize_market(raw_market(question="Wuhan San Zhen FC leading at halftime?"))
+        ok, reason = candidate_filter_reason(generic_halftime_leader, now=now)
+        self.assertFalse(ok)
+        self.assertIn("generic team-match", reason)
+
         generic_exact_score = normalize_market(raw_market(question="Exact Score: Club Atlético de Madrid 2 - 2 Arsenal FC?"))
         ok, reason = candidate_filter_reason(generic_exact_score, now=now)
         self.assertFalse(ok)

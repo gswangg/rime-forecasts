@@ -131,6 +131,8 @@ def is_generic_team_match_market(question: str) -> bool:
         r"^Will .+ vs\. .+ end in a draw\?$",
         r"^Will .+ win on \d{4}-\d{2}-\d{2}\?$",
         r"^.+ vs\. .+: Both Teams to Score$",
+        r"^.+ vs\. .+: Draw at halftime\?$",
+        r"^.+ leading at halftime\?$",
         r"^Exact Score: .+ \d+ - \d+ .+\?$",
         r"^Exact Score: Any Other Score\?$",
         r"^Will .+ advance to the Conference Semifinals in the \d{4} NBA Playoffs\?$",
