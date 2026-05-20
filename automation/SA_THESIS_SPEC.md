@@ -1,6 +1,6 @@
 # Situational Awareness thesis-generation spec
 
-Status: v0.1 shadow discovery daemon, 2026-05-20.
+Status: v0.2 shadow discovery daemon, 2026-05-20.
 
 ## Goal
 
@@ -37,17 +37,28 @@ Durable strategy inputs live in `options/sa-watchlist.json`:
   "strategy": "situational-awareness-ai-stack",
   "defaults": {
     "enabled": true,
-    "emitOnFirstSeen": false,
+    "emitOnFirstSeen": true,
+    "prequalifyFirstSeen": true,
+    "maxFirstSeenCandidatesPerScan": 3,
+    "firstSeenRecheckHours": 24,
     "targetDays": 30,
     "minDaysToExpiry": 7,
     "maxDaysToExpiry": 60,
     "minLiquidContracts": 2,
+    "minDirectionalLiquidContracts": 2,
     "spotMoveTriggerPct": 0.12,
     "allowedStructures": ["debit_vertical"],
     "maxLossCap": 200,
     "minRewardRisk": 3,
     "minEdgePctOfRisk": 0.3,
-    "minProbabilityMargin": 0.08
+    "minProbabilityMargin": 0.08,
+    "nearPassMinPriority": 70,
+    "nearPassEdgeTolerance": 0.10,
+    "nearPassProbabilityMarginTolerance": 0.02,
+    "maxUnderlyingSpreadPct": 0.03,
+    "maxSpotStrikeGapPct": 0.35,
+    "minStrikeCount": 5,
+    "minOptionContracts": 10
   },
   "entries": [
     {
@@ -73,10 +84,16 @@ For each enabled entry, the scanner:
 2. fetches the chain from the configured provider;
 3. computes spot mid, liquid contract count, and quote-quality summary;
 4. applies trigger logic:
-   - first seen only if `emitOnFirstSeen: true`,
+   - first seen if `emitOnFirstSeen: true` and the entry has not completed first-seen review in scanner state,
    - liquidity crossing `minLiquidContracts`,
-   - absolute spot move from the last scan >= `spotMoveTriggerPct`;
-5. emits one candidate per configured direction if triggered.
+   - absolute spot move from the last scan >= `spotMoveTriggerPct`,
+   - `--force` for explicit operator sweeps;
+5. builds an inactive thesis candidate per configured direction;
+6. attaches prequalification diagnostics:
+   - provider sanity: valid underlying bid/ask, bounded underlying spread, plausible spot vs strike ladder, sufficient contract/strike count, optional quote-age cap;
+   - directional liquidity: enough liquid calls for upside or puts for downside within the target path;
+   - options structure search: same quote filters and thesis gates used by `scripts/options-daemon.py`;
+7. emits triggered candidates only if they pass first-seen prequalification when `prequalifyFirstSeen: true`. A candidate prequalifies if at least one structure fully passes, or if a high-priority candidate has a near-pass structure inside configured edge/probability tolerances. First-seen emissions are throttled by `maxFirstSeenCandidatesPerScan`.
 
 Generated thesis fields:
 
@@ -88,7 +105,8 @@ Generated thesis fields:
 - `eventDate`: default to selected expiry unless entry supplies `eventDate`/`catalystDate`;
 - `optionExpiry`: selected expiry;
 - risk/edge gates copied from the watchlist entry/defaults;
-- `thesis`, `catalyst`, `plannedExit`, `falsifier` from the watchlist mechanism.
+- `thesis`, `catalyst`, `plannedExit`, `falsifier` from the watchlist mechanism;
+- `prequalification` diagnostics in the wake/candidate artifact, including blockers and best/near-pass structure summaries.
 
 ## Wake event
 
@@ -118,7 +136,7 @@ Runtime state is local and gitignored:
 - `automation/state/sa-thesis-candidates/*.json`
 - `automation/state/sa-thesis-scan.log`
 
-State stores last spot/liquidity by underlying and emitted candidate dedupe keys. Candidate artifacts are audit/debug records and may be promoted manually into tracked `options/theses/*.json` only after review.
+State stores last spot/liquidity by underlying, emitted candidate dedupe keys, and first-seen review/check timestamps. Candidate artifacts are audit/debug records and may be promoted manually into tracked `options/theses/*.json` only after review. First-seen prequalification failures are checked at most once per `firstSeenRecheckHours` unless another trigger fires.
 
 ## Operations
 
@@ -149,6 +167,6 @@ pkill -f 'scripts/sa-thesis-scan.py'
 
 ## Acceptance
 
-- Unit tests cover expiry selection, candidate generation, inactive/default behavior, state dedupe, and dry-run CLI output.
+- Unit tests cover expiry selection, candidate generation, inactive/default behavior, state dedupe, first-seen prequalification, and dry-run CLI output.
 - `dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --dry-run` succeeds without printing secrets.
 - Non-dry-run loop writes only wake/candidate/state artifacts; no tracked files are mutated.

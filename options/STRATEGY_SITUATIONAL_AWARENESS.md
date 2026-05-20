@@ -64,7 +64,7 @@ A Situational Awareness options signal may be opened for paper tracking only if 
 
 ## Operating flow
 
-1. Let the thesis scanner generate review candidates from `options/sa-watchlist.json`:
+1. Let the thesis scanner generate review candidates from `options/sa-watchlist.json`. First-seen is enabled for the curated list, but wakes are prequalified by provider sanity, directional liquidity, and options-structure search before review:
    ```bash
    dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --dry-run --max-events 5
    ```

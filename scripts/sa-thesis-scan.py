@@ -7,6 +7,7 @@ import argparse
 import json
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,8 @@ from automation.sa_thesis import (
     entry_enabled,
     load_watchlist,
     merged_entry,
+    first_seen_requires_prequalification,
+    prequalify_candidate,
     quote_config_from_entry,
     select_expiry,
     spot_mid,
@@ -119,6 +122,8 @@ def scan_once(
     strategy = str(watchlist.get("strategy") or "situational-awareness-ai-stack")
     candidates: list[SAThesisCandidate] = []
     rejections: list[dict[str, Any]] = []
+    first_seen_candidates = 0
+    default_first_seen_limit = int(defaults.get("maxFirstSeenCandidatesPerScan", 3))
 
     for raw_entry in watchlist.get("entries", []):
         if len(candidates) >= max_events:
@@ -162,6 +167,7 @@ def scan_once(
                 current_spot=spot,
                 current_liquid_contracts=liquid_count,
                 force=force,
+                now=now,
             )
             min_liquid = int(entry.get("minLiquidContracts", 2))
             if liquid_count < min_liquid:
@@ -188,6 +194,8 @@ def scan_once(
                     provider=snapshot.provider,
                 )
                 continue
+            first_seen_checked = "first_seen" in reasons and "force" not in reasons
+            first_seen_reviewed = False
             for direction in entry_directions(entry):
                 if len(candidates) >= max_events:
                     break
@@ -201,10 +209,41 @@ def scan_once(
                     chain_summary=summary,
                     trigger_reasons=reasons,
                 )
+                prequalification = prequalify_candidate(snapshot, candidate, entry=entry, now=now, config=config)
+                candidate = replace(candidate, prequalification=prequalification)
+                if first_seen_requires_prequalification(entry, reasons) and not prequalification.get("prequalified"):
+                    rejections.append(
+                        {
+                            "candidateId": candidate.candidate_id,
+                            "dedupeKey": candidate.dedupe_key,
+                            "underlying": underlying,
+                            "direction": direction,
+                            "reason": "first_seen prequalification failed",
+                            "prequalification": prequalification,
+                        }
+                    )
+                    continue
+                if "first_seen" in reasons and "force" not in reasons:
+                    first_seen_limit = int(entry.get("maxFirstSeenCandidatesPerScan", default_first_seen_limit))
+                    if first_seen_candidates >= first_seen_limit:
+                        rejections.append(
+                            {
+                                "candidateId": candidate.candidate_id,
+                                "dedupeKey": candidate.dedupe_key,
+                                "underlying": underlying,
+                                "direction": direction,
+                                "reason": f"first_seen throttle {first_seen_candidates} >= {first_seen_limit}",
+                            }
+                        )
+                        continue
                 if candidate.dedupe_key in state.get("emitted_candidates", {}):
                     rejections.append({"candidateId": candidate.candidate_id, "dedupeKey": candidate.dedupe_key, "reason": "already emitted"})
+                    first_seen_reviewed = first_seen_reviewed or first_seen_checked
                     continue
                 candidates.append(candidate)
+                if "first_seen" in reasons and "force" not in reasons:
+                    first_seen_candidates += 1
+                    first_seen_reviewed = True
             update_underlying_state(
                 state,
                 underlying=underlying,
@@ -213,6 +252,8 @@ def scan_once(
                 liquid_contracts=liquid_count,
                 option_expiry=expiry,
                 provider=snapshot.provider,
+                first_seen_reviewed=first_seen_reviewed if first_seen_checked else None,
+                first_seen_checked=first_seen_checked,
             )
         except Exception as exc:
             rejections.append({"underlying": underlying, "reason": str(exc)})

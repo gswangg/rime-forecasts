@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.5 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.6 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -12,6 +12,7 @@
 - *v4.3 (2026-05-19): next options-build phase. Add thesis-to-structure search, dry-run options tickets, provider interfaces, and CLV/ledger markouts while keeping prediction-market daemons paused.*
 - *v4.4 (2026-05-20): add Situational Awareness / AI-scaling options strategy as a shadow thesis prior, staged CBRS watch fixture, inactive fixture gates, and dotenvx-backed Tradier env handling.*
 - *v4.5 (2026-05-20): add Situational Awareness thesis-generation scanner/watchlist. `scripts/sa-thesis-scan.py` emits `options_thesis_review_due`; accepted theses are then promoted into `options/theses/` for `scripts/options-daemon.py`.*
+- *v4.6 (2026-05-20): first-seen SA thesis wakes are enabled across the curated watchlist, but gated by provider sanity checks, directional liquidity, options structure search, near-pass rules, and per-scan throttling.*
 
 ## Goal
 
@@ -39,7 +40,7 @@ scripts/polymarket-participant-daemon.py (v4 scaffold)
   -> participant signal / participant CLV wakes
 
 scripts/sa-thesis-scan.py (shadow-only)
-  -> options thesis-review wakes
+  -> prequalified options thesis-review wakes
 
 scripts/options-daemon.py (shadow-only)
   -> options signal / options CLV / expiry wakes

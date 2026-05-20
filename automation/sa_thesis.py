@@ -6,8 +6,17 @@ from pathlib import Path
 import json
 from typing import Any, Iterable, Mapping
 
-from .options import OptionChainSnapshot, OptionQuoteFilterConfig, contract_quote_filter_reason, days_to_expiry
-from .timeutil import isoformat_z
+from .options import (
+    OptionChainSnapshot,
+    OptionQuoteFilterConfig,
+    contract_quote_filter_reason,
+    days_to_expiry,
+    evaluate_structure_edge,
+    generate_structures_for_thesis,
+    model_fair_value_from_thesis,
+    normalize_thesis,
+)
+from .timeutil import isoformat_z, parse_iso
 from .wake import safe_part
 
 DEFAULT_STRATEGY = "situational-awareness-ai-stack"
@@ -28,9 +37,10 @@ class SAThesisCandidate:
     chain_summary: dict[str, Any]
     thesis_fixture: dict[str, Any]
     priority: int
+    prequalification: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "candidateId": self.candidate_id,
             "dedupeKey": self.dedupe_key,
             "underlying": self.underlying,
@@ -44,6 +54,9 @@ class SAThesisCandidate:
             "thesisFixture": self.thesis_fixture,
             "priority": self.priority,
         }
+        if self.prequalification is not None:
+            payload["prequalification"] = self.prequalification
+        return payload
 
 
 def load_watchlist(path: str | Path) -> dict[str, Any]:
@@ -129,12 +142,14 @@ def chain_summary(snapshot: OptionChainSnapshot, *, now: datetime, config: Optio
     calls = 0
     puts = 0
     expiries: set[str] = set()
+    strikes: set[float] = set()
     for contract in snapshot.contracts:
         if contract.right == "call":
             calls += 1
         elif contract.right == "put":
             puts += 1
         expiries.add(contract.expiry.isoformat())
+        strikes.add(contract.strike)
         ok, _ = contract_quote_filter_reason(contract, now=now, config=config)
         if ok:
             liquid.append(contract)
@@ -148,6 +163,7 @@ def chain_summary(snapshot: OptionChainSnapshot, *, now: datetime, config: Optio
         "callCount": calls,
         "putCount": puts,
         "expiryCount": len(expiries),
+        "strikeCount": len(strikes),
         "liquidContractCount": len(liquid),
         "liquidCallCount": sum(1 for c in liquid if c.right == "call"),
         "liquidPutCount": sum(1 for c in liquid if c.right == "put"),
@@ -192,6 +208,15 @@ def target_probability_for_direction(entry: Mapping[str, Any], direction: str) -
     return _direction_value(entry.get("targetProbability"), direction, 0.25)
 
 
+def _parse_state_ts(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return parse_iso(str(value))
+    except Exception:
+        return None
+
+
 def trigger_reasons_for_entry(
     *,
     entry: Mapping[str, Any],
@@ -199,14 +224,26 @@ def trigger_reasons_for_entry(
     current_spot: float,
     current_liquid_contracts: int,
     force: bool = False,
+    now: datetime | None = None,
 ) -> tuple[str, ...]:
     reasons: list[str] = []
     if force:
         reasons.append("force")
+    emit_first_seen = entry.get("emitOnFirstSeen", False)
     if state_row is None:
-        if entry.get("emitOnFirstSeen", False):
+        if emit_first_seen:
             reasons.append("first_seen")
         return tuple(reasons)
+
+    if emit_first_seen and not state_row.get("first_seen_reviewed"):
+        recheck_hours = entry.get("firstSeenRecheckHours")
+        last_checked = _parse_state_ts(state_row.get("first_seen_last_checked_at"))
+        if recheck_hours is None or last_checked is None or now is None:
+            reasons.append("first_seen")
+        else:
+            elapsed = (now - last_checked).total_seconds()
+            if elapsed >= float(recheck_hours) * 3600:
+                reasons.append("first_seen")
 
     min_liquid = int(entry.get("minLiquidContracts", 2))
     previous_liquid = int(state_row.get("last_liquid_contracts", 0) or 0)
@@ -221,7 +258,7 @@ def trigger_reasons_for_entry(
             move = current_spot / previous_spot - 1
             if abs(move) >= trigger_pct:
                 reasons.append(f"spot_move_{move:+.1%}")
-    return tuple(reasons)
+    return tuple(dict.fromkeys(reasons))
 
 
 def build_candidate(
@@ -234,6 +271,7 @@ def build_candidate(
     option_expiry: date,
     chain_summary: dict[str, Any],
     trigger_reasons: tuple[str, ...],
+    prequalification: dict[str, Any] | None = None,
 ) -> SAThesisCandidate:
     underlying = str(entry.get("underlying") or "").upper()
     if not underlying:
@@ -299,7 +337,221 @@ def build_candidate(
         chain_summary=chain_summary,
         thesis_fixture=fixture,
         priority=int(entry.get("priority", 55)),
+        prequalification=prequalification,
     )
+
+
+def provider_sanity_check(snapshot: OptionChainSnapshot, *, spot: float, entry: Mapping[str, Any], now: datetime) -> dict[str, Any]:
+    blockers: list[str] = []
+    warnings: list[str] = []
+    strikes = sorted({contract.strike for contract in snapshot.contracts if contract.strike > 0})
+    bid = snapshot.underlying_bid
+    ask = snapshot.underlying_ask
+    underlying_spread_pct = None
+    if bid is None or ask is None or bid <= 0 or ask <= 0 or bid > ask:
+        blockers.append("invalid underlying bid/ask")
+    else:
+        underlying_spread_pct = (ask - bid) / ((ask + bid) / 2)
+        max_spread_pct = float(entry.get("maxUnderlyingSpreadPct", 0.03))
+        if underlying_spread_pct > max_spread_pct:
+            blockers.append(f"underlying spread {underlying_spread_pct:.3f} exceeds max {max_spread_pct:.3f}")
+
+    min_contracts = int(entry.get("minOptionContracts", 4))
+    if len(snapshot.contracts) < min_contracts:
+        blockers.append(f"contract count {len(snapshot.contracts)} below min {min_contracts}")
+
+    min_strikes = int(entry.get("minStrikeCount", 3))
+    if len(strikes) < min_strikes:
+        blockers.append(f"strike count {len(strikes)} below min {min_strikes}")
+
+    min_strike = min(strikes) if strikes else None
+    max_strike = max(strikes) if strikes else None
+    max_gap_pct = float(entry.get("maxSpotStrikeGapPct", 0.35))
+    if min_strike is None or max_strike is None:
+        blockers.append("missing strike ladder")
+    elif spot < min_strike * (1 - max_gap_pct) or spot > max_strike * (1 + max_gap_pct):
+        blockers.append(f"spot {spot:.2f} outside strike ladder {min_strike:.2f}-{max_strike:.2f} with max gap {max_gap_pct:.0%}")
+
+    max_chain_quote_age = entry.get("maxChainQuoteAgeSeconds")
+    quote_age = snapshot.quote_delay_seconds
+    if max_chain_quote_age is not None:
+        if quote_age is None:
+            blockers.append("missing chain quote timestamp")
+        elif quote_age > int(max_chain_quote_age):
+            blockers.append(f"chain quote age {quote_age}s exceeds max {int(max_chain_quote_age)}s")
+    elif quote_age is not None and quote_age > 6 * 3600:
+        warnings.append(f"chain quote age {quote_age}s exceeds 6h")
+
+    return {
+        "passes": not blockers,
+        "blockers": blockers,
+        "warnings": warnings,
+        "metrics": {
+            "spot": round(spot, 4),
+            "underlyingSpreadPct": round(underlying_spread_pct, 6) if underlying_spread_pct is not None else None,
+            "contractCount": len(snapshot.contracts),
+            "strikeCount": len(strikes),
+            "minStrike": min_strike,
+            "maxStrike": max_strike,
+            "quoteDelaySeconds": quote_age,
+        },
+    }
+
+
+def directional_liquid_contracts(
+    snapshot: OptionChainSnapshot,
+    *,
+    direction: str,
+    target_price: float,
+    now: datetime,
+    config: OptionQuoteFilterConfig,
+) -> tuple[int, int]:
+    right = "call" if direction == "up" else "put"
+    matching = 0
+    liquid = 0
+    for contract in snapshot.contracts:
+        if contract.right != right:
+            continue
+        if direction == "up" and contract.strike > target_price:
+            continue
+        if direction == "down" and contract.strike < target_price:
+            continue
+        matching += 1
+        ok, _ = contract_quote_filter_reason(contract, now=now, config=config)
+        if ok:
+            liquid += 1
+    return liquid, matching
+
+
+def _probability_margin(model_probability: float | None, breakeven_probability: float | None) -> float | None:
+    if model_probability is None or breakeven_probability is None:
+        return None
+    return model_probability - breakeven_probability
+
+
+def prequalify_candidate(
+    snapshot: OptionChainSnapshot,
+    candidate: SAThesisCandidate,
+    *,
+    entry: Mapping[str, Any],
+    now: datetime,
+    config: OptionQuoteFilterConfig,
+) -> dict[str, Any]:
+    raw_thesis = candidate.thesis_fixture["theses"][0]
+    thesis = normalize_thesis(raw_thesis)
+    sanity = provider_sanity_check(snapshot, spot=candidate.spot, entry=entry, now=now)
+    target_price = float(raw_thesis["targetPrice"])
+    liquid_directional, matching_directional = directional_liquid_contracts(
+        snapshot,
+        direction=candidate.direction,
+        target_price=target_price,
+        now=now,
+        config=config,
+    )
+    min_directional = int(entry.get("minDirectionalLiquidContracts", entry.get("minLiquidContracts", 2)))
+    directional_ok = liquid_directional >= min_directional
+
+    structures = generate_structures_for_thesis(snapshot.contracts, thesis, now=now, config=config)
+    pass_count = 0
+    near_count = 0
+    best: dict[str, Any] | None = None
+    near_examples: list[dict[str, Any]] = []
+    edge_tolerance = float(entry.get("nearPassEdgeTolerance", 0.10))
+    probability_tolerance = float(entry.get("nearPassProbabilityMarginTolerance", 0.02))
+    reward_risk_tolerance = float(entry.get("nearPassRewardRiskTolerance", 0.0))
+    min_edge_near = max(0.0, thesis.min_edge_pct_of_risk - edge_tolerance)
+    min_probability_near = max(0.0, (thesis.min_probability_margin or 0.0) - probability_tolerance)
+    min_reward_risk_near = max(0.0, thesis.min_reward_risk - reward_risk_tolerance)
+    high_priority = int(entry.get("priority", 55)) >= int(entry.get("nearPassMinPriority", 70))
+
+    for structure in structures:
+        model_fair, payoff_if_hit, reward_risk = model_fair_value_from_thesis(structure, thesis)
+        evaluation = evaluate_structure_edge(
+            structure,
+            model_fair_value=model_fair,
+            min_edge_pct_of_risk=thesis.min_edge_pct_of_risk,
+            model_probability=thesis.target_probability,
+            min_probability_margin=thesis.min_probability_margin,
+            max_loss_cap=thesis.max_loss_cap,
+        )
+        probability_margin = _probability_margin(evaluation.model_probability, evaluation.breakeven_probability)
+        max_loss_ok = structure.max_loss is not None and structure.max_loss <= thesis.max_loss_cap
+        edge_ok = evaluation.edge_pct_of_risk is not None and evaluation.edge_pct_of_risk >= min_edge_near
+        probability_ok = probability_margin is None or probability_margin >= min_probability_near
+        reward_ok = reward_risk is not None and reward_risk >= min_reward_risk_near
+        near = bool(high_priority and max_loss_ok and edge_ok and probability_ok and reward_ok)
+        if evaluation.passes and reward_risk is not None and reward_risk >= thesis.min_reward_risk:
+            pass_count += 1
+        elif near:
+            near_count += 1
+            if len(near_examples) < 3:
+                near_examples.append(
+                    {
+                        "structure": structure.to_dict(),
+                        "edgePctOfRisk": evaluation.edge_pct_of_risk,
+                        "probabilityMargin": round(probability_margin, 8) if probability_margin is not None else None,
+                        "rewardRisk": round(reward_risk, 8) if reward_risk is not None else None,
+                        "blockedReasons": list(evaluation.blocked_reasons),
+                    }
+                )
+
+        score_edge = evaluation.edge_pct_of_risk if evaluation.edge_pct_of_risk is not None else -999.0
+        score_margin = probability_margin if probability_margin is not None else -999.0
+        score_rr = reward_risk if reward_risk is not None else -999.0
+        score = (1 if evaluation.passes else 0, 1 if near else 0, score_edge, score_margin, score_rr)
+        best_score = tuple(best.get("_score", ())) if best else None
+        if best is None or score > best_score:
+            best = {
+                "_score": score,
+                "structure": structure.to_dict(),
+                "edgePctOfRisk": evaluation.edge_pct_of_risk,
+                "probabilityMargin": round(probability_margin, 8) if probability_margin is not None else None,
+                "rewardRisk": round(reward_risk, 8) if reward_risk is not None else None,
+                "maxLoss": structure.max_loss,
+                "maxGain": structure.max_gain,
+                "blockedReasons": list(evaluation.blocked_reasons),
+            }
+
+    structure_ok = pass_count > 0 or near_count > 0
+    blockers: list[str] = []
+    if not sanity["passes"]:
+        blockers.extend(f"provider sanity: {reason}" for reason in sanity["blockers"])
+    if not directional_ok:
+        blockers.append(f"directional liquid contracts {liquid_directional} below min {min_directional}")
+    if not structures:
+        blockers.append("no candidate structures after quote filters")
+    elif not structure_ok:
+        blockers.append("no passing or near-pass structure")
+
+    if best and "_score" in best:
+        best = {key: value for key, value in best.items() if key != "_score"}
+
+    return {
+        "passes": not blockers,
+        "prequalified": not blockers,
+        "mode": "pass" if pass_count else "near_pass" if near_count else "blocked",
+        "blockers": blockers,
+        "providerSanity": sanity,
+        "directionalLiquidity": {
+            "liquidContractCount": liquid_directional,
+            "matchingContractCount": matching_directional,
+            "minDirectionalLiquidContracts": min_directional,
+            "passes": directional_ok,
+        },
+        "structureSearch": {
+            "generatedStructureCount": len(structures),
+            "passingStructureCount": pass_count,
+            "nearPassStructureCount": near_count,
+            "nearPassMinPriority": int(entry.get("nearPassMinPriority", 70)),
+            "highPriorityNearPassAllowed": high_priority,
+            "best": best,
+            "nearExamples": near_examples,
+        },
+    }
+
+
+def first_seen_requires_prequalification(entry: Mapping[str, Any], reasons: tuple[str, ...]) -> bool:
+    return "first_seen" in reasons and "force" not in reasons and entry.get("prequalifyFirstSeen", True) is not False
 
 
 def update_underlying_state(
@@ -311,12 +563,25 @@ def update_underlying_state(
     liquid_contracts: int,
     option_expiry: date | None,
     provider: str,
+    first_seen_reviewed: bool | None = None,
+    first_seen_checked: bool = False,
 ) -> None:
     underlyings = state.setdefault("underlyings", {})
-    underlyings[underlying] = {
-        "last_scanned_at": isoformat_z(now),
-        "last_spot": round(spot, 4),
-        "last_liquid_contracts": int(liquid_contracts),
-        "last_option_expiry": option_expiry.isoformat() if option_expiry else None,
-        "last_provider": provider,
-    }
+    existing = underlyings.get(underlying, {}) if isinstance(underlyings.get(underlying), dict) else {}
+    row = dict(existing)
+    row.update(
+        {
+            "last_scanned_at": isoformat_z(now),
+            "last_spot": round(spot, 4),
+            "last_liquid_contracts": int(liquid_contracts),
+            "last_option_expiry": option_expiry.isoformat() if option_expiry else None,
+            "last_provider": provider,
+        }
+    )
+    if first_seen_checked:
+        row["first_seen_last_checked_at"] = isoformat_z(now)
+    if first_seen_reviewed is not None:
+        row["first_seen_reviewed"] = bool(first_seen_reviewed)
+        if first_seen_reviewed:
+            row["first_seen_reviewed_at"] = isoformat_z(now)
+    underlyings[underlying] = row

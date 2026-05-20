@@ -122,6 +122,10 @@ class SAThesisTests(unittest.TestCase):
     def test_trigger_reasons_first_seen_and_spot_move(self):
         entry = watchlist_payload()["entries"][0]
         self.assertEqual(trigger_reasons_for_entry(entry=entry, state_row=None, current_spot=331.0, current_liquid_contracts=3), ("first_seen",))
+        self.assertEqual(
+            trigger_reasons_for_entry(entry=entry, state_row={"last_spot": 331.0, "last_liquid_contracts": 3}, current_spot=331.0, current_liquid_contracts=3),
+            ("first_seen",),
+        )
         moved = trigger_reasons_for_entry(
             entry={**entry, "emitOnFirstSeen": False, "spotMoveTriggerPct": 0.10},
             state_row={"last_spot": 290.0, "last_liquid_contracts": 3},
@@ -157,7 +161,7 @@ class SAThesisTests(unittest.TestCase):
         provider = FixtureOptionProvider(snapshot=fixture_snapshot())
         state = {"version": 1, "underlyings": {}, "emitted_candidates": {}}
         candidates, rejections = sa_thesis_scan.scan_once(
-            watchlist=watchlist_payload(),
+            watchlist=watchlist_payload(prequalifyFirstSeen=False),
             provider=provider,
             state=state,
             now=dt("2026-05-20T14:00:00Z"),
@@ -168,7 +172,7 @@ class SAThesisTests(unittest.TestCase):
         self.assertIn("CBRS", state["underlyings"])
         state["emitted_candidates"] = {candidate.dedupe_key: {"event_id": "old"} for candidate in candidates}
         again, rejections = sa_thesis_scan.scan_once(
-            watchlist=watchlist_payload(),
+            watchlist=watchlist_payload(prequalifyFirstSeen=False),
             provider=provider,
             state=state,
             now=dt("2026-05-20T15:00:00Z"),
@@ -177,6 +181,48 @@ class SAThesisTests(unittest.TestCase):
         )
         self.assertEqual(again, [])
         self.assertTrue(any(row.get("reason") == "already emitted" for row in rejections))
+
+    def test_scan_once_prequalifies_first_seen(self):
+        snapshot = parse_option_chain_snapshot(
+            {
+                "underlying": "CBRS",
+                "provider": "fixture",
+                "underlying_bid": 330.0,
+                "underlying_ask": 332.0,
+                "quote_ts": "2026-05-20T13:57:00Z",
+                "contracts": [
+                    raw_contract(symbol="CBRS260618C00400000", expiry="2026-06-18", right="call", strike=400, bid=1.10, ask=1.20, volume=254, open_interest=754),
+                    raw_contract(symbol="CBRS260618C00450000", expiry="2026-06-18", right="call", strike=450, bid=0.90, ask=0.95, volume=419, open_interest=603),
+                    raw_contract(symbol="CBRS260618P00300000", expiry="2026-06-18", right="put", strike=300, bid=0.50, ask=0.55, volume=408, open_interest=90),
+                    raw_contract(symbol="CBRS260618P00250000", expiry="2026-06-18", right="put", strike=250, bid=0.30, ask=0.35, volume=408, open_interest=90),
+                ],
+            }
+        )
+        provider = FixtureOptionProvider(snapshot=snapshot)
+        state = {"version": 1, "underlyings": {}, "emitted_candidates": {}}
+        candidates, rejections = sa_thesis_scan.scan_once(
+            watchlist=watchlist_payload(directions=["up"], targetMovePct={"up": 0.4, "down": 0.25}),
+            provider=provider,
+            state=state,
+            now=dt("2026-05-20T14:00:00Z"),
+            max_events=5,
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertTrue(candidates[0].prequalification["prequalified"])
+        self.assertGreater(candidates[0].prequalification["structureSearch"]["passingStructureCount"], 0)
+
+    def test_scan_once_blocks_unqualified_first_seen(self):
+        provider = FixtureOptionProvider(snapshot=fixture_snapshot())
+        state = {"version": 1, "underlyings": {}, "emitted_candidates": {}}
+        candidates, rejections = sa_thesis_scan.scan_once(
+            watchlist=watchlist_payload(directions=["up"]),
+            provider=provider,
+            state=state,
+            now=dt("2026-05-20T14:00:00Z"),
+            max_events=5,
+        )
+        self.assertEqual(candidates, [])
+        self.assertTrue(any(row.get("reason") == "first_seen prequalification failed" for row in rejections))
 
     def test_scan_once_suppresses_first_seen_without_flag(self):
         provider = FixtureOptionProvider(snapshot=fixture_snapshot())
@@ -196,7 +242,7 @@ class SAThesisTests(unittest.TestCase):
             tmp_path = Path(tmp)
             watchlist = tmp_path / "watchlist.json"
             fixture = tmp_path / "chain.json"
-            watchlist.write_text(json.dumps(watchlist_payload()), encoding="utf-8")
+            watchlist.write_text(json.dumps(watchlist_payload(prequalifyFirstSeen=False)), encoding="utf-8")
             fixture.write_text(json.dumps(fixture_snapshot().to_dict()), encoding="utf-8")
             args = sa_thesis_scan.build_parser().parse_args(
                 [
