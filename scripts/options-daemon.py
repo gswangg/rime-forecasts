@@ -31,8 +31,11 @@ from automation.options import (
     build_debit_vertical,
     build_long_option,
     contract_quote_filter_reason,
+    days_to_expiry,
     evaluate_structure_edge,
     find_opportunities_for_thesis,
+    generate_structures_for_thesis,
+    model_fair_value_from_thesis,
     normalize_thesis,
     option_structure_label,
     option_ticket_from_event,
@@ -90,6 +93,8 @@ def load_options_state(path: Path) -> dict[str, Any]:
     state.setdefault("emitted_signals", {})
     state.setdefault("clv_events", {})
     state.setdefault("exit_events", {})
+    state.setdefault("thesis_refresh_events", {})
+    state.setdefault("thesis_refresh_status", {})
     return state
 
 
@@ -414,6 +419,295 @@ def mark_options_events_emitted(state: dict[str, Any], events: list[dict[str, An
             emitted[signal_id] = {"emitted_at": isoformat_z(now), "event_id": event.get("id")}
 
 
+def is_thesis_search_fixture(fixture: dict[str, Any]) -> bool:
+    return fixture.get("strategy") == "situational-awareness-ai-stack" or fixture.get("source") == "rime-forecasts/sa-thesis-scan"
+
+
+def _parse_optional_ts(value: Any):
+    if not value:
+        return None
+    try:
+        return parse_iso(str(value))
+    except Exception:
+        return None
+
+
+def _fixture_review_anchor(fixture: dict[str, Any], raw_thesis: dict[str, Any]):
+    return (
+        _parse_optional_ts(raw_thesis.get("reviewedAt"))
+        or _parse_optional_ts(fixture.get("reviewedAt"))
+        or _parse_optional_ts(fixture.get("generatedAt"))
+    )
+
+
+def _snapshot_spot(snapshot) -> float | None:
+    return snapshot.underlying_mid
+
+
+def _chain_liquidity_summary(snapshot, *, now, config: OptionQuoteFilterConfig) -> dict[str, Any]:
+    liquid = []
+    calls = 0
+    puts = 0
+    for contract in snapshot.contracts:
+        if contract.right == "call":
+            calls += 1
+        elif contract.right == "put":
+            puts += 1
+        ok, _ = contract_quote_filter_reason(contract, now=now, config=config)
+        if ok:
+            liquid.append(contract)
+    return {
+        "provider": snapshot.provider,
+        "quoteTs": isoformat_z(snapshot.quote_ts) if snapshot.quote_ts is not None else None,
+        "quoteDelaySeconds": snapshot.quote_delay_seconds,
+        "underlyingBid": snapshot.underlying_bid,
+        "underlyingAsk": snapshot.underlying_ask,
+        "contractCount": len(snapshot.contracts),
+        "callCount": calls,
+        "putCount": puts,
+        "liquidContractCount": len(liquid),
+        "liquidCallCount": sum(1 for contract in liquid if contract.right == "call"),
+        "liquidPutCount": sum(1 for contract in liquid if contract.right == "put"),
+        "minStrike": min((contract.strike for contract in snapshot.contracts), default=None),
+        "maxStrike": max((contract.strike for contract in snapshot.contracts), default=None),
+    }
+
+
+def _target_distance_pct(thesis, spot: float | None) -> float | None:
+    if spot is None or spot <= 0:
+        return None
+    if thesis.direction == "up":
+        return thesis.target_price / spot - 1
+    return spot / thesis.target_price - 1
+
+
+def _best_structure_diagnostic(snapshot, thesis, *, now, config: OptionQuoteFilterConfig) -> dict[str, Any]:
+    best: dict[str, Any] | None = None
+    passing = 0
+    generated = 0
+    for structure in generate_structures_for_thesis(snapshot.contracts, thesis, now=now, config=config):
+        generated += 1
+        model_fair, payoff_if_hit, reward_risk = model_fair_value_from_thesis(structure, thesis)
+        evaluation = evaluate_structure_edge(
+            structure,
+            model_fair_value=model_fair,
+            min_edge_pct_of_risk=thesis.min_edge_pct_of_risk,
+            model_probability=thesis.target_probability,
+            min_probability_margin=thesis.min_probability_margin,
+            max_loss_cap=thesis.max_loss_cap,
+        )
+        passes = evaluation.passes and reward_risk is not None and reward_risk >= thesis.min_reward_risk
+        if passes:
+            passing += 1
+        probability_margin = None
+        if evaluation.model_probability is not None and evaluation.breakeven_probability is not None:
+            probability_margin = evaluation.model_probability - evaluation.breakeven_probability
+        blocked = list(evaluation.blocked_reasons)
+        if reward_risk is None or reward_risk < thesis.min_reward_risk:
+            blocked.append(f"reward/risk {reward_risk if reward_risk is not None else 'unknown'} below min {thesis.min_reward_risk:.3f}")
+        score = (
+            1 if passes else 0,
+            evaluation.edge_pct_of_risk if evaluation.edge_pct_of_risk is not None else -999.0,
+            probability_margin if probability_margin is not None else -999.0,
+            reward_risk if reward_risk is not None else -999.0,
+        )
+        if best is None or score > best["_score"]:
+            best = {
+                "_score": score,
+                "structure": structure.to_dict(),
+                "passes": passes,
+                "edgePctOfRisk": evaluation.edge_pct_of_risk,
+                "probabilityMargin": round(probability_margin, 8) if probability_margin is not None else None,
+                "rewardRisk": round(reward_risk, 8) if reward_risk is not None else None,
+                "modelFairValue": evaluation.model_fair_value,
+                "blockedReasons": blocked,
+            }
+    if best is not None:
+        best = {key: value for key, value in best.items() if key != "_score"}
+    return {"generatedStructureCount": generated, "passingStructureCount": passing, "best": best}
+
+
+def _thesis_has_emitted_signal(state: dict[str, Any], thesis_id: str) -> bool:
+    return any(thesis_id in str(signal_id) for signal_id in state.get("emitted_signals", {}))
+
+
+def _thesis_refresh_event_id(thesis_id: str, reasons: list[str], now) -> str:
+    reason_part = safe_part("-".join(reasons) or "review", max_len=32)
+    return safe_part(f"rime-options-thesis-refresh-{thesis_id}-{reason_part}-{now.strftime('%Y%m%dT%H%M%SZ')}", max_len=120)
+
+
+def _thesis_refresh_prompt(payload: dict[str, Any]) -> str:
+    thesis = payload.get("thesis", {}) if isinstance(payload.get("thesis"), dict) else {}
+    reasons = ", ".join(payload.get("reasons", []))
+    return (
+        f"Options thesis refresh due for {payload.get('underlying')} {thesis.get('id')} ({reasons}). "
+        "Reassess the active search fixture against current market conditions, thesis/falsifier, liquidity, and structure-search diagnostics. "
+        "If still valid, update reviewedAt/notes if useful; if invalid, deactivate the thesis fixture. Do not place live orders."
+    )
+
+
+def _mark_thesis_refresh_status(
+    state: dict[str, Any],
+    *,
+    thesis_id: str,
+    now,
+    spot: float | None,
+    liquid_contracts: int,
+    passing_structures: int,
+    provider: str,
+) -> None:
+    status = state.setdefault("thesis_refresh_status", {}).setdefault(thesis_id, {})
+    status.update(
+        {
+            "last_checked_at": isoformat_z(now),
+            "last_spot": spot,
+            "last_liquid_contracts": liquid_contracts,
+            "last_passing_structure_count": passing_structures,
+            "last_provider": provider,
+        }
+    )
+
+
+def generate_thesis_refresh_events(
+    *,
+    fixture: dict[str, Any],
+    now,
+    session_id: str,
+    state: dict[str, Any],
+    config: OptionQuoteFilterConfig,
+    max_events: int,
+    refresh_days: int = 7,
+    no_signal_days: int | None = None,
+    expiry_review_days: int = 7,
+    spot_move_pct: float = 0.08,
+    liquidity_drop_pct: float = 0.50,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if max_events <= 0 or not is_thesis_search_fixture(fixture):
+        return [], []
+    snapshot = parse_option_chain_snapshot(fixture.get("chain", fixture))
+    spot = _snapshot_spot(snapshot)
+    liquidity = _chain_liquidity_summary(snapshot, now=now, config=config)
+    liquid_contracts = int(liquidity["liquidContractCount"])
+    no_signal_days = refresh_days if no_signal_days is None else no_signal_days
+    events: list[dict[str, Any]] = []
+    rejections: list[dict[str, Any]] = []
+    refresh_state = state.setdefault("thesis_refresh_status", {})
+    emitted_state = state.setdefault("thesis_refresh_events", {})
+
+    for raw_thesis in fixture.get("theses", []):
+        if len(events) >= max_events:
+            break
+        if not isinstance(raw_thesis, dict):
+            rejections.append({"thesis": raw_thesis, "reason": "thesis must be an object"})
+            continue
+        if not is_active(raw_thesis):
+            continue
+        try:
+            thesis = normalize_thesis(raw_thesis)
+        except Exception as exc:
+            rejections.append({"thesis": raw_thesis.get("id"), "reason": str(exc)})
+            continue
+        diagnostic = _best_structure_diagnostic(snapshot, thesis, now=now, config=config)
+        status = refresh_state.get(thesis.id, {}) if isinstance(refresh_state.get(thesis.id), dict) else {}
+        reasons: list[str] = []
+        expiry = thesis.option_expiry or thesis.event_date
+        dte = days_to_expiry(expiry, now=now) if expiry is not None else None
+        if dte is not None and dte <= expiry_review_days:
+            reasons.append(f"expiry_within_{expiry_review_days}d")
+        anchor = _fixture_review_anchor(fixture, raw_thesis)
+        if anchor is not None:
+            age_days = (now - anchor).total_seconds() / 86400
+            if age_days >= refresh_days:
+                reasons.append(f"review_stale_{refresh_days}d")
+            if not _thesis_has_emitted_signal(state, thesis.id) and age_days >= no_signal_days:
+                reasons.append(f"no_signal_{no_signal_days}d")
+        last_spot = status.get("last_spot")
+        spot_move = None
+        if spot is not None and last_spot:
+            try:
+                previous_spot = float(last_spot)
+                if previous_spot > 0:
+                    spot_move = spot / previous_spot - 1
+                    if abs(spot_move) >= spot_move_pct:
+                        reasons.append(f"spot_move_{spot_move:+.1%}")
+            except Exception:
+                pass
+        last_liquid = status.get("last_liquid_contracts")
+        liquidity_change = None
+        if last_liquid:
+            try:
+                previous_liquid = int(last_liquid)
+                if previous_liquid > 0:
+                    liquidity_change = liquid_contracts / previous_liquid - 1
+                    if liquidity_change <= -abs(liquidity_drop_pct):
+                        reasons.append(f"liquidity_drop_{liquidity_change:+.0%}")
+            except Exception:
+                pass
+        previous_passing = int(status.get("last_passing_structure_count", 0) or 0)
+        current_passing = int(diagnostic["passingStructureCount"])
+        if status:
+            if previous_passing == 0 and current_passing > 0:
+                reasons.append("structure_now_passes")
+            if previous_passing > 0 and current_passing == 0:
+                reasons.append("structure_no_longer_passes")
+
+        _mark_thesis_refresh_status(
+            state,
+            thesis_id=thesis.id,
+            now=now,
+            spot=spot,
+            liquid_contracts=liquid_contracts,
+            passing_structures=current_passing,
+            provider=snapshot.provider,
+        )
+        if not reasons:
+            continue
+        reasons = list(dict.fromkeys(reasons))
+        dedupe_key = f"options_thesis_refresh:{thesis.id}:{now.date().isoformat()}:{','.join(reasons)}"
+        if dedupe_key in emitted_state:
+            rejections.append({"thesisId": thesis.id, "reason": "refresh already emitted", "dedupeKey": dedupe_key})
+            continue
+        payload = {
+            "thesisId": thesis.id,
+            "underlying": snapshot.underlying,
+            "fixturePath": fixture.get("_fixturePath"),
+            "reasons": reasons,
+            "thesis": thesis.to_dict(),
+            "reviewedAt": raw_thesis.get("reviewedAt") or fixture.get("reviewedAt"),
+            "currentMarket": {
+                "spot": spot,
+                "targetDistancePct": round(_target_distance_pct(thesis, spot), 8) if _target_distance_pct(thesis, spot) is not None else None,
+                "spotMoveSinceLastCheckPct": round(spot_move, 8) if spot_move is not None else None,
+                "liquidityChangeSinceLastCheckPct": round(liquidity_change, 8) if liquidity_change is not None else None,
+                "daysToExpiry": dte,
+                "liquidity": liquidity,
+            },
+            "structureSearch": diagnostic,
+            "dedupeKey": dedupe_key,
+        }
+        event = build_wake_event(
+            event_id=_thesis_refresh_event_id(thesis.id, reasons, now),
+            session_id=session_id,
+            ts=isoformat_z(now),
+            event_type="options_thesis_refresh_due",
+            priority=70 if dte is not None and dte <= 2 else 55,
+            prompt=_thesis_refresh_prompt(payload),
+            payload=payload,
+            source=SOURCE,
+        )
+        events.append(event)
+    return events, rejections
+
+
+def mark_thesis_refresh_events_emitted(state: dict[str, Any], events: list[dict[str, Any]], *, now) -> None:
+    emitted = state.setdefault("thesis_refresh_events", {})
+    for event in events:
+        payload = event.get("payload", {}) if isinstance(event.get("payload"), dict) else {}
+        dedupe_key = payload.get("dedupeKey")
+        if dedupe_key:
+            emitted[dedupe_key] = {"emitted_at": isoformat_z(now), "event_id": event.get("id")}
+
+
 def load_ticket_records(ticket_dir: Path) -> list[tuple[Path, dict[str, Any]]]:
     if not ticket_dir.exists():
         return []
@@ -580,6 +874,8 @@ def poll_once(args, *, session_id: str | None) -> int:
     )
     effective_session_id = session_id or "dry-run-session"
     events: list[dict[str, Any]] = []
+    signal_events: list[dict[str, Any]] = []
+    thesis_refresh_events: list[dict[str, Any]] = []
     rejections: list[dict[str, Any]] = []
     for fixture in fixtures:
         if len(events) >= args.max_events:
@@ -604,11 +900,29 @@ def poll_once(args, *, session_id: str | None) -> int:
             max_events=args.max_events - len(events),
         )
         events.extend(fixture_events)
+        signal_events.extend(fixture_events)
         rejections.extend(fixture_rejections)
+        if not args.no_thesis_refresh and len(events) < args.max_events:
+            refresh_events, refresh_rejections = generate_thesis_refresh_events(
+                fixture=materialized_fixture,
+                now=now,
+                session_id=effective_session_id,
+                state=state,
+                config=config,
+                max_events=args.max_events - len(events),
+                refresh_days=args.thesis_refresh_days,
+                no_signal_days=args.thesis_no_signal_days,
+                expiry_review_days=args.thesis_expiry_review_days,
+                spot_move_pct=args.thesis_spot_move_pct,
+                liquidity_drop_pct=args.thesis_liquidity_drop_pct,
+            )
+            events.extend(refresh_events)
+            thesis_refresh_events.extend(refresh_events)
+            rejections.extend(refresh_rejections)
 
     ticket_paths: list[str] = []
     if args.write_tickets:
-        for event in events:
+        for event in signal_events:
             ticket = option_ticket_from_event(event, now=now, status=args.ticket_status)
             path = write_option_ticket(ticket, args.ticket_dir)
             ticket_paths.append(str(path))
@@ -640,7 +954,8 @@ def poll_once(args, *, session_id: str | None) -> int:
                     "rejectionCount": len(rejections),
                     "ticketPaths": ticket_paths,
                     "ticketsWritten": len(ticket_paths),
-                    "candidateEventCount": len(events) - len(lifecycle_events),
+                    "candidateEventCount": len(signal_events),
+                    "thesisRefreshEventCount": len(thesis_refresh_events),
                     "lifecycleEventCount": len(lifecycle_events),
                 },
                 indent=2,
@@ -654,7 +969,8 @@ def poll_once(args, *, session_id: str | None) -> int:
         path = write_wake_event(args.wake_root, event)
         print(f"wrote {event['type']} {event['id']} -> {path}")
         written += 1
-    mark_options_events_emitted(state, [event for event in events if event.get("type") == "options_signal_candidate"], now=now)
+    mark_options_events_emitted(state, signal_events, now=now)
+    mark_thesis_refresh_events_emitted(state, thesis_refresh_events, now=now)
     mark_ticket_lifecycle_events_emitted(state, lifecycle_events, now=now)
     save_state(args.state_path, state)
     print(
@@ -664,7 +980,8 @@ def poll_once(args, *, session_id: str | None) -> int:
                 "eventsWritten": written,
                 "rejections": len(rejections),
                 "ticketsWritten": len(ticket_paths),
-                "candidateEvents": len(events) - len(lifecycle_events),
+                "candidateEvents": len(signal_events),
+                "thesisRefreshEvents": len(thesis_refresh_events),
                 "lifecycleEvents": len(lifecycle_events),
             },
             sort_keys=True,
@@ -692,6 +1009,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ticket-status", choices=["draft", "blocked", "paper_open", "paper_closed"], default="draft")
     parser.add_argument("--no-ticket-events", action="store_true", help="do not scan option tickets for CLV/expiry lifecycle wakes")
     parser.add_argument("--schedule-status", action="append", choices=["draft", "paper_open"], help="ticket status eligible for CLV checkpoint wakes; default: paper_open")
+
+    thesis_refresh = parser.add_argument_group("thesis refresh lifecycle")
+    thesis_refresh.add_argument("--no-thesis-refresh", action="store_true", help="do not scan active thesis-search fixtures for refresh/review wakes")
+    thesis_refresh.add_argument("--thesis-refresh-days", type=int, default=7, help="emit refresh when reviewedAt/generatedAt is this many days stale (default: 7)")
+    thesis_refresh.add_argument("--thesis-no-signal-days", type=int, help="emit refresh when no option signal has fired this many days after review; defaults to thesis-refresh-days")
+    thesis_refresh.add_argument("--thesis-expiry-review-days", type=int, default=7, help="emit refresh when option expiry is within this many days (default: 7)")
+    thesis_refresh.add_argument("--thesis-spot-move-pct", type=float, default=0.08, help="emit refresh when underlying spot moves this fraction from last thesis check (default: 0.08)")
+    thesis_refresh.add_argument("--thesis-liquidity-drop-pct", type=float, default=0.50, help="emit refresh when liquid contract count drops by this fraction from last thesis check (default: 0.50)")
 
     filters = parser.add_argument_group("quote filters")
     filters.add_argument("--allow-underlying", action="append", help="allow only this underlying; repeatable")

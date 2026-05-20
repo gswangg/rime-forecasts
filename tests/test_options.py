@@ -825,6 +825,49 @@ class OptionsCoreTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
 
+    def test_thesis_refresh_events_emit_stale_active_search_review(self):
+        fixture = self.options_fixture()
+        fixture["signals"] = []
+        fixture["strategy"] = "situational-awareness-ai-stack"
+        fixture["source"] = "rime-forecasts/sa-thesis-scan"
+        fixture["reviewedAt"] = "2026-05-10T00:00:00Z"
+        state = {"emitted_signals": {}, "thesis_refresh_events": {}, "thesis_refresh_status": {}}
+        events, rejections = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state=state,
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+            refresh_days=7,
+            expiry_review_days=7,
+            spot_move_pct=0.08,
+        )
+        self.assertEqual(rejections, [])
+        self.assertEqual(len(events), 1)
+        event = events[0]
+        self.assertEqual(event["type"], "options_thesis_refresh_due")
+        self.assertEqual(event["sessionId"], "session-123")
+        self.assertEqual(event["payload"]["thesisId"], "nvda-generated-upside")
+        self.assertIn("review_stale_7d", event["payload"]["reasons"])
+        self.assertIn("no_signal_7d", event["payload"]["reasons"])
+        self.assertIn("expiry_within_7d", event["payload"]["reasons"])
+        self.assertGreaterEqual(event["payload"]["structureSearch"]["passingStructureCount"], 1)
+        self.assertIn("nvda-generated-upside", state["thesis_refresh_status"])
+        options_daemon.mark_thesis_refresh_events_emitted(state, events, now=dt("2026-05-19T03:25:00Z"))
+        again, rejections = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T04:25:00Z"),
+            session_id="session-123",
+            state=state,
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+            refresh_days=7,
+            expiry_review_days=7,
+        )
+        self.assertEqual(again, [])
+        self.assertTrue(any(row.get("reason") == "refresh already emitted" for row in rejections))
+
     def test_ticket_lifecycle_events_emit_clv_and_expiry_wakes(self):
         ticket = self._sample_option_ticket()
         ticket["status"] = "paper_open"

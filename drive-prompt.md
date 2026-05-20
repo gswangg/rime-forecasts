@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.6 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.7 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -13,6 +13,7 @@
 - *v4.4 (2026-05-20): add Situational Awareness / AI-scaling options strategy as a shadow thesis prior, staged CBRS watch fixture, inactive fixture gates, and dotenvx-backed Tradier env handling.*
 - *v4.5 (2026-05-20): add Situational Awareness thesis-generation scanner/watchlist. `scripts/sa-thesis-scan.py` emits `options_thesis_review_due`; accepted theses are then promoted into `options/theses/` for `scripts/options-daemon.py`.*
 - *v4.6 (2026-05-20): first-seen SA thesis wakes are enabled across the curated watchlist, but gated by provider sanity checks, directional liquidity, options structure search, near-pass rules, and per-scan throttling.*
+- *v4.7 (2026-05-20): active options thesis-search fixtures now get lifecycle review wakes (`options_thesis_refresh_due`) for stale review, no signal, near expiry, spot/liquidity moves, and structure-search changes.*
 
 ## Goal
 
@@ -102,6 +103,7 @@ Options event handling remains shadow-only:
 
 - `options_thesis_review_due`: review a generated Situational Awareness thesis candidate from `scripts/sa-thesis-scan.py`. If accepted, promote or update an inactive/active fixture under `options/theses/*.json`, document the mechanism/probability/falsifier, and run the options daemon dry-run. Do not create paper tickets or ledger P/L directly from this wake.
 - `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. If accepted for shadow tracking, ensure a local option ticket exists under `execution/options-tickets/` and update `options-ledger.md`; do not mix options P/L into prediction-market Brier.
+- `options_thesis_refresh_due`: reassess an active thesis-search fixture against current spot, liquidity, expiry, structure diagnostics, thesis/falsifier, and market conditions. If still valid, update `reviewedAt`/notes if useful; if invalid, deactivate the fixture. Do not create paper tickets or P/L directly from this wake.
 - `options_clv_checkpoint_due`: mark the referenced local ticket with `scripts/options-markout.py` using current/manual quotes, then update/append `options-ledger.md` if useful. Do not treat stale wake payload marks as executable.
 - `options_expiry_or_exit`: mark the referenced local ticket with checkpoint `exit` or `expiry`, update `options-ledger.md` final P/L / return on max risk, and journal the thesis result.
 

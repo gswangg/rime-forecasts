@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.4 Situational Awareness thesis mode, 2026-05-20.
+Status: v0.5 thesis-search lifecycle mode, 2026-05-20.
 
 ## Goal
 
@@ -18,6 +18,8 @@ v0.2 shifted from hand-authored option structures toward a thesis-driven funnel:
 v0.3 stitches that funnel into wake lifecycle operation: active thesis fixtures live in `options/theses/`, `scripts/options-daemon.py` can loop over them, accepted candidates can write local paper tickets, and open tickets can emit CLV/expiry wake events.
 
 v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling stack, supports staged inactive thesis fixtures, and distinguishes the catalyst `eventDate` from the contract `optionExpiry` used for structure search. Thesis discovery itself is specified separately in `automation/SA_THESIS_SPEC.md`; generated review candidates must be promoted into `options/theses/*.json` before this options funnel searches structures.
+
+v0.5 adds active thesis-search lifecycle review. The daemon continuously snapshots active Situational Awareness thesis fixtures against current spot, liquidity, expiry, and structure-search diagnostics, and emits `options_thesis_refresh_due` when a search is stale, near expiry, materially moved, liquidity-regressed, or structure availability changed.
 
 ## Non-goals
 
@@ -219,6 +221,26 @@ Payload includes:
 - mechanical filter reason
 - related Polymarket/Kalshi markets, if any
 
+### `options_thesis_refresh_due`
+
+An active thesis-search fixture needs review even though no paper trade may exist. The daemon scans active Situational Awareness thesis fixtures from `options/theses/*.json` and emits refresh wakes when configured lifecycle checks fire:
+
+- `review_stale_<N>d`: fixture `reviewedAt`/`generatedAt` is older than `--thesis-refresh-days`;
+- `no_signal_<N>d`: no `options_signal_candidate` has emitted for the thesis after the no-signal interval;
+- `expiry_within_<N>d`: searched option expiry is close;
+- `spot_move_±X%`: underlying moved materially since the last thesis check;
+- `liquidity_drop_-X%`: liquid contract count deteriorated materially;
+- `structure_now_passes` / `structure_no_longer_passes`: search gates crossed between checks.
+
+Payload includes:
+
+- thesis id and fixture path;
+- current spot, distance to target, days to expiry, and chain/liquidity summary;
+- current structure-search diagnostics, including best passing/blocked structure;
+- reasons and dedupe key.
+
+Handling rule: reassess the thesis, catalyst, target probability, falsifier, and market conditions. If valid, update `reviewedAt`/notes if useful; if invalid or stale, deactivate the fixture. Do not write tickets or ledger P/L from a refresh wake.
+
 ### `options_clv_checkpoint_due`
 
 A tracked option signal/trade reached +1h/+6h/+24h. The daemon scans local `execution/options-tickets/*.json` and emits checkpoints for eligible statuses, default `paper_open`.
@@ -296,7 +318,8 @@ Live options orders require all existing execution safeguards plus broker-specif
 9. Add provider interfaces behind local credentials. **Implemented for fixture + Tradier market data:** `OptionChainProvider`, `FixtureOptionProvider`, `TradierOptionProvider`, and `scripts/options-chain-fetch.py`. Additional providers remain future work.
 10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]`, generated `theses[]`, and provider-backed thesis files.**
 11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
-12. Only then consider broker live adapter design.
+12. Add active thesis-search lifecycle review. **Implemented:** `options_thesis_refresh_due` from active Situational Awareness thesis fixtures, with stale/no-signal/expiry/spot/liquidity/structure-change checks.
+13. Only then consider broker live adapter design.
 
 ## Fixture signal format
 
@@ -380,6 +403,17 @@ Fetch a normalized current chain:
 
 ```bash
 dotenvx run -- scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry 2026-05-22 --output /tmp/nvda-chain.json --pretty
+```
+
+Active thesis-search refresh is enabled by default for Situational Awareness fixtures. Useful controls:
+
+```bash
+--no-thesis-refresh
+--thesis-refresh-days 7
+--thesis-no-signal-days 7
+--thesis-expiry-review-days 7
+--thesis-spot-move-pct 0.08
+--thesis-liquidity-drop-pct 0.50
 ```
 
 Wake-producing loop, pinned to the rime session:

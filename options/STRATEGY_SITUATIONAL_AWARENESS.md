@@ -77,8 +77,9 @@ A Situational Awareness options signal may be opened for paper tracking only if 
    ```bash
    dotenvx run -- scripts/options-daemon.py --fixture-dir options/theses --provider tradier --dry-run
    ```
-5. If a candidate is worth shadow tracking, write a local ticket with `--write-tickets --ticket-status paper_open` and mark +1h/+6h/+24h/exit.
-6. Keep options P/L in `options-ledger.md`; do not mix it into prediction-market Brier.
+5. While an accepted thesis fixture is active, let `scripts/options-daemon.py` emit `options_thesis_refresh_due` when review is stale, no signal has fired, expiry approaches, spot/liquidity moves, or structure-search gates change. Refresh handling should update `reviewedAt`/notes or deactivate the fixture; it should not create a paper trade.
+6. If a signal candidate is worth shadow tracking, write a local ticket with `--write-tickets --ticket-status paper_open` and mark +1h/+6h/+24h/exit.
+7. Keep options P/L in `options-ledger.md`; do not mix it into prediction-market Brier.
 
 ## Falsifiers for the whole strategy
 
