@@ -13,7 +13,9 @@
     "minLiquidContracts": 2,
     "minDirectionalLiquidContracts": 2,
     "spotMoveTriggerPct": 0.12,
-    "allowedStructures": ["debit_vertical"],
+    "allowedStructures": [
+      "debit_vertical"
+    ],
     "maxLossCap": 200,
     "minRewardRisk": 3,
     "minEdgePctOfRisk": 0.3,
@@ -34,9 +36,18 @@
       "theme": "frontier_compute",
       "priority": 95,
       "emitOnFirstSeen": true,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.35, "down": 0.25},
-      "targetProbability": {"up": 0.25, "down": 0.3},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.35,
+        "down": 0.25
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.3
+      },
       "catalyst": "post-IPO option liquidity and first public-market digestion",
       "mechanism": "Cerebras is a direct frontier-compute scarcity asset, but post-IPO AGI scarcity premium can also unwind if valuation/customer/software concerns dominate.",
       "falsifier": "chain remains too wide, customer concentration dominates, or disclosures fail to support durable frontier-compute demand"
@@ -45,9 +56,18 @@
       "underlying": "BE",
       "theme": "power",
       "priority": 85,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.22, "down": 0.18},
-      "targetProbability": {"up": 0.28, "down": 0.26},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.22,
+        "down": 0.18
+      },
+      "targetProbability": {
+        "up": 0.28,
+        "down": 0.26
+      },
       "catalyst": "AI datacenter power-contract headlines, earnings, or guidance update",
       "mechanism": "AI scaling shifts bottleneck attention from accelerators to dispatchable power and on-site generation.",
       "falsifier": "new disclosures show power demand is already priced or project economics/capacity are weaker than expected"
@@ -56,9 +76,18 @@
       "underlying": "MU",
       "theme": "memory",
       "priority": 82,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.18, "down": 0.16},
-      "targetProbability": {"up": 0.28, "down": 0.25},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.18,
+        "down": 0.16
+      },
+      "targetProbability": {
+        "up": 0.28,
+        "down": 0.25
+      },
       "catalyst": "HBM/DRAM pricing, earnings, or AI memory supply commentary",
       "mechanism": "AI scaling can move the binding constraint into memory bandwidth/capacity faster than consensus cycle models update.",
       "falsifier": "pricing, utilization, or guide commentary shows memory scarcity is already fully priced"
@@ -67,9 +96,18 @@
       "underlying": "SNDK",
       "theme": "storage",
       "priority": 80,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.22, "down": 0.18},
-      "targetProbability": {"up": 0.27, "down": 0.25},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.22,
+        "down": 0.18
+      },
+      "targetProbability": {
+        "up": 0.27,
+        "down": 0.25
+      },
       "catalyst": "NAND/storage pricing update, earnings, or AI infrastructure storage demand commentary",
       "mechanism": "Frontier training and inference scale can reprice storage/NAND scarcity beyond normal cycle framing.",
       "falsifier": "pricing or demand commentary fails to support AI-driven storage scarcity"
@@ -78,9 +116,18 @@
       "underlying": "CRWV",
       "theme": "neocloud",
       "priority": 76,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.24, "down": 0.2},
-      "targetProbability": {"up": 0.26, "down": 0.27},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.24,
+        "down": 0.2
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.27
+      },
       "catalyst": "capacity, customer, financing, lockup, or utilization update",
       "mechanism": "Neocloud capacity is a scarce AI-scaling asset, but financing and customer concentration make the equity fragile.",
       "falsifier": "no evidence of capacity scarcity, financing stress dominates, or option IV absorbs the entire distribution"
@@ -89,9 +136,18 @@
       "underlying": "CORZ",
       "theme": "datacenter_conversion",
       "priority": 72,
-      "directions": ["up", "down"],
-      "targetMovePct": {"up": 0.25, "down": 0.2},
-      "targetProbability": {"up": 0.26, "down": 0.26},
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.25,
+        "down": 0.2
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.26
+      },
       "catalyst": "datacenter conversion contract, customer demand, power-site update, or financing event",
       "mechanism": "Bitcoin-miner power footprints can be repriced as AI datacenter conversion assets.",
       "falsifier": "conversion economics or financing fail to validate AI compute reuse"
@@ -100,12 +156,295 @@
       "underlying": "SMH",
       "theme": "crowded_ai_beta_hedge",
       "priority": 70,
-      "directions": ["down"],
-      "targetMovePct": {"down": 0.1},
-      "targetProbability": {"down": 0.24},
+      "directions": [
+        "down"
+      ],
+      "targetMovePct": {
+        "down": 0.1
+      },
+      "targetProbability": {
+        "down": 0.24
+      },
       "catalyst": "semi crowding, capex disappointment, rates shock, or export-control/policy shock",
       "mechanism": "The obvious AI beta layer can break on crowding even while the deeper AI-scaling thesis remains intact.",
       "falsifier": "breadth and earnings revisions continue to validate crowded semi beta without policy/rates pressure"
+    },
+    {
+      "underlying": "NVDA",
+      "theme": "frontier_compute",
+      "priority": 90,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.12,
+        "down": 0.1
+      },
+      "targetProbability": {
+        "up": 0.27,
+        "down": 0.24
+      },
+      "catalyst": "earnings, accelerator supply/capex guide, export-control update, or hyperscaler AI capex revision",
+      "mechanism": "NVIDIA remains the liquid public proxy for frontier-compute scaling, but obvious AI beta can also mean crowded downside convexity.",
+      "falsifier": "datacenter accelerator demand or margins decelerate, export controls bind harder than modeled, or option IV fully prices the move"
+    },
+    {
+      "underlying": "AVGO",
+      "theme": "frontier_compute_networking",
+      "priority": 84,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.14,
+        "down": 0.12
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.24
+      },
+      "catalyst": "AI ASIC/custom silicon demand, networking order commentary, earnings, or hyperscaler capex update",
+      "mechanism": "Custom accelerators and cluster networking can capture value as frontier labs diversify beyond merchant GPUs.",
+      "falsifier": "AI ASIC backlog, networking growth, or margin commentary shows the scarcity premium is already priced"
+    },
+    {
+      "underlying": "VRT",
+      "theme": "power_thermal",
+      "priority": 86,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.16,
+        "down": 0.13
+      },
+      "targetProbability": {
+        "up": 0.28,
+        "down": 0.25
+      },
+      "catalyst": "datacenter power/cooling order update, earnings guide, backlog commentary, or AI capacity buildout headline",
+      "mechanism": "AI datacenter scaling pushes thermal management and power infrastructure from support equipment into bottleneck assets.",
+      "falsifier": "orders/backlog or margin commentary fails to show incremental AI datacenter scarcity"
+    },
+    {
+      "underlying": "GEV",
+      "theme": "power",
+      "priority": 84,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.14,
+        "down": 0.12
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.24
+      },
+      "catalyst": "grid equipment demand, gas/power generation order commentary, earnings, or large datacenter power announcement",
+      "mechanism": "AI load growth can pull grid and generation equipment demand forward faster than industrial-cycle models update.",
+      "falsifier": "grid/generation orders do not connect to AI load growth or valuation already embeds the pull-forward"
+    },
+    {
+      "underlying": "ETN",
+      "theme": "power_electrification",
+      "priority": 82,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.12,
+        "down": 0.1
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.24
+      },
+      "catalyst": "electrical equipment backlog, datacenter demand commentary, earnings, or grid-interconnect update",
+      "mechanism": "Datacenter electrification and grid bottlenecks can extend electrical-equipment pricing power.",
+      "falsifier": "orders, lead times, or margins normalize enough to invalidate the AI bottleneck premium"
+    },
+    {
+      "underlying": "CEG",
+      "theme": "power",
+      "priority": 80,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.14,
+        "down": 0.12
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.24
+      },
+      "catalyst": "nuclear/datacenter power-contract news, capacity-pricing update, earnings, or policy support",
+      "mechanism": "Firm clean power can reprice as a scarce input for AI datacenters and sovereign compute.",
+      "falsifier": "power contracts, regulation, or capacity pricing fail to convert AI load growth into equity value"
+    },
+    {
+      "underlying": "ANET",
+      "theme": "networking",
+      "priority": 81,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.14,
+        "down": 0.12
+      },
+      "targetProbability": {
+        "up": 0.26,
+        "down": 0.24
+      },
+      "catalyst": "AI cluster networking demand, Ethernet fabric adoption, earnings, or hyperscaler capex commentary",
+      "mechanism": "Scale-out AI clusters can bottleneck on networking fabric as much as on accelerators.",
+      "falsifier": "customer concentration or guide commentary shows AI networking growth is already fully priced"
+    },
+    {
+      "underlying": "MRVL",
+      "theme": "networking_custom_silicon",
+      "priority": 76,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.16,
+        "down": 0.14
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.24
+      },
+      "catalyst": "custom silicon ramps, optical/DSP/networking demand, earnings, or customer update",
+      "mechanism": "AI scale-out creates demand for custom silicon and networking components beyond headline GPU suppliers.",
+      "falsifier": "custom silicon ramps slip or networking demand fails to offset non-AI cyclicality"
+    },
+    {
+      "underlying": "WDC",
+      "theme": "storage",
+      "priority": 74,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.16,
+        "down": 0.14
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.24
+      },
+      "catalyst": "NAND/HDD pricing update, AI infrastructure storage demand commentary, earnings, or supply discipline news",
+      "mechanism": "AI training/inference data pipelines can tighten storage markets beyond normal cycle framing.",
+      "falsifier": "storage pricing or utilization fails to show AI-linked scarcity"
+    },
+    {
+      "underlying": "STX",
+      "theme": "storage",
+      "priority": 73,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.14,
+        "down": 0.12
+      },
+      "targetProbability": {
+        "up": 0.24,
+        "down": 0.23
+      },
+      "catalyst": "nearline demand, cloud storage commentary, earnings, or AI data-retention infrastructure update",
+      "mechanism": "AI data growth can support higher-value storage demand and extend storage-cycle pricing power.",
+      "falsifier": "nearline/cloud demand weakens or AI storage demand fails to reach public-equity cash flows"
+    },
+    {
+      "underlying": "IREN",
+      "theme": "datacenter_conversion",
+      "priority": 72,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.22,
+        "down": 0.18
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.25
+      },
+      "catalyst": "AI/HPC hosting contract, power-site monetization update, financing event, or datacenter conversion milestone",
+      "mechanism": "Bitcoin-miner power access can be repriced as AI/HPC datacenter capacity if conversion economics validate.",
+      "falsifier": "financing, conversion capex, or customer demand fails to validate AI compute reuse"
+    },
+    {
+      "underlying": "APLD",
+      "theme": "datacenter_conversion",
+      "priority": 71,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.24,
+        "down": 0.2
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.26
+      },
+      "catalyst": "AI datacenter lease/customer update, financing event, power-site progress, or utilization disclosure",
+      "mechanism": "AI datacenter scarcity can reprice smaller power/site operators, while financing and execution risk keep downside live.",
+      "falsifier": "customer demand, financing, or buildout execution fails to support AI datacenter optionality"
+    },
+    {
+      "underlying": "PLTR",
+      "theme": "sovereign_ai_security",
+      "priority": 79,
+      "directions": [
+        "up",
+        "down"
+      ],
+      "targetMovePct": {
+        "up": 0.16,
+        "down": 0.14
+      },
+      "targetProbability": {
+        "up": 0.25,
+        "down": 0.25
+      },
+      "catalyst": "defense AI contract, government AI policy, earnings, or enterprise AI deployment commentary",
+      "mechanism": "If AI becomes national-security infrastructure, secure government/enterprise AI platforms can retain scarcity value.",
+      "falsifier": "government/enterprise AI demand fails to convert into durable revenue or valuation already embeds the security premium"
+    },
+    {
+      "underlying": "QQQ",
+      "theme": "crowded_ai_beta_hedge",
+      "priority": 68,
+      "directions": [
+        "down"
+      ],
+      "targetMovePct": {
+        "down": 0.06
+      },
+      "targetProbability": {
+        "down": 0.23
+      },
+      "catalyst": "AI-beta crowding, rates shock, capex digestion, earnings breadth deterioration, or policy/export-control shock",
+      "mechanism": "The broad AI/growth beta layer can sell off even if the long-run AI-scaling thesis remains intact.",
+      "falsifier": "market breadth and earnings revisions continue to validate AI/growth beta without rates or policy pressure"
     }
   ]
 }
