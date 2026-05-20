@@ -1,0 +1,43 @@
+{
+  "active": true,
+  "underlying": "CORZ",
+  "strategy": "situational-awareness-ai-stack",
+  "theme": "datacenter_conversion",
+  "source": "rime-forecasts/sa-thesis-scan",
+  "sourceCandidateId": "sa-corz-datacenter_conversion-up-2026-06-18-29.13-20260520T184533Z",
+  "reviewedAt": "2026-05-20T18:48:00Z",
+  "notes": "Accepted as an active shadow thesis-search fixture, not as a trade. First review found a high-priority near-pass CORZ upside call vertical; current options daemon dry-run produced no signal because the probability-margin gate did not fully clear. Keep exact gates intact and let options_signal_candidate handle any future paper-ticket review.",
+  "review": {
+    "status": "accepted_for_active_search",
+    "initialPrequalificationMode": "near_pass",
+    "initialBestStructure": "2026-06-18 28/29 call debit vertical",
+    "initialBestMaxLoss": 19.0,
+    "initialBestMaxGain": 81.0,
+    "initialBestEdgePctOfRisk": 0.36842105,
+    "initialBestProbabilityMargin": 0.07,
+    "initialBlocker": "probability margin 0.070 below min 0.080",
+    "liveSubmitAllowed": false
+  },
+  "theses": [
+    {
+      "id": "sa-corz-datacenter_conversion-up-2026-06-18-29.13",
+      "active": true,
+      "direction": "up",
+      "targetPrice": 29.13,
+      "targetProbability": 0.26,
+      "eventDate": "2026-06-18",
+      "optionExpiry": "2026-06-18",
+      "maxLossCap": 200.0,
+      "minRewardRisk": 3.0,
+      "minEdgePctOfRisk": 0.3,
+      "minProbabilityMargin": 0.08,
+      "allowedStructures": [
+        "debit_vertical"
+      ],
+      "thesis": "Bitcoin-miner power footprints can be repriced as AI datacenter conversion assets. CORZ upside thesis targets 29.13 by the 2026-06-18 option expiry if customer demand, power-site optionality, conversion contracts, or financing terms validate the AI datacenter conversion narrative.",
+      "catalyst": "AI datacenter conversion contract, customer demand, power-site update, financing event, or quote repricing inside the June 18 options window",
+      "plannedExit": "first liquid mark after catalyst or thesis invalidation; otherwise close before expiry week",
+      "falsifier": "conversion economics, financing, or customer demand fail to validate AI compute reuse; or option IV/spreads absorb the edge"
+    }
+  ]
+}
