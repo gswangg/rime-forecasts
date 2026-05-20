@@ -64,17 +64,21 @@ A Situational Awareness options signal may be opened for paper tracking only if 
 
 ## Operating flow
 
-1. Promote a watch item into an active `options/theses/*.json` file.
-2. Fetch the chain through the provider, without committing credentials:
+1. Let the thesis scanner generate review candidates from `options/sa-watchlist.json`:
+   ```bash
+   dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --dry-run --max-events 5
+   ```
+2. Promote an accepted watch candidate into an active `options/theses/*.json` file.
+3. Fetch the chain through the provider, without committing credentials:
    ```bash
    dotenvx run -- scripts/options-chain-fetch.py --provider tradier --underlying CBRS --expiry <YYYY-MM-DD> --output /tmp/cbrs-chain.json --pretty
    ```
-3. Dry-run the funnel:
+4. Dry-run the funnel:
    ```bash
    dotenvx run -- scripts/options-daemon.py --fixture-dir options/theses --provider tradier --dry-run
    ```
-4. If a candidate is worth shadow tracking, write a local ticket with `--write-tickets --ticket-status paper_open` and mark +1h/+6h/+24h/exit.
-5. Keep options P/L in `options-ledger.md`; do not mix it into prediction-market Brier.
+5. If a candidate is worth shadow tracking, write a local ticket with `--write-tickets --ticket-status paper_open` and mark +1h/+6h/+24h/exit.
+6. Keep options P/L in `options-ledger.md`; do not mix it into prediction-market Brier.
 
 ## Falsifiers for the whole strategy
 

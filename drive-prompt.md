@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.4 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.5 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -11,6 +11,7 @@
 - *v4.2 (2026-05-19): Greg requested options funnel buildout. Prediction-market wake daemons are paused; AC work should prioritize the shadow options opportunity system.*
 - *v4.3 (2026-05-19): next options-build phase. Add thesis-to-structure search, dry-run options tickets, provider interfaces, and CLV/ledger markouts while keeping prediction-market daemons paused.*
 - *v4.4 (2026-05-20): add Situational Awareness / AI-scaling options strategy as a shadow thesis prior, staged CBRS watch fixture, inactive fixture gates, and dotenvx-backed Tradier env handling.*
+- *v4.5 (2026-05-20): add Situational Awareness thesis-generation scanner/watchlist. `scripts/sa-thesis-scan.py` emits `options_thesis_review_due`; accepted theses are then promoted into `options/theses/` for `scripts/options-daemon.py`.*
 
 ## Goal
 
@@ -37,7 +38,10 @@ scripts/polymarket-daemon.py / scripts/kalshi-daemon.py (paused during options-b
 scripts/polymarket-participant-daemon.py (v4 scaffold)
   -> participant signal / participant CLV wakes
 
-scripts/options-daemon.py (current build target, shadow-only)
+scripts/sa-thesis-scan.py (shadow-only)
+  -> options thesis-review wakes
+
+scripts/options-daemon.py (shadow-only)
   -> options signal / options CLV / expiry wakes
 
 all daemons
@@ -53,6 +57,7 @@ Core docs:
 - [`automation/SPEC.md`](./automation/SPEC.md) — market daemon/wake contract
 - [`automation/PARTICIPANT_SPEC.md`](./automation/PARTICIPANT_SPEC.md) — participant intelligence contract
 - [`automation/OPTIONS_SPEC.md`](./automation/OPTIONS_SPEC.md) — shadow-only listed-options contract
+- [`automation/SA_THESIS_SPEC.md`](./automation/SA_THESIS_SPEC.md) — Situational Awareness thesis-generation contract
 - [`automation/LESSONS.md`](./automation/LESSONS.md) — wake-loop lessons and implemented filter changes
 - [`clv-ledger.md`](./clv-ledger.md) — fast-feedback market ledger
 - [`participant-ledger.md`](./participant-ledger.md) — shadow participant-signal ledger
@@ -94,6 +99,7 @@ Participant event handling:
 
 Options event handling remains shadow-only:
 
+- `options_thesis_review_due`: review a generated Situational Awareness thesis candidate from `scripts/sa-thesis-scan.py`. If accepted, promote or update an inactive/active fixture under `options/theses/*.json`, document the mechanism/probability/falsifier, and run the options daemon dry-run. Do not create paper tickets or ledger P/L directly from this wake.
 - `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. If accepted for shadow tracking, ensure a local option ticket exists under `execution/options-tickets/` and update `options-ledger.md`; do not mix options P/L into prediction-market Brier.
 - `options_clv_checkpoint_due`: mark the referenced local ticket with `scripts/options-markout.py` using current/manual quotes, then update/append `options-ledger.md` if useful. Do not treat stale wake payload marks as executable.
 - `options_expiry_or_exit`: mark the referenced local ticket with checkpoint `exit` or `expiry`, update `options-ledger.md` final P/L / return on max risk, and journal the thesis result.
@@ -129,6 +135,14 @@ scripts/polymarket-participant-daemon.py --dry-run --limit 100
 scripts/polymarket-participant-daemon.py --session-id <pi-session-id> --once
 ```
 
+Situational Awareness thesis scanner smoke / loop:
+
+```bash
+dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --dry-run --max-events 5
+dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --session-id <pi-session-id> --once
+dotenvx run -- scripts/sa-thesis-scan.py --provider tradier --session-id <pi-session-id> --loop --interval-sec 3600 --max-events 2
+```
+
 Options daemon smoke / loop:
 
 ```bash
@@ -158,6 +172,13 @@ nohup scripts/kalshi-daemon.py \
   --loop \
   --interval-sec 900 \
   >> automation/state/kalshi-daemon.log 2>&1 &
+nohup dotenvx run -- scripts/sa-thesis-scan.py \
+  --provider tradier \
+  --session-id <pi-session-id> \
+  --loop \
+  --interval-sec 3600 \
+  --max-events 2 \
+  >> automation/state/sa-thesis-scan.log 2>&1 &
 # participant daemon interval can be shorter once signal filters are conservative:
 nohup scripts/polymarket-participant-daemon.py \
   --session-id <pi-session-id> \
@@ -315,6 +336,7 @@ Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events and da
 - `automation/PARTICIPANT_SPEC.md` when participant-related
 - `automation/LESSONS.md`
 - `automation/OPTIONS_SPEC.md` when options-related
+- `automation/SA_THESIS_SPEC.md` when Situational Awareness thesis-generation is relevant
 - `options/STRATEGY_SITUATIONAL_AWARENESS.md` when AI-scaling / Situational Awareness options strategy is relevant
 - Relevant `reasoning/*.md`
 - `scorecard.md`

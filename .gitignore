@@ -9,6 +9,7 @@ __pycache__/
 *.html
 *.json
 !options/
+!options/sa-watchlist.json
 !options/theses/
 !options/theses/*.json
 /tmp/

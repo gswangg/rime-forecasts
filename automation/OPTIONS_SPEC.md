@@ -17,7 +17,7 @@ v0.2 shifted from hand-authored option structures toward a thesis-driven funnel:
 
 v0.3 stitches that funnel into wake lifecycle operation: active thesis fixtures live in `options/theses/`, `scripts/options-daemon.py` can loop over them, accepted candidates can write local paper tickets, and open tickets can emit CLV/expiry wake events.
 
-v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling stack, supports staged inactive thesis fixtures, and distinguishes the catalyst `eventDate` from the contract `optionExpiry` used for structure search.
+v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling stack, supports staged inactive thesis fixtures, and distinguishes the catalyst `eventDate` from the contract `optionExpiry` used for structure search. Thesis discovery itself is specified separately in `automation/SA_THESIS_SPEC.md`; generated review candidates must be promoted into `options/theses/*.json` before this options funnel searches structures.
 
 ## Non-goals
 

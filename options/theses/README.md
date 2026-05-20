@@ -13,7 +13,7 @@ Each JSON file can either:
 
 Do not put provider credentials, account identifiers, broker metadata, or private notes in these files. Use `active: false` at fixture or thesis level for watch items that should be committed but not scanned/emitted yet.
 
-Prediction-market daemons remain paused during options-build mode; this directory is for options-only fixture/thesis work. The initial staged strategy file is Cerebras/`CBRS`, tied to the Situational Awareness AI-scaling stack. It is inactive until deliberately promoted.
+Prediction-market daemons remain paused during options-build mode; this directory is for options-only fixture/thesis work. The initial staged strategy file is Cerebras/`CBRS`, tied to the Situational Awareness AI-scaling stack. It is inactive until deliberately promoted. New review candidates are generated upstream by `scripts/sa-thesis-scan.py` from `options/sa-watchlist.json` and local `automation/state/sa-thesis-candidates/*.json` artifacts.
 
 Provider-backed example shape:
 

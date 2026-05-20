@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "strategy": "situational-awareness-ai-stack",
+  "defaults": {
+    "enabled": true,
+    "emitOnFirstSeen": false,
+    "targetDays": 30,
+    "minDaysToExpiry": 7,
+    "maxDaysToExpiry": 60,
+    "minLiquidContracts": 2,
+    "spotMoveTriggerPct": 0.12,
+    "allowedStructures": ["debit_vertical"],
+    "maxLossCap": 200,
+    "minRewardRisk": 3,
+    "minEdgePctOfRisk": 0.3,
+    "minProbabilityMargin": 0.08,
+    "plannedExit": "first liquid mark after catalyst or thesis invalidation; otherwise close before expiry week"
+  },
+  "entries": [
+    {
+      "underlying": "CBRS",
+      "theme": "frontier_compute",
+      "priority": 95,
+      "emitOnFirstSeen": true,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.35, "down": 0.25},
+      "targetProbability": {"up": 0.25, "down": 0.3},
+      "catalyst": "post-IPO option liquidity and first public-market digestion",
+      "mechanism": "Cerebras is a direct frontier-compute scarcity asset, but post-IPO AGI scarcity premium can also unwind if valuation/customer/software concerns dominate.",
+      "falsifier": "chain remains too wide, customer concentration dominates, or disclosures fail to support durable frontier-compute demand"
+    },
+    {
+      "underlying": "BE",
+      "theme": "power",
+      "priority": 85,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.22, "down": 0.18},
+      "targetProbability": {"up": 0.28, "down": 0.26},
+      "catalyst": "AI datacenter power-contract headlines, earnings, or guidance update",
+      "mechanism": "AI scaling shifts bottleneck attention from accelerators to dispatchable power and on-site generation.",
+      "falsifier": "new disclosures show power demand is already priced or project economics/capacity are weaker than expected"
+    },
+    {
+      "underlying": "MU",
+      "theme": "memory",
+      "priority": 82,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.18, "down": 0.16},
+      "targetProbability": {"up": 0.28, "down": 0.25},
+      "catalyst": "HBM/DRAM pricing, earnings, or AI memory supply commentary",
+      "mechanism": "AI scaling can move the binding constraint into memory bandwidth/capacity faster than consensus cycle models update.",
+      "falsifier": "pricing, utilization, or guide commentary shows memory scarcity is already fully priced"
+    },
+    {
+      "underlying": "SNDK",
+      "theme": "storage",
+      "priority": 80,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.22, "down": 0.18},
+      "targetProbability": {"up": 0.27, "down": 0.25},
+      "catalyst": "NAND/storage pricing update, earnings, or AI infrastructure storage demand commentary",
+      "mechanism": "Frontier training and inference scale can reprice storage/NAND scarcity beyond normal cycle framing.",
+      "falsifier": "pricing or demand commentary fails to support AI-driven storage scarcity"
+    },
+    {
+      "underlying": "CRWV",
+      "theme": "neocloud",
+      "priority": 76,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.24, "down": 0.2},
+      "targetProbability": {"up": 0.26, "down": 0.27},
+      "catalyst": "capacity, customer, financing, lockup, or utilization update",
+      "mechanism": "Neocloud capacity is a scarce AI-scaling asset, but financing and customer concentration make the equity fragile.",
+      "falsifier": "no evidence of capacity scarcity, financing stress dominates, or option IV absorbs the entire distribution"
+    },
+    {
+      "underlying": "CORZ",
+      "theme": "datacenter_conversion",
+      "priority": 72,
+      "directions": ["up", "down"],
+      "targetMovePct": {"up": 0.25, "down": 0.2},
+      "targetProbability": {"up": 0.26, "down": 0.26},
+      "catalyst": "datacenter conversion contract, customer demand, power-site update, or financing event",
+      "mechanism": "Bitcoin-miner power footprints can be repriced as AI datacenter conversion assets.",
+      "falsifier": "conversion economics or financing fail to validate AI compute reuse"
+    },
+    {
+      "underlying": "SMH",
+      "theme": "crowded_ai_beta_hedge",
+      "priority": 70,
+      "directions": ["down"],
+      "targetMovePct": {"down": 0.1},
+      "targetProbability": {"down": 0.24},
+      "catalyst": "semi crowding, capex disappointment, rates shock, or export-control/policy shock",
+      "mechanism": "The obvious AI beta layer can break on crowding even while the deeper AI-scaling thesis remains intact.",
+      "falsifier": "breadth and earnings revisions continue to validate crowded semi beta without policy/rates pressure"
+    }
+  ]
+}
