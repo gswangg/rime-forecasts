@@ -1,0 +1,45 @@
+{
+  "active": true,
+  "underlying": "PLTR",
+  "strategy": "situational-awareness-ai-stack",
+  "theme": "sovereign_ai_security",
+  "source": "rime-forecasts/sa-thesis-scan",
+  "sourceCandidateId": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61-20260520T194752Z",
+  "reviewedAt": "2026-05-20T19:50:00Z",
+  "notes": "Accepted as an active shadow thesis-search fixture, not as a trade. PLTR maps to the sovereign/secure AI leg of the Situational Awareness strategy and the first-seen candidate was liquid but only near-pass under current probability-margin gates. Keep exact gates intact and let options_signal_candidate handle any future paper-ticket review.",
+  "review": {
+    "status": "accepted_for_active_search",
+    "initialPrequalificationMode": "near_pass",
+    "initialBestStructure": "2026-06-18 150/155 call debit vertical",
+    "initialBestMaxLoss": 95.0,
+    "initialBestMaxGain": 405.0,
+    "initialBestEdgePctOfRisk": 0.31578947,
+    "initialBestProbabilityMargin": 0.06,
+    "initialBlockers": [
+      "probability margin 0.060 below min 0.080"
+    ],
+    "liveSubmitAllowed": false
+  },
+  "theses": [
+    {
+      "id": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61",
+      "active": true,
+      "direction": "up",
+      "targetPrice": 158.61,
+      "targetProbability": 0.25,
+      "eventDate": "2026-06-18",
+      "optionExpiry": "2026-06-18",
+      "maxLossCap": 200.0,
+      "minRewardRisk": 3.0,
+      "minEdgePctOfRisk": 0.3,
+      "minProbabilityMargin": 0.08,
+      "allowedStructures": [
+        "debit_vertical"
+      ],
+      "thesis": "If AI becomes national-security infrastructure, secure government and enterprise AI platforms can retain scarcity value. PLTR upside target is 158.61 by the 2026-06-18 option expiry if defense AI contracts, government AI policy, or enterprise AI deployment commentary validate the sovereign AI/security leg.",
+      "catalyst": "defense AI contract, government AI policy, earnings, or enterprise AI deployment commentary inside the June 18 options window",
+      "plannedExit": "first liquid mark after catalyst or thesis invalidation; otherwise close before expiry week",
+      "falsifier": "government/enterprise AI demand fails to convert into durable revenue, valuation already embeds the security premium, or option IV/spreads absorb the edge"
+    }
+  ]
+}
