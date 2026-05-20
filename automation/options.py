@@ -211,6 +211,7 @@ class OptionThesis:
     target_price: float
     target_probability: float
     event_date: date | None
+    option_expiry: date | None
     max_loss_cap: float
     min_reward_risk: float
     min_edge_pct_of_risk: float
@@ -229,6 +230,7 @@ class OptionThesis:
             "target_price": self.target_price,
             "target_probability": self.target_probability,
             "event_date": self.event_date.isoformat() if self.event_date else None,
+            "option_expiry": self.option_expiry.isoformat() if self.option_expiry else None,
             "max_loss_cap": self.max_loss_cap,
             "min_reward_risk": self.min_reward_risk,
             "min_edge_pct_of_risk": self.min_edge_pct_of_risk,
@@ -920,8 +922,17 @@ def normalize_thesis(raw: dict[str, Any]) -> OptionThesis:
     target_probability = _float_or_none(_first(raw.get("targetProbability"), raw.get("target_probability"), raw.get("probability")))
     if target_probability is None or not (0 < target_probability < 1):
         raise ValueError("option thesis target probability must be inside (0, 1)")
-    event_date_raw = _first(raw.get("eventDate"), raw.get("event_date"), raw.get("expiry"))
+    event_date_raw = _first(raw.get("eventDate"), raw.get("event_date"), raw.get("catalystDate"), raw.get("catalyst_date"))
     event_date = _parse_expiry(event_date_raw) if event_date_raw else None
+    option_expiry_raw = _first(
+        raw.get("optionExpiry"),
+        raw.get("option_expiry"),
+        raw.get("targetExpiry"),
+        raw.get("target_expiry"),
+        raw.get("expiry"),
+        event_date_raw,
+    )
+    option_expiry = _parse_expiry(option_expiry_raw) if option_expiry_raw else None
     allowed_raw = raw.get("allowedStructures") or raw.get("allowed_structures") or ("debit_vertical", "long_call", "long_put")
     if isinstance(allowed_raw, str):
         allowed_values = (allowed_raw,)
@@ -939,6 +950,7 @@ def normalize_thesis(raw: dict[str, Any]) -> OptionThesis:
         target_price=target_price,
         target_probability=target_probability,
         event_date=event_date,
+        option_expiry=option_expiry,
         max_loss_cap=float(_first(raw.get("maxLossCap"), raw.get("max_loss_cap"), 100.0)),
         min_reward_risk=float(_first(raw.get("minRewardRisk"), raw.get("min_reward_risk"), 2.0)),
         min_edge_pct_of_risk=float(_first(raw.get("minEdgePctOfRisk"), raw.get("min_edge_pct_of_risk"), 0.20)),
@@ -989,7 +1001,7 @@ def _candidate_contracts_for_thesis(
     for contract in contracts:
         if contract.right != right:
             continue
-        if thesis.event_date is not None and contract.expiry != thesis.event_date:
+        if thesis.option_expiry is not None and contract.expiry != thesis.option_expiry:
             continue
         ok, _ = contract_quote_filter_reason(contract, now=now, config=config)
         if ok:

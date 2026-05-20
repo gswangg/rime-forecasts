@@ -58,9 +58,9 @@ def _timestamp_from_tradier(value: Any, *, fallback: datetime) -> datetime:
 class TradierOptionProvider:
     """Tradier market-data provider adapter.
 
-    Requires a market-data token supplied out-of-repo via TRADIER_TOKEN unless a
-    test fetcher is injected. This class does not place orders and does not use
-    account endpoints.
+    Requires a market-data token supplied out-of-repo via TRADIER_TOKEN or
+    TRADIER_API_KEY unless a test fetcher is injected. This class does not place
+    orders and does not use account endpoints.
     """
 
     token: str
@@ -71,9 +71,9 @@ class TradierOptionProvider:
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "TradierOptionProvider":
         env = env or os.environ
-        token = env.get("TRADIER_TOKEN")
+        token = env.get("TRADIER_TOKEN") or env.get("TRADIER_API_KEY")
         if not token:
-            raise OptionProviderError("TRADIER_TOKEN is required for Tradier option-chain access")
+            raise OptionProviderError("TRADIER_TOKEN or TRADIER_API_KEY is required for Tradier option-chain access")
         return cls(token=token, base_url=env.get("TRADIER_BASE_URL", "https://api.tradier.com/v1"))
 
     def _get(self, path: str, params: Mapping[str, str]) -> Any:

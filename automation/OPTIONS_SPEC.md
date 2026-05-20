@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.3 shadow wake loop, 2026-05-19.
+Status: v0.4 Situational Awareness thesis mode, 2026-05-20.
 
 ## Goal
 
@@ -16,6 +16,8 @@ The first milestone is **shadow options coverage**: ingest chains, compute distr
 v0.2 shifted from hand-authored option structures toward a thesis-driven funnel: a catalyst thesis specifies direction, target zone, event date, model probability, and risk caps; code searches liquid contracts for capped-risk structures that express it.
 
 v0.3 stitches that funnel into wake lifecycle operation: active thesis fixtures live in `options/theses/`, `scripts/options-daemon.py` can loop over them, accepted candidates can write local paper tickets, and open tickets can emit CLV/expiry wake events.
+
+v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling stack, supports staged inactive thesis fixtures, and distinguishes the catalyst `eventDate` from the contract `optionExpiry` used for structure search.
 
 ## Non-goals
 
@@ -88,7 +90,7 @@ Provider interfaces are code-shaped before credentials exist via `automation/opt
 - `provider`, `quote_ts`, `quote_delay_seconds`, and raw response metadata on every normalized record
 - no credentials or account identifiers in repo fixtures, state, tickets, or logs
 
-Tradier usage requires `TRADIER_TOKEN` in the local environment; optional `TRADIER_BASE_URL` can point at sandbox or an alternate endpoint. The adapter uses market-data endpoints only and never submits orders.
+Tradier usage requires `TRADIER_TOKEN` or `TRADIER_API_KEY` in the local environment; optional `TRADIER_BASE_URL` can point at sandbox or an alternate endpoint. The adapter uses market-data endpoints only and never submits orders. Greg's durable setup keeps the key in encrypted dotenvx state; invoke provider commands with `dotenvx run -- ...` rather than decrypting `.env`.
 
 Candidate provider order:
 
@@ -103,7 +105,7 @@ Credentials and API keys must be supplied out-of-repo via environment variables 
 
 The options opportunity funnel is deliberately reject-heavy:
 
-1. **Catalyst/thesis input** — direction, target zone, event date, model probability, mechanism, falsifier, and exit plan.
+1. **Catalyst/thesis input** — direction, target zone, catalyst date, option expiry, model probability, mechanism, falsifier, and exit plan.
 2. **Tradability filter** — underlying allowlist, expiry window, bid/ask integrity, spread, volume/open interest, quote freshness, no corporate-action ambiguity.
 3. **Structure search** — generate capped-risk long options and debit verticals whose payoff zone matches the thesis; credit spreads remain supported only when explicitly requested.
 4. **EV/asymmetry gate** — compare model fair value to executable debit/credit after multiplier and fees; require edge as percent of max risk and probability margin over breakeven.
@@ -288,11 +290,11 @@ Live options orders require all existing execution safeguards plus broker-specif
 3. Add Black-Scholes / IV utility functions for distribution estimates; use fixtures first. **Implemented:** Black-Scholes pricing, risk-neutral threshold/range helpers, capped-risk structure builders, and edge evaluation.
 4. Add `options-ledger.md` and journal event conventions. **Implemented.**
 5. Build `scripts/options-daemon.py --dry-run` that prints candidates from fixtures only. **Implemented:** fixture chain + `signals[]` flow; dry-run prints candidate events/rejections.
-6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, event date, model probability, and max-risk constraints. **Implemented.**
+6. Add thesis-to-structure search over fixtures: generate long/debit-vertical candidates from direction, target zone, option expiry, model probability, and max-risk constraints. **Implemented.**
 7. Extend `scripts/options-daemon.py` so `theses[]` can auto-generate and rank structures, not only consume hand-authored `signals[]`. **Implemented.**
 8. Add dry-run options ticket artifacts under `execution/options-tickets/` plus ledger/markout helpers. **Implemented:** `option_ticket_from_event`, `write_option_ticket`, `option_markout`, `add_option_markout`, `options_ledger_row`, `scripts/options-daemon.py --write-tickets`, and `scripts/options-markout.py`.
 9. Add provider interfaces behind local credentials. **Implemented for fixture + Tradier market data:** `OptionChainProvider`, `FixtureOptionProvider`, `TradierOptionProvider`, and `scripts/options-chain-fetch.py`. Additional providers remain future work.
-10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]` and generated `theses[]`; provider inputs remain future work.**
+10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]`, generated `theses[]`, and provider-backed thesis files.**
 11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
 12. Only then consider broker live adapter design.
 
@@ -338,6 +340,7 @@ Generated-structure fixtures should add `theses[]` alongside or instead of hand-
 
 ```json
 {
+  "active": true,
   "chain": {"underlying":"NVDA","provider":"fixture","contracts": []},
   "theses": [
     {
@@ -346,6 +349,7 @@ Generated-structure fixtures should add `theses[]` alongside or instead of hand-
       "targetPrice": 250.0,
       "targetProbability": 0.35,
       "eventDate": "2026-05-22",
+      "optionExpiry": "2026-05-29",
       "maxLossCap": 100.0,
       "minRewardRisk": 3.0,
       "minEdgePctOfRisk": 0.20,
@@ -359,7 +363,7 @@ Generated-structure fixtures should add `theses[]` alongside or instead of hand-
 }
 ```
 
-The search generates candidate structures, computes executable debit, max loss/gain, breakeven, reward/risk, model fair value from the thesis probability/payoff approximation, and ranks accepted candidates by edge percent of risk plus asymmetry/spread quality.
+The search generates candidate structures, computes executable debit, max loss/gain, breakeven, reward/risk, model fair value from the thesis probability/payoff approximation, and ranks accepted candidates by edge percent of risk plus asymmetry/spread quality. Set fixture-level or thesis-level `active: false` to stage watch items without provider fetches or wake emissions. `eventDate` is the catalyst/review date; `optionExpiry` (or legacy `expiry`) is the listed-option expiry searched. If `optionExpiry` is omitted, the search falls back to `eventDate`.
 
 ## Daemon operation
 
@@ -369,19 +373,19 @@ Candidate dry-run:
 scripts/options-daemon.py --fixture path/to/fixture.json --dry-run
 scripts/options-daemon.py --fixture-dir options/theses --dry-run
 # provider-backed thesis files that omit embedded chain data:
-TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --dry-run
+dotenvx run -- scripts/options-daemon.py --fixture-dir options/theses --provider tradier --dry-run
 ```
 
 Fetch a normalized current chain:
 
 ```bash
-TRADIER_TOKEN=... scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry 2026-05-22 --output /tmp/nvda-chain.json --pretty
+dotenvx run -- scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry 2026-05-22 --output /tmp/nvda-chain.json --pretty
 ```
 
 Wake-producing loop, pinned to the rime session:
 
 ```bash
-TRADIER_TOKEN=... scripts/options-daemon.py \
+dotenvx run -- scripts/options-daemon.py \
   --fixture-dir options/theses \
   --provider tradier \
   --session-id 019dc71a-53fa-73ff-85a7-46f8e5d3c671 \

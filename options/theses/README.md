@@ -9,11 +9,11 @@ scripts/options-daemon.py --fixture-dir options/theses --dry-run
 Each JSON file can either:
 
 1. include a `chain` object plus `theses[]` and/or hand-authored `signals[]`, or
-2. include `underlying` plus `theses[]` and rely on a provider-backed daemon run, e.g. `--provider tradier` with local `TRADIER_TOKEN`.
+2. include `underlying` plus `theses[]` and rely on a provider-backed daemon run, e.g. `dotenvx run -- scripts/options-daemon.py --provider tradier ...` with local encrypted `TRADIER_API_KEY` or `TRADIER_TOKEN`.
 
-Do not put provider credentials, account identifiers, broker metadata, or private notes in these files.
+Do not put provider credentials, account identifiers, broker metadata, or private notes in these files. Use `active: false` at fixture or thesis level for watch items that should be committed but not scanned/emitted yet.
 
-Prediction-market daemons remain paused during options-build mode; this directory is for options-only fixture/thesis work.
+Prediction-market daemons remain paused during options-build mode; this directory is for options-only fixture/thesis work. The initial staged strategy file is Cerebras/`CBRS`, tied to the Situational Awareness AI-scaling stack. It is inactive until deliberately promoted.
 
 Provider-backed example shape:
 
@@ -27,6 +27,7 @@ Provider-backed example shape:
       "targetPrice": 250,
       "targetProbability": 0.35,
       "eventDate": "2026-05-22",
+      "optionExpiry": "2026-05-29",
       "maxLossCap": 100,
       "minRewardRisk": 3,
       "allowedStructures": ["debit_vertical"],

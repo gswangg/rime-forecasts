@@ -1,0 +1,44 @@
+{
+  "active": false,
+  "underlying": "CBRS",
+  "strategy": "situational-awareness-ai-stack",
+  "notes": "Staged watch fixture only. Activate after CBRS post-IPO option chain liquidity stabilizes and a current catalyst/probability is reviewed.",
+  "theses": [
+    {
+      "id": "cbrs-post-ipo-frontier-compute-upside-jun18",
+      "active": false,
+      "direction": "up",
+      "targetPrice": 450,
+      "targetProbability": 0.25,
+      "eventDate": "2026-06-18",
+      "optionExpiry": "2026-06-18",
+      "maxLossCap": 200,
+      "minRewardRisk": 4,
+      "minEdgePctOfRisk": 0.35,
+      "minProbabilityMargin": 0.08,
+      "allowedStructures": ["debit_vertical"],
+      "thesis": "Cerebras reprices as a direct frontier-compute scarcity asset if post-IPO demand validates non-NVIDIA accelerator demand faster than options imply.",
+      "catalyst": "post-IPO liquidity and first public-market demand/disclosure cycle",
+      "plannedExit": "exit on first post-catalyst liquid mark or if spread/IV makes the vertical uneconomic",
+      "falsifier": "chain remains too wide, customer concentration dominates narrative, or public disclosures fail to support accelerated demand"
+    },
+    {
+      "id": "cbrs-post-ipo-agi-hype-unwind-jun18",
+      "active": false,
+      "direction": "down",
+      "targetPrice": 250,
+      "targetProbability": 0.30,
+      "eventDate": "2026-06-18",
+      "optionExpiry": "2026-06-18",
+      "maxLossCap": 200,
+      "minRewardRisk": 3,
+      "minEdgePctOfRisk": 0.30,
+      "minProbabilityMargin": 0.08,
+      "allowedStructures": ["debit_vertical"],
+      "thesis": "Cerebras post-IPO AGI scarcity premium can unwind if valuation, float, customer concentration, or software-ecosystem concerns dominate after the initial demand spike.",
+      "catalyst": "post-IPO volatility normalization and first public-market digestion",
+      "plannedExit": "exit on first post-catalyst liquid mark or if downside IV/spreads absorb the edge",
+      "falsifier": "sustained institutional demand, improving liquidity, and disclosures that validate durable frontier-compute scarcity premium"
+    }
+  ]
+}

@@ -106,6 +106,22 @@ def build_provider(name: str | None) -> OptionChainProvider | None:
     raise OptionsDaemonError(f"unsupported options provider: {name!r}")
 
 
+def is_active(row: dict[str, Any]) -> bool:
+    return row.get("active", True) is not False and row.get("enabled", True) is not False
+
+
+def thesis_expiry_value(row: dict[str, Any]) -> Any:
+    return (
+        row.get("optionExpiry")
+        or row.get("option_expiry")
+        or row.get("targetExpiry")
+        or row.get("target_expiry")
+        or row.get("expiry")
+        or row.get("eventDate")
+        or row.get("event_date")
+    )
+
+
 def materialize_provider_fixture(fixture: dict[str, Any], provider: OptionChainProvider | None) -> dict[str, Any]:
     if "chain" in fixture or "contracts" in fixture:
         return fixture
@@ -116,8 +132,8 @@ def materialize_provider_fixture(fixture: dict[str, Any], provider: OptionChainP
         raise OptionsDaemonError("provider-backed thesis fixture requires underlying")
     expiries: set[Any] = set()
     for row in fixture.get("theses", []):
-        if isinstance(row, dict):
-            expiry = row.get("eventDate") or row.get("event_date") or row.get("expiry")
+        if isinstance(row, dict) and is_active(row):
+            expiry = thesis_expiry_value(row)
             if expiry:
                 expiries.add(expiry)
     chains = []
@@ -289,6 +305,9 @@ def generate_options_events(
         if not isinstance(raw_thesis, dict):
             rejections.append({"thesis": raw_thesis, "reason": "thesis must be an object"})
             continue
+        if not is_active(raw_thesis):
+            rejections.append({"thesisId": raw_thesis.get("id"), "reason": "inactive thesis"})
+            continue
         try:
             thesis = normalize_thesis(raw_thesis)
             opportunities = find_opportunities_for_thesis(snapshot.contracts, thesis, now=now, config=config)
@@ -324,6 +343,9 @@ def generate_options_events(
             break
         if not isinstance(raw_signal, dict):
             rejections.append({"signal": raw_signal, "reason": "signal must be an object"})
+            continue
+        if not is_active(raw_signal):
+            rejections.append({"signalId": raw_signal.get("id") or raw_signal.get("signalId"), "reason": "inactive signal"})
             continue
         try:
             structure = build_structure_from_signal(raw_signal, symbols)
@@ -562,6 +584,9 @@ def poll_once(args, *, session_id: str | None) -> int:
     for fixture in fixtures:
         if len(events) >= args.max_events:
             break
+        if not is_active(fixture):
+            rejections.append({"fixture": fixture.get("_fixturePath"), "reason": "inactive fixture"})
+            continue
         try:
             materialized_fixture = materialize_provider_fixture(fixture, provider)
         except Exception as exc:

@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.3 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.4 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -10,6 +10,7 @@
 - *v4.1 (2026-05-19): add shadow-only listed-options expansion. Options chains can be used for implied distributions and paper options signals; no live options trading without broker approval, explicit policy, and reconciliation.*
 - *v4.2 (2026-05-19): Greg requested options funnel buildout. Prediction-market wake daemons are paused; AC work should prioritize the shadow options opportunity system.*
 - *v4.3 (2026-05-19): next options-build phase. Add thesis-to-structure search, dry-run options tickets, provider interfaces, and CLV/ledger markouts while keeping prediction-market daemons paused.*
+- *v4.4 (2026-05-20): add Situational Awareness / AI-scaling options strategy as a shadow thesis prior, staged CBRS watch fixture, inactive fixture gates, and dotenvx-backed Tradier env handling.*
 
 ## Goal
 
@@ -132,9 +133,9 @@ Options daemon smoke / loop:
 
 ```bash
 scripts/options-daemon.py --fixture-dir options/theses --dry-run
-TRADIER_TOKEN=... scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry <YYYY-MM-DD> --output /tmp/current-chain.json
-TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --once
-TRADIER_TOKEN=... scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --loop --interval-sec 900 --write-tickets --ticket-status paper_open
+dotenvx run -- scripts/options-chain-fetch.py --provider tradier --underlying NVDA --expiry <YYYY-MM-DD> --output /tmp/current-chain.json
+dotenvx run -- scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --once
+dotenvx run -- scripts/options-daemon.py --fixture-dir options/theses --provider tradier --session-id <pi-session-id> --loop --interval-sec 900 --write-tickets --ticket-status paper_open
 ```
 
 Options markout:
@@ -314,6 +315,7 @@ Do not use drain-time `ac` as a market polling loop. Use `wake-pi` events and da
 - `automation/PARTICIPANT_SPEC.md` when participant-related
 - `automation/LESSONS.md`
 - `automation/OPTIONS_SPEC.md` when options-related
+- `options/STRATEGY_SITUATIONAL_AWARENESS.md` when AI-scaling / Situational Awareness options strategy is relevant
 - Relevant `reasoning/*.md`
 - `scorecard.md`
 - `clv-ledger.md`

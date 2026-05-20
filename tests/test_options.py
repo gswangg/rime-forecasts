@@ -241,6 +241,11 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(quote.underlying, "NVDA")
         self.assertEqual(quote.right, "call")
 
+    def test_tradier_from_env_accepts_api_key_alias(self):
+        provider = TradierOptionProvider.from_env({"TRADIER_API_KEY": "alias-token", "TRADIER_BASE_URL": "https://example.test/v1"})
+        self.assertEqual(provider.token, "alias-token")
+        self.assertEqual(provider.base_url, "https://example.test/v1")
+
     def test_fixture_option_provider_interface(self):
         provider = FixtureOptionProvider.from_mapping(
             {
@@ -485,6 +490,32 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertTrue(all(s.right == "call" for s in structures))
         self.assertTrue(all(s.expiry.isoformat() == "2026-05-22" for s in structures))
 
+    def test_normalize_thesis_distinguishes_catalyst_date_and_option_expiry(self):
+        contracts = [
+            normalize_contract(raw_contract(symbol="NVDA260522C00250000", expiry="2026-05-22", strike=250, bid=1.20, ask=1.28)),
+            normalize_contract(raw_contract(symbol="NVDA260522C00260000", expiry="2026-05-22", strike=260, bid=0.42, ask=0.48)),
+            normalize_contract(raw_contract(symbol="NVDA260529C00250000", expiry="2026-05-29", strike=250, bid=2.10, ask=2.20)),
+            normalize_contract(raw_contract(symbol="NVDA260529C00260000", expiry="2026-05-29", strike=260, bid=0.90, ask=0.98)),
+        ]
+        thesis = normalize_thesis(
+            {
+                "id": "nvda-catalyst-upside",
+                "direction": "up",
+                "targetPrice": 260,
+                "targetProbability": 0.35,
+                "eventDate": "2026-05-22",
+                "optionExpiry": "2026-05-29",
+                "maxLossCap": 150,
+                "minRewardRisk": 2.0,
+                "allowedStructures": ["debit_vertical"],
+            }
+        )
+        self.assertEqual(thesis.event_date.isoformat(), "2026-05-22")
+        self.assertEqual(thesis.option_expiry.isoformat(), "2026-05-29")
+        structures = generate_structures_for_thesis(contracts, thesis, now=dt("2026-05-19T03:25:00Z"))
+        self.assertGreaterEqual(len(structures), 1)
+        self.assertTrue(all(structure.expiry.isoformat() == "2026-05-29" for structure in structures))
+
     def test_payoff_and_model_fair_value_from_thesis(self):
         long_call = normalize_contract(raw_contract(symbol="NVDA260522C00250000", strike=250, bid=1.20, ask=1.28))
         short_call = normalize_contract(raw_contract(symbol="NVDA260522C00260000", strike=260, bid=0.42, ask=0.48))
@@ -656,6 +687,48 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(event["payload"]["structure"]["structure_type"], "debit_vertical")
         self.assertTrue(event["payload"]["evaluation"]["passes"])
         self.assertGreater(event["payload"]["rewardRisk"], 3.0)
+
+    def test_options_daemon_skips_inactive_provider_fixture_without_provider(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_dir = Path(tmp) / "theses"
+            fixture_dir.mkdir()
+            (fixture_dir / "inactive.json").write_text(
+                json.dumps(
+                    {
+                        "active": False,
+                        "underlying": "NVDA",
+                        "theses": [
+                            {
+                                "id": "inactive-provider-thesis",
+                                "direction": "up",
+                                "targetPrice": 260,
+                                "targetProbability": 0.35,
+                                "optionExpiry": "2026-05-22",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args = options_daemon.build_parser().parse_args(
+                [
+                    "--fixture-dir",
+                    str(fixture_dir),
+                    "--state-path",
+                    str(Path(tmp) / "state.json"),
+                    "--ticket-dir",
+                    str(Path(tmp) / "tickets"),
+                    "--dry-run",
+                    "--no-ticket-events",
+                ]
+            )
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                result = options_daemon.poll_once(args, session_id=None)
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(result, 0)
+            self.assertEqual(payload["eventCount"], 0)
+            self.assertEqual(payload["rejections"][0]["reason"], "inactive fixture")
 
     def test_options_daemon_materializes_provider_backed_thesis_fixture(self):
         chain_fixture = self.options_fixture()["chain"]
