@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.7 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.8 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -14,6 +14,7 @@
 - *v4.5 (2026-05-20): add Situational Awareness thesis-generation scanner/watchlist. `scripts/sa-thesis-scan.py` emits `options_thesis_review_due`; accepted theses are then promoted into `options/theses/` for `scripts/options-daemon.py`.*
 - *v4.6 (2026-05-20): first-seen SA thesis wakes are enabled across the curated watchlist, but gated by provider sanity checks, directional liquidity, options structure search, near-pass rules, and per-scan throttling.*
 - *v4.7 (2026-05-20): active options thesis-search fixtures now get lifecycle review wakes (`options_thesis_refresh_due`) for stale review, no signal, near expiry, spot/liquidity moves, and structure-search changes.*
+- *v4.8 (2026-05-21): per-thesis cap on options_signal_candidate emissions (default 1) and widened ticket-id encoding so multiple structures from the same thesis stop colliding.*
 
 ## Goal
 

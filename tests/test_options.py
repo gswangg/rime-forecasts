@@ -825,6 +825,79 @@ class OptionsCoreTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
 
+    def test_options_daemon_caps_emissions_per_thesis(self):
+        # Multi-strike chain produces several passing debit verticals for the same thesis.
+        fixture = {
+            "chain": {
+                "underlying": "NVDA",
+                "provider": "fixture",
+                "underlying_bid": 224.40,
+                "underlying_ask": 224.45,
+                "quote_ts": "2026-05-19T03:20:00Z",
+                "contracts": [
+                    raw_contract(symbol="NVDA260522C00245000", strike=245, bid=2.00, ask=2.10, volume=1200, open_interest=5400),
+                    raw_contract(symbol="NVDA260522C00250000", strike=250, bid=1.20, ask=1.28, volume=1200, open_interest=5400),
+                    raw_contract(symbol="NVDA260522C00255000", strike=255, bid=0.80, ask=0.88, volume=1200, open_interest=5400),
+                    raw_contract(symbol="NVDA260522C00260000", strike=260, bid=0.42, ask=0.48, volume=1200, open_interest=5400),
+                ],
+            },
+            "theses": [
+                {
+                    "id": "nvda-multi-strike",
+                    "direction": "up",
+                    "targetPrice": 260,
+                    "targetProbability": 0.35,
+                    "eventDate": "2026-05-22",
+                    "maxLossCap": 200,
+                    "minRewardRisk": 2.0,
+                    "minEdgePctOfRisk": 0.10,
+                    "minProbabilityMargin": 0.0,
+                    "allowedStructures": ["debit_vertical"],
+                    "thesis": "multi-strike test",
+                }
+            ],
+            "signals": [],
+        }
+        events, rejections = options_daemon.generate_options_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.10,
+            min_probability_margin=0.0,
+            max_loss_cap=200.0,
+            max_events=10,
+        )
+        self.assertEqual(len(events), 1)
+        self.assertTrue(any("per-thesis cap" in str(row.get("reason", "")) for row in rejections))
+        self.assertEqual(events[0]["payload"]["perThesisCap"], 1)
+        # Bumping the cap should release more candidates from the same thesis.
+        events_two, _ = options_daemon.generate_options_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.10,
+            min_probability_margin=0.0,
+            max_loss_cap=200.0,
+            max_events=10,
+            max_signals_per_thesis=5,
+        )
+        self.assertGreater(len(events_two), 1)
+
+    def test_option_ticket_id_keeps_strike_differentiator(self):
+        from automation.options import option_ticket_id
+        signal_a = "sa-nvda-frontier_compute-up-2026-06-18-250.22:debit_vertical:1:NVDA260618C00240000"
+        signal_b = "sa-nvda-frontier_compute-up-2026-06-18-250.22:debit_vertical:1:NVDA260618C00245000"
+        now = dt("2026-05-21T13:51:34Z")
+        ticket_a = option_ticket_id(signal_a, now)
+        ticket_b = option_ticket_id(signal_b, now)
+        self.assertNotEqual(ticket_a, ticket_b)
+        self.assertIn("00240000", ticket_a)
+        self.assertIn("00245000", ticket_b)
+
     def test_thesis_refresh_events_emit_stale_active_search_review(self):
         fixture = self.options_fixture()
         fixture["signals"] = []

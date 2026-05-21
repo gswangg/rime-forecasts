@@ -1111,7 +1111,9 @@ def option_ticket_id(signal_id: str, now: datetime) -> str:
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     stamp = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return f"rime-options-ticket-{_safe_ticket_part(signal_id, max_len=70)}-{stamp}"
+    # Use a long enough signal_id slice that strike/leg differentiators are not truncated
+    # for thesis-driven structure search ids (typically <= 90 chars before stamp).
+    return f"rime-options-ticket-{_safe_ticket_part(signal_id, max_len=120)}-{stamp}"
 
 
 def build_option_ticket_artifact(

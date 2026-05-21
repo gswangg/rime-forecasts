@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.5 thesis-search lifecycle mode, 2026-05-20.
+Status: v0.6 thesis-search lifecycle and per-thesis cap, 2026-05-21.
 
 ## Goal
 
@@ -20,6 +20,8 @@ v0.3 stitches that funnel into wake lifecycle operation: active thesis fixtures 
 v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling stack, supports staged inactive thesis fixtures, and distinguishes the catalyst `eventDate` from the contract `optionExpiry` used for structure search. Thesis discovery itself is specified separately in `automation/SA_THESIS_SPEC.md`; generated review candidates must be promoted into `options/theses/*.json` before this options funnel searches structures.
 
 v0.5 adds active thesis-search lifecycle review. The daemon continuously snapshots active Situational Awareness thesis fixtures against current spot, liquidity, expiry, and structure-search diagnostics, and emits `options_thesis_refresh_due` when a search is stale, near expiry, materially moved, liquidity-regressed, or structure availability changed.
+
+v0.6 caps how many candidate `options_signal_candidate` wakes a single thesis can emit per poll. The default is 1: the top-scored structure per thesis wins and alternative passing structures from the same thesis are suppressed (logged as `per-thesis cap reached`). This matches the shadow-paper convention of one representative position per thesis. Use `--max-signals-per-thesis N` to lift the cap for diagnostic sweeps. The ticket-id encoding was also widened so multiple structures from the same thesis no longer collide on disk when the cap is lifted.
 
 ## Non-goals
 
@@ -319,7 +321,8 @@ Live options orders require all existing execution safeguards plus broker-specif
 10. Emit `options_signal_candidate` wakes only after filters are conservative. **Implemented for fixture `signals[]`, generated `theses[]`, and provider-backed thesis files.**
 11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
 12. Add active thesis-search lifecycle review. **Implemented:** `options_thesis_refresh_due` from active Situational Awareness thesis fixtures, with stale/no-signal/expiry/spot/liquidity/structure-change checks.
-13. Only then consider broker live adapter design.
+13. Cap per-thesis candidate emissions and fix ticket-id collision so the shadow-paper book stays canonical. **Implemented:** `--max-signals-per-thesis` (default 1) and widened ticket-id encoding.
+14. Only then consider broker live adapter design.
 
 ## Fixture signal format
 
@@ -414,7 +417,10 @@ Active thesis-search refresh is enabled by default for Situational Awareness fix
 --thesis-expiry-review-days 7
 --thesis-spot-move-pct 0.08
 --thesis-liquidity-drop-pct 0.50
+--max-signals-per-thesis 1
 ```
+
+The per-thesis cap defaults to 1. Suppressed alternative structures show up in the dry-run rejection list with a `per-thesis cap reached` reason and a small sample so reviewers can audit what was held back.
 
 Wake-producing loop, pinned to the rime session:
 

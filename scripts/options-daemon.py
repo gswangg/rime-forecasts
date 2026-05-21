@@ -297,12 +297,14 @@ def generate_options_events(
     min_probability_margin: float | None,
     max_loss_cap: float | None,
     max_events: int,
+    max_signals_per_thesis: int = 1,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     chain_raw = fixture.get("chain", fixture)
     snapshot = parse_option_chain_snapshot(chain_raw)
     symbols = _contract_by_symbol(snapshot.contracts)
     events: list[dict[str, Any]] = []
     rejections: list[dict[str, Any]] = []
+    cap_per_thesis = max(1, int(max_signals_per_thesis))
 
     for raw_thesis in fixture.get("theses", []):
         if len(events) >= max_events:
@@ -322,13 +324,30 @@ def generate_options_events(
         if not opportunities:
             rejections.append({"thesisId": thesis.id, "reason": "no generated structure passed gates"})
             continue
+        emitted_for_thesis = 0
+        skipped_alternative_count = 0
+        skipped_alternative_examples: list[dict[str, Any]] = []
         for opportunity in opportunities[: max(0, max_events - len(events))]:
             signal_id = _opportunity_signal_id(opportunity)
             if signal_id in state.get("emitted_signals", {}):
                 rejections.append({"signalId": signal_id, "reason": "already emitted"})
                 continue
+            if emitted_for_thesis >= cap_per_thesis:
+                skipped_alternative_count += 1
+                if len(skipped_alternative_examples) < 3:
+                    skipped_alternative_examples.append(
+                        {
+                            "signalId": signal_id,
+                            "structureType": opportunity.structure.structure_type,
+                            "edgePctOfRisk": opportunity.evaluation.edge_pct_of_risk,
+                            "rewardRisk": opportunity.reward_risk,
+                            "maxLoss": opportunity.structure.max_loss,
+                        }
+                    )
+                continue
             leg_reasons = _leg_filter_reasons(opportunity.structure, now=now, config=config)
             payload = _opportunity_payload(opportunity, leg_reasons)
+            payload["perThesisCap"] = cap_per_thesis
             event = build_wake_event(
                 event_id=_event_id(signal_id, now),
                 session_id=session_id,
@@ -340,8 +359,18 @@ def generate_options_events(
                 source=SOURCE,
             )
             events.append(event)
+            emitted_for_thesis += 1
             if len(events) >= max_events:
                 break
+        if skipped_alternative_count:
+            rejections.append(
+                {
+                    "thesisId": thesis.id,
+                    "reason": f"per-thesis cap {cap_per_thesis} reached; suppressed {skipped_alternative_count} alternative structure(s)",
+                    "perThesisCap": cap_per_thesis,
+                    "suppressedAlternatives": skipped_alternative_examples,
+                }
+            )
 
     for raw_signal in fixture.get("signals", []):
         if len(events) >= max_events:
@@ -898,6 +927,7 @@ def poll_once(args, *, session_id: str | None) -> int:
             min_probability_margin=args.min_probability_margin,
             max_loss_cap=args.max_loss_cap,
             max_events=args.max_events - len(events),
+            max_signals_per_thesis=args.max_signals_per_thesis,
         )
         events.extend(fixture_events)
         signal_events.extend(fixture_events)
@@ -1033,6 +1063,7 @@ def build_parser() -> argparse.ArgumentParser:
     edge.add_argument("--min-edge-pct-of-risk", type=float, default=0.20)
     edge.add_argument("--min-probability-margin", type=float, default=0.05)
     edge.add_argument("--max-loss-cap", type=float, default=100.0)
+    edge.add_argument("--max-signals-per-thesis", type=int, default=1, help="cap on candidate signals emitted per thesis per poll; top-scored wins (default: 1, shadow-paper convention)")
     return parser
 
 
