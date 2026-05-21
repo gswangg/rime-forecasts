@@ -25,6 +25,16 @@ v0.6 caps how many candidate `options_signal_candidate` wakes a single thesis ca
 
 v0.7 makes live Tradier tape pulls a standing operational practice. `scripts/live-tape.py` is the canonical helper: any options thesis review, signal review, lifecycle refresh, CLV mark, exit/expiry mark, or human-requested status check must pull current quotes/intraday for the underlying and its read-through basket before judgment. Stale or wake-payload quotes are not substitutes when live tape is one command away.
 
+v0.8 internalizes the vol-crush hurdle / positioning crowding / rotation lesson from NVDA Q1 FY27. Every `options_signal_candidate` and `options_thesis_refresh_due` payload now carries a `tapeContext` block:
+
+- `spot`, `underlyingBid`, `underlyingAsk`, `underlyingSpreadPct`, `quoteTs`, `quoteDelaySeconds`, `daysToExpiry`;
+- `chainImpliedMoveToExpiry`: ATM-straddle-derived one-sigma move to the thesis option expiry (`strike`, `straddle`, `impliedMovePct`);
+- `targetMovePct`: thesis target distance from spot, signed by direction;
+- `targetMoveVsImpliedRatio`: target move divided by implied move. Ratios `<= 1.0` mean the chain already prices the directional outcome inside its distribution.
+- `reviewerNote`: short prose summary of whether target exceeds or is inside implied move.
+
+Reviewers compare these alongside live tape (`scripts/live-tape.py`) and the read-through basket before accepting a signal or refreshing a thesis. See `automation/LESSONS.md` for the NVDA Q1 FY27 calibration episode.
+
 ## Non-goals
 
 - No live options trading until broker access, options approval level, local credentials, policy gates, and reconciliation exist.
@@ -325,7 +335,8 @@ Live options orders require all existing execution safeguards plus broker-specif
 12. Add active thesis-search lifecycle review. **Implemented:** `options_thesis_refresh_due` from active Situational Awareness thesis fixtures, with stale/no-signal/expiry/spot/liquidity/structure-change checks.
 13. Cap per-thesis candidate emissions and fix ticket-id collision so the shadow-paper book stays canonical. **Implemented:** `--max-signals-per-thesis` (default 1) and widened ticket-id encoding.
 14. Add a canonical live-tape helper (`scripts/live-tape.py`) and codify the standing practice that every position/thesis review pulls current Tradier quotes + intraday + sector basket before judging. **Implemented.**
-15. Only then consider broker live adapter design.
+15. Compute and surface ATM-straddle implied move and target-vs-implied ratio on every options signal / thesis refresh wake so vol-crush hurdle and positioning context are reviewed by default. **Implemented:** `automation/options.py::atm_straddle_implied_move` and `tapeContext` block in `scripts/options-daemon.py`.
+16. Only then consider broker live adapter design.
 
 ## Fixture signal format
 

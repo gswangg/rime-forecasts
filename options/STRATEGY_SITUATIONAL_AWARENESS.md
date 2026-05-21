@@ -81,6 +81,18 @@ A Situational Awareness options signal may be opened for paper tracking only if 
 6. If a signal candidate is worth shadow tracking, write a local ticket with `--write-tickets --ticket-status paper_open` and mark +1h/+6h/+24h/exit.
 7. Keep options P/L in `options-ledger.md`; do not mix it into prediction-market Brier.
 
+## Positioning, vol-crush, and rotation discipline
+
+Mega-cap event-vol prints (earnings, capex updates, policy events) do not have a clean fundamental-to-direction map. Three forces sit on top of the fundamental delta and routinely flip the post-event direction even when the print is unambiguously strong:
+
+1. **Vol-crush hurdle.** The pre-event ATM straddle defines the threshold the print must clear to drive a positive return. A beat-and-raise inside the implied move usually produces flat-to-down because vol crush deflates premium and dealer hedging flows kick in. Compare thesis-target move to the chain's implied move to expiry before judging. `options_signal_candidate` and `options_thesis_refresh_due` wakes now carry `tapeContext.chainImpliedMoveToExpiry` and `targetMoveVsImpliedRatio`; ratios <= 1.0 mean the chain already prices the directional outcome inside its distribution.
+2. **Positioning crowding.** Names that have run materially into an event lack a marginal buyer at the print. Long-only and systematic funds are at max position, and the sell-side is taking profit on the known catalyst. Strong fundamentals alone do not translate to upside in this state. Live tape (`scripts/live-tape.py`) surfaces sector-relative behavior and is the standing practice for this check.
+3. **Rotation within thesis.** When the primary expression of a thesis is over-owned, beats produce rotation into second-derivative names (networking, power, memory, datacenter conversion) rather than rally in the primary. The thesis is being validated by the read-throughs; the primary becomes the funding leg. Always survey the read-through basket before accepting a primary-name structure.
+
+Apply: when reviewing an SA thesis or generated signal candidate, the wake payload now exposes the implied-move comparison and the live-tape helper exposes basket dispersion. Reject a signal where (a) target move is well inside implied move and the thesis is not vol/path specific, or (b) the read-through basket is being bid materially while the primary is being distributed. Prefer the cheap expression of a validated thesis when a structure passes gates on a less-crowded name.
+
+NVDA Q1 FY27 (2026-05-20) is the calibration episode for this discipline. See `automation/LESSONS.md` for the full lesson record.
+
 ## Falsifiers for the whole strategy
 
 - model progress stalls at the data wall;

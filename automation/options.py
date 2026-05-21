@@ -504,6 +504,72 @@ def days_to_expiry(expiry: date, *, now: datetime) -> int:
     return (expiry - now.astimezone(timezone.utc).date()).days
 
 
+def atm_straddle_implied_move(
+    snapshot: OptionChainSnapshot,
+    *,
+    expiry: date | None = None,
+    spot: float | None = None,
+) -> dict[str, Any] | None:
+    """Estimate the ATM-straddle implied move to a given expiry.
+
+    The straddle premium = call mid + put mid at the strike nearest to spot.
+    Implied move (to expiry) = straddle / spot. This is approximately the
+    one-sigma price range the chain is pricing for the underlying by the
+    target expiry. It is the natural hurdle a thesis-target move must clear:
+    a target move smaller than the implied move means the option market
+    already prices the directional outcome inside its distribution.
+
+    Returns None if there is no usable call/put pair at the chosen expiry.
+    """
+    if not snapshot.contracts:
+        return None
+    if spot is None:
+        spot = snapshot.underlying_mid
+    if spot is None or spot <= 0:
+        return None
+    candidates = [c for c in snapshot.contracts if expiry is None or c.expiry == expiry]
+    if not candidates:
+        return None
+    # Pick the strike nearest to spot that has both a call and a put with usable mids
+    by_strike: dict[float, dict[str, OptionContract]] = {}
+    for c in candidates:
+        if c.mid is None or c.mid <= 0:
+            continue
+        by_strike.setdefault(c.strike, {})[c.right] = c
+    pairs = [(strike, legs) for strike, legs in by_strike.items() if "call" in legs and "put" in legs]
+    if not pairs:
+        return None
+    pairs.sort(key=lambda item: (abs(item[0] - spot), item[0]))
+    strike, legs = pairs[0]
+    call = legs["call"]
+    put = legs["put"]
+    straddle = (call.mid or 0.0) + (put.mid or 0.0)
+    if straddle <= 0:
+        return None
+    implied_move = straddle / spot
+    return {
+        "strike": strike,
+        "spot": spot,
+        "expiry": call.expiry.isoformat(),
+        "callSymbol": call.symbol,
+        "putSymbol": put.symbol,
+        "callMid": call.mid,
+        "putMid": put.mid,
+        "straddle": _round_money(straddle),
+        "impliedMovePct": _round_metric(implied_move),
+    }
+
+
+def target_move_pct_from_spot(*, direction: str, target_price: float, spot: float) -> float | None:
+    if not spot or spot <= 0 or not target_price or target_price <= 0:
+        return None
+    if direction == "up":
+        return target_price / spot - 1
+    if direction == "down":
+        return spot / target_price - 1
+    return None
+
+
 def single_leg_spread_limit(mid: float, config: OptionQuoteFilterConfig | None = None) -> float:
     config = config or OptionQuoteFilterConfig()
     return max(config.max_single_leg_abs_spread, config.max_single_leg_spread_pct_of_mid * mid)

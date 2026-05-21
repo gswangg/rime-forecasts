@@ -124,6 +124,25 @@ Lessons from wake-driven operation. When a lesson is validated, implement it in 
 
 **Implementation:** Polymarket price-move alerts suppress books wider than 50pp regardless of move size.
 
+### Vol-crush hurdle, positioning crowding, and rotation within thesis
+
+**Observed:** NVDA Q1 FY27 print (2026-05-20 post-close) was an unambiguously strong beat-and-raise: revenue $81.6B (+20% Q/Q, +85% Y/Y), Q2 guide $91B ± 2% explicitly excluding China, GM stable at 75%, networking +199% Y/Y, $80B incremental buyback, dividend 25x. Pre-print direction call was **up, +7% to +12% next session, confidence 4/5** anchored on fundamentals. Actual reaction: stock gapped up to $227 at the open then was distributed for two hours on 8.9x average volume, settling around $219 (-1.8% vs pre-print close). Meanwhile second-derivative AI names ripped on heavy volume: ANET +3.7% (485% of avg), MRVL +3.1%, VRT +3.6%, MU +3.2%, CORZ +4.1%, APLD +17.8%. AMD was sold with NVDA at -2.7% as a NVDA-alt.
+
+**Lesson:** on mega-cap event-vol prints, fundamentals do not dictate the post-print direction directly. Three forces stack on top of the fundamental delta:
+
+1. **Vol-crush hurdle.** The pre-print ATM straddle defines the threshold the print must clear to drive a positive return. NVDA's pre-print May 22 straddle was ~±5.8%. A beat that lives inside the implied move usually produces flat-to-down because vol crush mechanically deflates premium and induces dealer hedging. The fundamental beat has to *exceed the implied move* before it drives positive spot return.
+2. **Positioning crowding.** Mega-cap names that have run up into earnings have no marginal buyer at the print. Long-only and systematic funds are at max position. Even on a beat-and-raise, the people who would have bought are already long, and the sell-side is profit-taking on a known catalyst.
+3. **Rotation within thesis, not against it.** When the primary expression of a thesis is over-owned, beats produce rotation into second-derivative names (networking, power, memory, datacenter conversion) rather than rally in the primary. The thesis is being validated by the read-throughs ripping; the primary is the funding leg.
+
+Which means: even when the fundamentals win the print, the trade can lose if the trade is the most expensive expression of the thesis. Prefer the cheap expression when structure passes gates.
+
+**Implementation:** 
+
+- `automation/options.py::atm_straddle_implied_move(snapshot, expiry, spot)` computes the ATM-straddle implied move to a given expiry from any normalized option chain snapshot.
+- `scripts/options-daemon.py` enriches every `options_signal_candidate` and `options_thesis_refresh_due` payload with `chainImpliedMoveToExpiry`, `targetMovePctFromSpot`, `targetMoveVsImpliedRatio`, and a tape-context block (current spot, days to expiry). The reviewer sees "is my target move bigger than what options imply?" directly in the wake payload.
+- `drive-prompt.md` v4.9 makes live tape pulling (`scripts/live-tape.py`) standing practice before any thesis review, signal review, position evaluation, or direction call. The review checklist explicitly compares thesis-target move vs implied move and surveys the read-through basket to check for rotation dynamics.
+- `options/STRATEGY_SITUATIONAL_AWARENESS.md` documents the positioning-crowding and vol-crush principle so SA-thesis evaluations apply it by default.
+
 ### Manifold is not a validation source
 
 **Observed:** Manifold-only predictions were useful early for calibration practice and backtesting, but they are paper-money markets and do not answer the project's economic tradeability question.

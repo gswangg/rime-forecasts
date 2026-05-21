@@ -27,6 +27,7 @@ from automation.options import (
     OptionOpportunity,
     OptionQuoteFilterConfig,
     OptionStructure,
+    atm_straddle_implied_move,
     build_credit_vertical,
     build_debit_vertical,
     build_long_option,
@@ -40,6 +41,7 @@ from automation.options import (
     option_structure_label,
     option_ticket_from_event,
     parse_option_chain_snapshot,
+    target_move_pct_from_spot,
     write_option_ticket,
 )
 from automation.options_providers import TradierOptionProvider
@@ -258,9 +260,60 @@ def _signal_payload(signal: dict[str, Any], structure: OptionStructure, evaluati
     }
 
 
-def _opportunity_payload(opportunity: OptionOpportunity, leg_filter_reasons: list[dict[str, Any]]) -> dict[str, Any]:
-    signal_id = _opportunity_signal_id(opportunity)
+def _tape_context(snapshot, thesis, *, now) -> dict[str, Any] | None:
+    """Build a compact tape/positioning context for a thesis review.
+
+    Surfaces ATM-straddle implied move, target move, and the
+    target/implied ratio so reviewers can sanity-check whether the
+    thesis's directional target exceeds what the option chain is
+    pricing as a one-sigma move to expiry.
+    """
+    if snapshot is None:
+        return None
+    spot = snapshot.underlying_mid
+    if spot is None or spot <= 0:
+        return None
+    expiry = thesis.option_expiry or thesis.event_date
+    dte = days_to_expiry(expiry, now=now) if expiry is not None else None
+    implied = atm_straddle_implied_move(snapshot, expiry=expiry, spot=spot)
+    target_move = target_move_pct_from_spot(direction=thesis.direction, target_price=thesis.target_price, spot=spot)
+    implied_pct = implied.get("impliedMovePct") if isinstance(implied, dict) else None
+    ratio = None
+    if target_move is not None and implied_pct and implied_pct > 0:
+        ratio = target_move / implied_pct
+    spread_pct = None
+    if snapshot.underlying_bid and snapshot.underlying_ask and snapshot.underlying_bid > 0:
+        spread_pct = (snapshot.underlying_ask - snapshot.underlying_bid) / ((snapshot.underlying_ask + snapshot.underlying_bid) / 2)
     return {
+        "spot": round(spot, 6),
+        "underlyingBid": snapshot.underlying_bid,
+        "underlyingAsk": snapshot.underlying_ask,
+        "underlyingSpreadPct": round(spread_pct, 8) if spread_pct is not None else None,
+        "quoteTs": isoformat_z(snapshot.quote_ts) if snapshot.quote_ts is not None else None,
+        "quoteDelaySeconds": snapshot.quote_delay_seconds,
+        "daysToExpiry": dte,
+        "chainImpliedMoveToExpiry": implied,
+        "targetMovePct": round(target_move, 8) if target_move is not None else None,
+        "targetMoveVsImpliedRatio": round(ratio, 6) if ratio is not None else None,
+        "reviewerNote": (
+            "target move exceeds implied move; print/event surprise must clear vol-crush hurdle"
+            if ratio is not None and ratio > 1.0
+            else (
+                "target move inside implied move; option chain already prices this directional outcome inside its distribution"
+                if ratio is not None and ratio <= 1.0
+                else None
+            )
+        ),
+    }
+
+
+def _opportunity_payload(
+    opportunity: OptionOpportunity,
+    leg_filter_reasons: list[dict[str, Any]],
+    tape_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    signal_id = _opportunity_signal_id(opportunity)
+    payload = {
         "signalId": signal_id,
         "underlying": opportunity.structure.underlying,
         "sourceMode": "thesis_search",
@@ -276,6 +329,9 @@ def _opportunity_payload(opportunity: OptionOpportunity, leg_filter_reasons: lis
         "legFilterReasons": leg_filter_reasons,
         "dedupeKey": f"options_signal:{signal_id}",
     }
+    if tape_context is not None:
+        payload["tapeContext"] = tape_context
+    return payload
 
 
 def _leg_filter_reasons(structure: OptionStructure, *, now, config: OptionQuoteFilterConfig) -> list[dict[str, Any]]:
@@ -346,7 +402,8 @@ def generate_options_events(
                     )
                 continue
             leg_reasons = _leg_filter_reasons(opportunity.structure, now=now, config=config)
-            payload = _opportunity_payload(opportunity, leg_reasons)
+            tape_ctx = _tape_context(snapshot, opportunity.thesis, now=now)
+            payload = _opportunity_payload(opportunity, leg_reasons, tape_context=tape_ctx)
             payload["perThesisCap"] = cap_per_thesis
             event = build_wake_event(
                 event_id=_event_id(signal_id, now),
@@ -696,6 +753,7 @@ def generate_thesis_refresh_events(
         if dedupe_key in emitted_state:
             rejections.append({"thesisId": thesis.id, "reason": "refresh already emitted", "dedupeKey": dedupe_key})
             continue
+        tape_ctx = _tape_context(snapshot, thesis, now=now)
         payload = {
             "thesisId": thesis.id,
             "underlying": snapshot.underlying,
@@ -711,6 +769,7 @@ def generate_thesis_refresh_events(
                 "daysToExpiry": dte,
                 "liquidity": liquidity,
             },
+            "tapeContext": tape_ctx,
             "structureSearch": diagnostic,
             "dedupeKey": dedupe_key,
         }

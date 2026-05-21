@@ -887,6 +887,76 @@ class OptionsCoreTests(unittest.TestCase):
         )
         self.assertGreater(len(events_two), 1)
 
+    def test_atm_straddle_implied_move(self):
+        from automation.options import atm_straddle_implied_move
+        snapshot = parse_option_chain_snapshot(
+            {
+                "underlying": "NVDA",
+                "provider": "fixture",
+                "underlying_bid": 219.50,
+                "underlying_ask": 219.60,
+                "quote_ts": "2026-05-21T13:55:00Z",
+                "contracts": [
+                    raw_contract(symbol="NVDA260522C00220000", expiry="2026-05-22", strike=220, right="call", bid=4.90, ask=5.10, underlying_bid=219.50, underlying_ask=219.60),
+                    raw_contract(symbol="NVDA260522P00220000", expiry="2026-05-22", strike=220, right="put", bid=5.10, ask=5.30, underlying_bid=219.50, underlying_ask=219.60),
+                    raw_contract(symbol="NVDA260522C00250000", expiry="2026-05-22", strike=250, right="call", bid=1.20, ask=1.28, underlying_bid=219.50, underlying_ask=219.60),
+                ],
+            }
+        )
+        from datetime import date as _d
+        result = atm_straddle_implied_move(snapshot, expiry=_d(2026, 5, 22))
+        self.assertIsNotNone(result)
+        self.assertEqual(result["strike"], 220)
+        # straddle = (5.00 call mid + 5.20 put mid) = 10.20
+        self.assertAlmostEqual(result["straddle"], 10.20, places=4)
+        # implied move = 10.20 / 219.55 ~ 4.65%
+        self.assertAlmostEqual(result["impliedMovePct"], 10.20 / 219.55, places=4)
+
+    def test_tape_context_surfaces_target_vs_implied_ratio(self):
+        from automation.options import normalize_thesis
+        snapshot = parse_option_chain_snapshot(
+            {
+                "underlying": "NVDA",
+                "provider": "fixture",
+                "underlying_bid": 219.50,
+                "underlying_ask": 219.60,
+                "quote_ts": "2026-05-21T13:55:00Z",
+                "contracts": [
+                    raw_contract(symbol="NVDA260522C00220000", expiry="2026-05-22", strike=220, right="call", bid=4.90, ask=5.10, underlying_bid=219.50, underlying_ask=219.60),
+                    raw_contract(symbol="NVDA260522P00220000", expiry="2026-05-22", strike=220, right="put", bid=5.10, ask=5.30, underlying_bid=219.50, underlying_ask=219.60),
+                ],
+            }
+        )
+        thesis_target_above_implied = normalize_thesis(
+            {
+                "id": "nvda-target-above-implied",
+                "direction": "up",
+                "targetPrice": 240,  # +9.3% > implied ~4.65%
+                "targetProbability": 0.30,
+                "optionExpiry": "2026-05-22",
+                "maxLossCap": 200,
+                "allowedStructures": ["debit_vertical"],
+            }
+        )
+        ctx = options_daemon._tape_context(snapshot, thesis_target_above_implied, now=dt("2026-05-21T13:56:00Z"))
+        self.assertIsNotNone(ctx)
+        self.assertGreater(ctx["targetMoveVsImpliedRatio"], 1.0)
+        self.assertIn("exceeds implied move", ctx["reviewerNote"])
+        thesis_target_inside_implied = normalize_thesis(
+            {
+                "id": "nvda-target-inside-implied",
+                "direction": "up",
+                "targetPrice": 224,  # +2% < implied ~4.65%
+                "targetProbability": 0.45,
+                "optionExpiry": "2026-05-22",
+                "maxLossCap": 200,
+                "allowedStructures": ["debit_vertical"],
+            }
+        )
+        ctx2 = options_daemon._tape_context(snapshot, thesis_target_inside_implied, now=dt("2026-05-21T13:56:00Z"))
+        self.assertLess(ctx2["targetMoveVsImpliedRatio"], 1.0)
+        self.assertIn("inside implied move", ctx2["reviewerNote"])
+
     def test_option_ticket_id_keeps_strike_differentiator(self):
         from automation.options import option_ticket_id
         signal_a = "sa-nvda-frontier_compute-up-2026-06-18-250.22:debit_vertical:1:NVDA260618C00240000"

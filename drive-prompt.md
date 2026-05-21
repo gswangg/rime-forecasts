@@ -1,4 +1,4 @@
-# Drive prompt: rime-forecasts (validation experiment, v4.9 options-build mode)
+# Drive prompt: rime-forecasts (validation experiment, v4.10 options-build mode)
 
 *Purpose: test whether rime's forecasting and market-participant reasoning produce economically tradeable calibration before any capital is committed.*
 
@@ -16,6 +16,7 @@
 - *v4.7 (2026-05-20): active options thesis-search fixtures now get lifecycle review wakes (`options_thesis_refresh_due`) for stale review, no signal, near expiry, spot/liquidity moves, and structure-search changes.*
 - *v4.8 (2026-05-21): per-thesis cap on options_signal_candidate emissions (default 1) and widened ticket-id encoding so multiple structures from the same thesis stop colliding.*
 - *v4.9 (2026-05-21): live tape becomes standing practice via `scripts/live-tape.py`. Every options thesis review, options signal review, prediction direction call, and position status report must pull current Tradier quote/intraday color across the underlying and its read-through basket before judging.*
+- *v4.10 (2026-05-21): vol-crush hurdle and positioning rotation lesson is wired in. Options daemon now ships `tapeContext.chainImpliedMoveToExpiry` and `targetMoveVsImpliedRatio` on every `options_signal_candidate` and `options_thesis_refresh_due` payload. Reviewers must compare thesis-target move to chain-implied move and survey the read-through basket before accepting a primary-name structure.*
 
 ## Goal
 
@@ -104,7 +105,7 @@ Participant event handling:
 Options event handling remains shadow-only:
 
 - `options_thesis_review_due`: review a generated Situational Awareness thesis candidate from `scripts/sa-thesis-scan.py`. Before judging, pull live tape across the underlying and a basket of read-through names via `dotenvx run -- scripts/live-tape.py <under> <basket...> --intraday <under> --thesis <fixture>` so positioning/rotation context is on the page. If accepted, promote or update an inactive/active fixture under `options/theses/*.json`, document the mechanism/probability/falsifier, and run the options daemon dry-run. Do not create paper tickets or ledger P/L directly from this wake.
-- `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. Pull live tape (`scripts/live-tape.py`) for the underlying and its read-through basket, compare implied move to thesis target move, and check sector-rotation dispersion before accepting. If accepted for shadow tracking, ensure a local option ticket exists under `execution/options-tickets/` and update `options-ledger.md`; do not mix options P/L into prediction-market Brier.
+- `options_signal_candidate`: evaluate whether a contract/spread or options-derived distribution has useful edge after quote delay, bid/ask, fees, and max-risk constraints. Pull live tape (`scripts/live-tape.py`) for the underlying and its read-through basket, then check the wake payload's `tapeContext.targetMoveVsImpliedRatio`: if it is <= 1.0 the chain already prices the directional outcome inside its distribution and the signal needs a vol/path-specific edge to justify acceptance. Survey the read-through basket for rotation dynamics (primary may be the funding leg of a thesis-validating rotation; prefer the cheap expression when available). If accepted for shadow tracking, ensure a local option ticket exists under `execution/options-tickets/` and update `options-ledger.md`; do not mix options P/L into prediction-market Brier.
 - `options_thesis_refresh_due`: reassess an active thesis-search fixture against current spot, liquidity, expiry, structure diagnostics, thesis/falsifier, and market conditions. Pull live tape for the underlying plus its basket. If still valid, update `reviewedAt`/notes if useful; if invalid, deactivate the fixture. Do not create paper tickets or P/L directly from this wake.
 - `options_clv_checkpoint_due`: mark the referenced local ticket with `scripts/options-markout.py` using current/manual quotes, then update/append `options-ledger.md` if useful. Always pull live tape for the underlying + read-through basket alongside the mark; the mark on its own is incomplete context. Do not treat stale wake payload marks as executable.
 - `options_expiry_or_exit`: mark the referenced local ticket with checkpoint `exit` or `expiry`, pull final live tape, update `options-ledger.md` final P/L / return on max risk, and journal the thesis result.
