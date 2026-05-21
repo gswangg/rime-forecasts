@@ -5,8 +5,8 @@
   "theme": "sovereign_ai_security",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61-20260520T194752Z",
-  "reviewedAt": "2026-05-20T19:50:00Z",
-  "notes": "Accepted as an active shadow thesis-search fixture, not as a trade. PLTR maps to the sovereign/secure AI leg of the Situational Awareness strategy and the first-seen candidate was liquid but only near-pass under current probability-margin gates. Keep exact gates intact and let options_signal_candidate handle any future paper-ticket review.",
+  "reviewedAt": "2026-05-21T15:42:00Z",
+  "notes": "Re-reviewed on options_signal_candidate (155/157.5 Jun18 call debit vertical, ratio 1.54x vs implied). Rejected: target move 15.5% over 28d exceeds implied 10.1% (1.54x), no known catalyst in window, short-leg OI thin (103), and enterprise/sovereign-AI sector being actively distributed today (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol). PLTR holding +0.12% relative strength but no sector tailwind. Thesis intact; tightened gates so the daemon emits only on materially better setups while the sector is being sold and no catalyst is scheduled.",
   "review": {
     "status": "accepted_for_active_search",
     "initialPrequalificationMode": "near_pass",
@@ -30,9 +30,9 @@
       "eventDate": "2026-06-18",
       "optionExpiry": "2026-06-18",
       "maxLossCap": 200.0,
-      "minRewardRisk": 3.0,
-      "minEdgePctOfRisk": 0.3,
-      "minProbabilityMargin": 0.08,
+      "minRewardRisk": 4.0,
+      "minEdgePctOfRisk": 0.45,
+      "minProbabilityMargin": 0.12,
       "allowedStructures": [
         "debit_vertical"
       ],
