@@ -10,4 +10,4 @@ Use `scripts/options-markout.py --append-ledger` after reviewing a current mark 
 
 | Opened | Underlying | Structure | Thesis | Entry | +1h | +6h | +24h | Exit/expiry | P/L | Notes |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
-| _none yet_ | | | | | | | | | | |
+| 2026-05-21 | NVDA | debit_vertical +1 call 240.0 / -1 call 250.0 | NVIDIA frontier-compute upside; target 250.22 by 2026-06-18 after Q1 FY27 print, with IV-crushed Jun18 240/250 call vertical clearing edge/probability gates. | debit $168.00; max loss $168.00; max gain $832.00; edge $102.00 / 60.7%; reward/risk 4.95x |  |  |  |  |  | paper_open; signal id `sa-nvda-frontier_compute-up-2026-06-18-250.22:debit_vertical:1:NVDA260618C002400`; no live order |
