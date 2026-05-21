@@ -5,10 +5,10 @@
   "theme": "frontier_compute",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-nvda-frontier_compute-up-2026-06-18-250.22-20260520T194752Z",
-  "reviewedAt": "2026-05-20T19:49:00Z",
-  "notes": "Accepted as an active shadow thesis-search fixture, not as a trade. NVDA is the most liquid public frontier-compute proxy and the first-seen candidate was high-quality but only near-pass under current gates. Keep exact gates intact and let options_signal_candidate handle any future paper-ticket review.",
+  "reviewedAt": "2026-05-21T14:30:00Z",
+  "notes": "Re-reviewed on options_thesis_refresh_due (structure_now_passes) after Q1 FY27 print. Thesis intact. Catalyst hit: revenue $81.6B beat, Q2 guide $91B excluding China, GM stable at 75%, $80B incremental buyback, dividend 25x, DC networking +199% Y/Y. Spot dipped ~1% to $221.56 but IV crushed on the back month (~45%) which allowed Jun18 240/250 call debit vertical to clear gates as a shadow paper position. Keep gates and target intact; do not chase tighter strikes from the same poll.",
   "review": {
-    "status": "accepted_for_active_search",
+    "status": "signal_open",
     "initialPrequalificationMode": "near_pass",
     "initialBestStructure": "2026-06-18 245/250 call debit vertical",
     "initialBestMaxLoss": 105.0,
@@ -19,7 +19,19 @@
       "edge 0.286 below min 0.300 of risk",
       "probability margin 0.060 below min 0.080"
     ],
-    "liveSubmitAllowed": false
+    "liveSubmitAllowed": false,
+    "history": [
+      {
+        "ts": "2026-05-21T14:30:00Z",
+        "reasons": ["structure_now_passes"],
+        "spot": 221.555,
+        "daysToExpiry": 28,
+        "passingStructureCount": 3,
+        "canonicalStructure": "2026-06-18 240/250 call debit vertical (paper_open ticket)",
+        "canonicalNetDebit": 168.0,
+        "canonicalEdgePctOfRisk": 0.60714286
+      }
+    ]
   },
   "theses": [
     {
