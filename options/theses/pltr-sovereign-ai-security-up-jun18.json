@@ -30,6 +30,16 @@
         "action": "rejected_signal_kept_thesis_active_tightened_gates",
         "signalConsidered": "2026-06-18 155/157.5 call debit vertical, $38 debit, 5.6 R/R, 65% edge",
         "reasonForRejection": "target/implied ratio 1.54x with no catalyst in window; enterprise/sovereign AI sector being actively distributed (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol); short-leg OI 103"
+      },
+      {
+        "ts": "2026-05-21T15:55:00Z",
+        "reasons": ["structure_no_longer_passes"],
+        "spot": 137.615,
+        "daysToExpiry": 28,
+        "passingStructureCount": 0,
+        "targetMoveVsImpliedRatio": 1.518626,
+        "action": "noop_expected_after_gate_tightening",
+        "note": "Transition from passing -> not-passing was caused by the prior tightening (minRewardRisk 3->4, minEdge 0.30->0.45, minProbMargin 0.08->0.12) in this review session. Best current structure shows edge 0.47 (above new 0.45) and rr 4.88 (above new 4.0) but probability margin 0.08 (below new 0.12). Exactly the marginal structure the tightening was meant to filter out."
       }
     ]
   },
