@@ -23,6 +23,8 @@ v0.5 adds active thesis-search lifecycle review. The daemon continuously snapsho
 
 v0.6 caps how many candidate `options_signal_candidate` wakes a single thesis can emit per poll. The default is 1: the top-scored structure per thesis wins and alternative passing structures from the same thesis are suppressed (logged as `per-thesis cap reached`). This matches the shadow-paper convention of one representative position per thesis. Use `--max-signals-per-thesis N` to lift the cap for diagnostic sweeps. The ticket-id encoding was also widened so multiple structures from the same thesis no longer collide on disk when the cap is lifted.
 
+v0.7 makes live Tradier tape pulls a standing operational practice. `scripts/live-tape.py` is the canonical helper: any options thesis review, signal review, lifecycle refresh, CLV mark, exit/expiry mark, or human-requested status check must pull current quotes/intraday for the underlying and its read-through basket before judgment. Stale or wake-payload quotes are not substitutes when live tape is one command away.
+
 ## Non-goals
 
 - No live options trading until broker access, options approval level, local credentials, policy gates, and reconciliation exist.
@@ -322,7 +324,8 @@ Live options orders require all existing execution safeguards plus broker-specif
 11. Add CLV/expiry lifecycle wake scanning for local paper tickets. **Implemented:** `options_clv_checkpoint_due` and `options_expiry_or_exit` from `execution/options-tickets/`.
 12. Add active thesis-search lifecycle review. **Implemented:** `options_thesis_refresh_due` from active Situational Awareness thesis fixtures, with stale/no-signal/expiry/spot/liquidity/structure-change checks.
 13. Cap per-thesis candidate emissions and fix ticket-id collision so the shadow-paper book stays canonical. **Implemented:** `--max-signals-per-thesis` (default 1) and widened ticket-id encoding.
-14. Only then consider broker live adapter design.
+14. Add a canonical live-tape helper (`scripts/live-tape.py`) and codify the standing practice that every position/thesis review pulls current Tradier quotes + intraday + sector basket before judging. **Implemented.**
+15. Only then consider broker live adapter design.
 
 ## Fixture signal format
 
