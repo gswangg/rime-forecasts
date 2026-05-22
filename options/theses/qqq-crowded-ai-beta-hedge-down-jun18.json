@@ -1,0 +1,45 @@
+{
+  "active": false,
+  "underlying": "QQQ",
+  "strategy": "situational-awareness-ai-stack",
+  "theme": "crowded_ai_beta_hedge",
+  "source": "rime-forecasts/sa-thesis-scan",
+  "sourceCandidateId": "sa-qqq-crowded_ai_beta_hedge-down-2026-06-18-673.82-20260522T204740Z",
+  "reviewedAt": "2026-05-22T21:00:00Z",
+  "notes": "Reviewed and held inactive. Mechanical signal cleared gates (5 passing structures, best 680/674 put debit vertical with R/R 5.90, edge 58.6%, $87 max loss). Framework rejects activation today because: (a) no specific catalyst identified in the 27-day window; (b) today's tape shows the NVDA-specific selloff being absorbed via rotation INTO the rest of mega-cap (AMD +3.99%, AAPL +1.26%, TSLA +1.96%, META +0.48%, SMH +1.49%) rather than broad AI-beta unwinding; (c) broad indices made intraday highs (QQQ +0.43%, SPY +0.40%, IWM +0.94%, DIA +0.60%); (d) recency-bias check after just closing -34% on a similar 'structure looks excellent' trade. Activate ONLY when one of: FOMC outcome materially hawkish, broad indices break key support, earnings breadth visibly deteriorates across multiple mega-caps in the same session, or AI mega-cap basket starts selling together rather than NVDA being the isolated funding leg. Until then, the fixture lives here for audit/lifecycle tracking and the SA scanner dedupe state prevents re-emission.",
+  "review": {
+    "status": "promoted_inactive_for_audit",
+    "initialPrequalificationMode": "pass",
+    "initialBestStructure": "2026-06-18 680/674 put debit vertical",
+    "initialBestMaxLoss": 87.0,
+    "initialBestMaxGain": 513.0,
+    "initialBestEdgePctOfRisk": 0.5862069,
+    "initialBestProbabilityMargin": 0.085,
+    "initialBestRewardRisk": 5.89655172,
+    "initialBlockers": [],
+    "rejectionReason": "framework_no_catalyst_market_in_rotation_not_unwind",
+    "liveSubmitAllowed": false
+  },
+  "theses": [
+    {
+      "id": "sa-qqq-crowded_ai_beta_hedge-down-2026-06-18-673.82",
+      "active": false,
+      "direction": "down",
+      "targetPrice": 673.82,
+      "targetProbability": 0.23,
+      "eventDate": "2026-06-18",
+      "optionExpiry": "2026-06-18",
+      "maxLossCap": 200.0,
+      "minRewardRisk": 4.0,
+      "minEdgePctOfRisk": 0.4,
+      "minProbabilityMargin": 0.12,
+      "allowedStructures": [
+        "debit_vertical"
+      ],
+      "thesis": "The broad AI/growth beta layer can sell off even if the long-run AI-scaling thesis remains intact. QQQ downside target is 673.82 (-6% from $716.83 entry-time spot) by the 2026-06-18 option expiry if mega-cap AI names sell together rather than rotating, or if a rates/capex/policy shock breaks broad index support.",
+      "catalyst": "AI-beta crowding break, FOMC rates shock, hyperscaler capex disappointment, earnings breadth deterioration across multiple mega-caps in a session, policy/export-control shock, or broad index technical break of support",
+      "plannedExit": "first liquid mark after activation catalyst or thesis invalidation (sustained broad index strength with healthy breadth); otherwise close before expiry week",
+      "falsifier": "market breadth and earnings revisions continue to validate AI/growth beta without rates or policy pressure; NVDA-style isolated mega-cap rotations continue to be absorbed by buying in other mega-caps"
+    }
+  ]
+}
