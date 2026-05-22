@@ -5,8 +5,8 @@
   "theme": "datacenter_conversion",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-corz-datacenter_conversion-up-2026-06-18-29.13-20260520T184533Z",
-  "reviewedAt": "2026-05-20T18:48:00Z",
-  "notes": "Accepted as an active shadow thesis-search fixture, not as a trade. First review found a high-priority near-pass CORZ upside call vertical; current options daemon dry-run produced no signal because the probability-margin gate did not fully clear. Keep exact gates intact and let options_signal_candidate handle any future paper-ticket review.",
+  "reviewedAt": "2026-05-22T20:00:00Z",
+  "notes": "Re-reviewed on options_thesis_refresh_due (liquidity_drop_-54%, 28 -> 13 liquid contracts). Thesis intact: CORZ +1.64% on day 2 (relative strength vs basket profit-taking: APLD -4.55%, IREN -2.38%, CRWV -1.97%; CIFR +2.23%, HUT +0.71%, RIOT +0.27%). Key inflection: chain implied move to 2026-06-18 now equals target move at 15.5% (targetMoveVsImpliedRatio = 1.0). The chain has caught up to our target probability distribution — no directional mispricing to exploit. Liquidity drop is normal 24h post-event decay, not thesis-breaking. No action: gates intact (tightening moot since nothing passes), fixture active for continued lifecycle monitoring. Re-review trigger: spot moves substantially while implied move stays lower (ratio < 0.8) OR specific catalyst surfaces inside the expiry window.",
   "review": {
     "status": "accepted_for_active_search",
     "initialPrequalificationMode": "near_pass",
@@ -16,7 +16,24 @@
     "initialBestEdgePctOfRisk": 0.36842105,
     "initialBestProbabilityMargin": 0.07,
     "initialBlocker": "probability margin 0.070 below min 0.080",
-    "liveSubmitAllowed": false
+    "liveSubmitAllowed": false,
+    "history": [
+      {
+        "ts": "2026-05-22T20:00:00Z",
+        "reasons": ["liquidity_drop_-54%"],
+        "spot": 25.215,
+        "spotPriorCheck": 25.225,
+        "liquidContractsNow": 13,
+        "liquidContractsPrior": 28,
+        "daysToExpiry": 27,
+        "targetMoveVsImpliedRatio": 1.0,
+        "impliedMovePct": 0.15526,
+        "targetMovePct": 0.15526,
+        "passingStructureCount": 0,
+        "action": "no_change_thesis_intact_wait_for_better_setup",
+        "note": "ratio=1.0 inflection: chain now prices exactly the target move. No directional edge available. Liquidity drop reflects normal 24h post-catalyst decay rather than thesis invalidation. CORZ +1.64% day 2 = relative strength vs APLD/IREN/CRWV profit-taking."
+      }
+    ]
   },
   "theses": [
     {
