@@ -1105,6 +1105,38 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertIn("00240000", ticket_a)
         self.assertIn("00245000", ticket_b)
 
+    def test_thesis_refresh_suppressed_when_signal_fires_same_poll(self):
+        fixture = self.options_fixture()
+        fixture["signals"] = []
+        fixture["strategy"] = "situational-awareness-ai-stack"
+        fixture["source"] = "rime-forecasts/sa-thesis-scan"
+        fixture["reviewedAt"] = "2026-05-10T00:00:00Z"  # stale
+        state = {"emitted_signals": {}, "thesis_refresh_events": {}, "thesis_refresh_status": {}}
+        thesis_id = fixture["theses"][0]["id"]
+        # Without suppression the refresh fires (stale + near-expiry).
+        events, _ = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="s",
+            state=state,
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+        )
+        self.assertEqual(len(events), 1)
+        # With suppression for the same thesis_id, no refresh emits.
+        state2 = {"emitted_signals": {}, "thesis_refresh_events": {}, "thesis_refresh_status": {}}
+        events2, rejections2 = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="s",
+            state=state2,
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+            suppress_thesis_ids={thesis_id},
+        )
+        self.assertEqual(events2, [])
+        self.assertTrue(any("subsumed by signal review" in str(r.get("reason", "")) for r in rejections2))
+
     def test_thesis_refresh_events_emit_stale_active_search_review(self):
         fixture = self.options_fixture()
         fixture["signals"] = []

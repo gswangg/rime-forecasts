@@ -714,9 +714,11 @@ def generate_thesis_refresh_events(
     expiry_review_days: int = 7,
     spot_move_pct: float = 0.08,
     liquidity_drop_pct: float = 0.50,
+    suppress_thesis_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_events <= 0 or not is_thesis_search_fixture(fixture):
         return [], []
+    suppress_ids = suppress_thesis_ids or set()
     snapshot = parse_option_chain_snapshot(fixture.get("chain", fixture))
     spot = _snapshot_spot(snapshot)
     liquidity = _chain_liquidity_summary(snapshot, now=now, config=config)
@@ -739,6 +741,12 @@ def generate_thesis_refresh_events(
             thesis = normalize_thesis(raw_thesis)
         except Exception as exc:
             rejections.append({"thesis": raw_thesis.get("id"), "reason": str(exc)})
+            continue
+        if thesis.id in suppress_ids:
+            rejections.append({
+                "thesisId": thesis.id,
+                "reason": "options_signal_candidate emitted same poll; refresh review subsumed by signal review",
+            })
             continue
         diagnostic = _best_structure_diagnostic(snapshot, thesis, now=now, config=config)
         status = refresh_state.get(thesis.id, {}) if isinstance(refresh_state.get(thesis.id), dict) else {}
@@ -1055,6 +1063,14 @@ def poll_once(args, *, session_id: str | None) -> int:
         signal_events.extend(fixture_events)
         rejections.extend(fixture_rejections)
         if not args.no_thesis_refresh and len(events) < args.max_events:
+            # Suppress refresh wakes for any thesis that already emitted an
+            # options_signal_candidate in this same poll; the signal review
+            # subsumes the refresh review.
+            fixture_signal_thesis_ids = {
+                ev.get("payload", {}).get("thesis", {}).get("id")
+                for ev in fixture_events
+                if ev.get("payload", {}).get("sourceMode") == "thesis_search"
+            } - {None}
             refresh_events, refresh_rejections = generate_thesis_refresh_events(
                 fixture=materialized_fixture,
                 now=now,
@@ -1067,6 +1083,7 @@ def poll_once(args, *, session_id: str | None) -> int:
                 expiry_review_days=args.thesis_expiry_review_days,
                 spot_move_pct=args.thesis_spot_move_pct,
                 liquidity_drop_pct=args.thesis_liquidity_drop_pct,
+                suppress_thesis_ids=fixture_signal_thesis_ids,
             )
             events.extend(refresh_events)
             thesis_refresh_events.extend(refresh_events)
