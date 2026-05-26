@@ -1,6 +1,6 @@
 # Situational Awareness thesis-generation spec
 
-Status: v0.2 shadow discovery daemon, 2026-05-20.
+Status: v0.3 shadow discovery daemon, 2026-05-26.
 
 ## Goal
 
@@ -39,6 +39,7 @@ Durable strategy inputs live in `options/sa-watchlist.json`:
     "enabled": true,
     "emitOnFirstSeen": true,
     "prequalifyFirstSeen": true,
+    "prequalifyEmissions": true,
     "maxFirstSeenCandidatesPerScan": 3,
     "firstSeenRecheckHours": 24,
     "targetDays": 30,
@@ -93,7 +94,7 @@ For each enabled entry, the scanner:
    - provider sanity: valid underlying bid/ask, bounded underlying spread, plausible spot vs strike ladder, sufficient contract/strike count, optional quote-age cap;
    - directional liquidity: enough liquid calls for upside or puts for downside within the target path;
    - options structure search: same quote filters and thesis gates used by `scripts/options-daemon.py`;
-7. emits triggered candidates only if they pass first-seen prequalification when `prequalifyFirstSeen: true`. A candidate prequalifies if at least one structure fully passes, or if a high-priority candidate has a near-pass structure inside configured edge/probability tolerances. First-seen emissions are throttled by `maxFirstSeenCandidatesPerScan`.
+7. emits triggered candidates only if they prequalify when `prequalifyEmissions: true` (default). The gate now applies to ALL non-force triggers — `first_seen`, `liquidity_crossed_*`, and `spot_move_*` — not just first-seen. A candidate prequalifies if at least one structure fully passes, or if a high-priority candidate has a near-pass structure inside configured edge/probability tolerances. First-seen emissions are additionally throttled by `maxFirstSeenCandidatesPerScan`. `force` triggers bypass all gates for operator sweeps. The legacy `prequalifyFirstSeen: false` flag remains accepted but now only carves out emissions whose sole trigger is `first_seen`; use `prequalifyEmissions: false` for the full opt-out.
 
 Generated thesis fields:
 

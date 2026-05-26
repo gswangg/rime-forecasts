@@ -550,8 +550,38 @@ def prequalify_candidate(
     }
 
 
-def first_seen_requires_prequalification(entry: Mapping[str, Any], reasons: tuple[str, ...]) -> bool:
-    return "first_seen" in reasons and "force" not in reasons and entry.get("prequalifyFirstSeen", True) is not False
+def emission_requires_prequalification(entry: Mapping[str, Any], reasons: tuple[str, ...]) -> bool:
+    """Return True when the scanner should refuse to emit an unqualified candidate.
+
+    The historical name was ``first_seen_requires_prequalification`` and only
+    gated first-seen triggers. Operationally that left a noise hole: when a
+    sparse-chain entry crossed the ``minLiquidContracts`` floor or made a
+    qualifying spot move, the scanner would still emit a paired-direction
+    candidate wake even though prequalification (provider sanity, directional
+    liquidity, structure search) explicitly failed.
+
+    Broaden the gate: any non-force trigger requires prequalification by
+    default. ``force`` is the operator-driven sweep escape hatch and intentionally
+    bypasses the gate. ``prequalifyEmissions`` is the new opt-out flag at the
+    watchlist defaults/entry level; ``prequalifyFirstSeen`` is accepted for
+    backward compatibility but only controls the first-seen carve-out for legacy
+    fixtures.
+    """
+    if "force" in reasons:
+        return False
+    emissions_flag = entry.get("prequalifyEmissions")
+    if emissions_flag is False:
+        return False
+    if emissions_flag is True:
+        return True
+    legacy_flag = entry.get("prequalifyFirstSeen")
+    if legacy_flag is False and reasons == ("first_seen",):
+        return False
+    return True
+
+
+# Backward-compatibility alias for any consumer that imported the old name.
+first_seen_requires_prequalification = emission_requires_prequalification
 
 
 def update_underlying_state(

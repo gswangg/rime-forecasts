@@ -161,7 +161,7 @@ class SAThesisTests(unittest.TestCase):
         provider = FixtureOptionProvider(snapshot=fixture_snapshot())
         state = {"version": 1, "underlyings": {}, "emitted_candidates": {}}
         candidates, rejections = sa_thesis_scan.scan_once(
-            watchlist=watchlist_payload(prequalifyFirstSeen=False),
+            watchlist=watchlist_payload(prequalifyEmissions=False),
             provider=provider,
             state=state,
             now=dt("2026-05-20T14:00:00Z"),
@@ -172,7 +172,7 @@ class SAThesisTests(unittest.TestCase):
         self.assertIn("CBRS", state["underlyings"])
         state["emitted_candidates"] = {candidate.dedupe_key: {"event_id": "old"} for candidate in candidates}
         again, rejections = sa_thesis_scan.scan_once(
-            watchlist=watchlist_payload(prequalifyFirstSeen=False),
+            watchlist=watchlist_payload(prequalifyEmissions=False),
             provider=provider,
             state=state,
             now=dt("2026-05-20T15:00:00Z"),
@@ -224,6 +224,59 @@ class SAThesisTests(unittest.TestCase):
         self.assertEqual(candidates, [])
         self.assertTrue(any(row.get("reason") == "first_seen prequalification failed" for row in rejections))
 
+    def test_emission_requires_prequalification_gates_all_non_force_triggers(self):
+        from automation.sa_thesis import emission_requires_prequalification
+        entry_default = {"underlying": "X"}
+        # default: prequalification required for any non-force trigger
+        self.assertTrue(emission_requires_prequalification(entry_default, ("first_seen",)))
+        self.assertTrue(emission_requires_prequalification(entry_default, ("liquidity_crossed_2",)))
+        self.assertTrue(emission_requires_prequalification(entry_default, ("spot_move_+12.3%",)))
+        self.assertTrue(emission_requires_prequalification(entry_default, ("first_seen", "liquidity_crossed_2")))
+        # force always bypasses
+        self.assertFalse(emission_requires_prequalification(entry_default, ("force",)))
+        self.assertFalse(emission_requires_prequalification(entry_default, ("force", "liquidity_crossed_2")))
+        # explicit opt-out via new flag
+        entry_opt_out = {"underlying": "X", "prequalifyEmissions": False}
+        self.assertFalse(emission_requires_prequalification(entry_opt_out, ("liquidity_crossed_2",)))
+        self.assertFalse(emission_requires_prequalification(entry_opt_out, ("first_seen",)))
+        # legacy prequalifyFirstSeen=False only carves out the first-seen-only case
+        entry_legacy = {"underlying": "X", "prequalifyFirstSeen": False}
+        self.assertFalse(emission_requires_prequalification(entry_legacy, ("first_seen",)))
+        self.assertTrue(emission_requires_prequalification(entry_legacy, ("liquidity_crossed_2",)))
+        self.assertTrue(emission_requires_prequalification(entry_legacy, ("first_seen", "liquidity_crossed_2")))
+
+    def test_scan_once_blocks_non_first_seen_unqualified_emission(self):
+        # Build a sparse-chain snapshot that previously would emit unprequalified
+        # liquidity_crossed_2 wakes (the MRVL/CRWV bug from operations).
+        sparse_snapshot = parse_option_chain_snapshot({
+            "underlying": "CBRS", "provider": "fixture",
+            "underlying_bid": 330.0, "underlying_ask": 332.0,
+            "quote_ts": "2026-05-26T17:00:00Z",
+            "contracts": [
+                raw_contract(symbol="CBRS260618P00300000", expiry="2026-06-18", right="put", strike=300, bid=27.80, ask=29.40, volume=408, open_interest=620),
+                raw_contract(symbol="CBRS260618P00280000", expiry="2026-06-18", right="put", strike=280, bid=15.30, ask=16.10, volume=412, open_interest=520),
+            ],
+        })
+        provider = FixtureOptionProvider(snapshot=sparse_snapshot)
+        # Prior state had 0 liquid contracts; current chain has 2 -> crosses min.
+        state = {
+            "version": 1,
+            "underlyings": {"CBRS": {"last_liquid_contracts": 0, "last_spot": 331.0, "first_seen_reviewed": True}},
+            "emitted_candidates": {},
+        }
+        candidates, rejections = sa_thesis_scan.scan_once(
+            watchlist=watchlist_payload(),
+            provider=provider,
+            state=state,
+            now=dt("2026-05-26T17:00:00Z"),
+            max_events=5,
+        )
+        # Up direction: 0 liquid calls -> prequalification fails -> no emit.
+        # Down direction: 2 liquid puts but structure search produces nothing
+        # passing -> prequalification fails -> no emit.
+        self.assertEqual(candidates, [])
+        self.assertTrue(any("prequalification failed" in str(r.get("reason", "")) for r in rejections))
+
     def test_scan_once_suppresses_first_seen_without_flag(self):
         provider = FixtureOptionProvider(snapshot=fixture_snapshot())
         state = {"version": 1, "underlyings": {}, "emitted_candidates": {}}
@@ -242,7 +295,7 @@ class SAThesisTests(unittest.TestCase):
             tmp_path = Path(tmp)
             watchlist = tmp_path / "watchlist.json"
             fixture = tmp_path / "chain.json"
-            watchlist.write_text(json.dumps(watchlist_payload(prequalifyFirstSeen=False)), encoding="utf-8")
+            watchlist.write_text(json.dumps(watchlist_payload(prequalifyEmissions=False)), encoding="utf-8")
             fixture.write_text(json.dumps(fixture_snapshot().to_dict()), encoding="utf-8")
             args = sa_thesis_scan.build_parser().parse_args(
                 [

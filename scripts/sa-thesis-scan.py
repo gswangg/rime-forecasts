@@ -25,7 +25,7 @@ from automation.sa_thesis import (
     entry_enabled,
     load_watchlist,
     merged_entry,
-    first_seen_requires_prequalification,
+    emission_requires_prequalification,
     prequalify_candidate,
     quote_config_from_entry,
     select_expiry,
@@ -211,14 +211,19 @@ def scan_once(
                 )
                 prequalification = prequalify_candidate(snapshot, candidate, entry=entry, now=now, config=config)
                 candidate = replace(candidate, prequalification=prequalification)
-                if first_seen_requires_prequalification(entry, reasons) and not prequalification.get("prequalified"):
+                if emission_requires_prequalification(entry, reasons) and not prequalification.get("prequalified"):
+                    rejection_reason = (
+                        "first_seen prequalification failed"
+                        if reasons == ("first_seen",)
+                        else f"prequalification failed (triggers: {','.join(reasons)})"
+                    )
                     rejections.append(
                         {
                             "candidateId": candidate.candidate_id,
                             "dedupeKey": candidate.dedupe_key,
                             "underlying": underlying,
                             "direction": direction,
-                            "reason": "first_seen prequalification failed",
+                            "reason": rejection_reason,
                             "prequalification": prequalification,
                         }
                     )
