@@ -354,6 +354,7 @@ def generate_options_events(
     max_loss_cap: float | None,
     max_events: int,
     max_signals_per_thesis: int = 1,
+    thesis_ids_with_open_paper: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     chain_raw = fixture.get("chain", fixture)
     snapshot = parse_option_chain_snapshot(chain_raw)
@@ -361,6 +362,8 @@ def generate_options_events(
     events: list[dict[str, Any]] = []
     rejections: list[dict[str, Any]] = []
     cap_per_thesis = max(1, int(max_signals_per_thesis))
+    open_paper_ids = thesis_ids_with_open_paper or set()
+    fixture_allow_multi = bool(fixture.get("allowMultiplePaperPositions", False))
 
     for raw_thesis in fixture.get("theses", []):
         if len(events) >= max_events:
@@ -376,6 +379,17 @@ def generate_options_events(
             opportunities = find_opportunities_for_thesis(snapshot.contracts, thesis, now=now, config=config)
         except Exception as exc:
             rejections.append({"thesis": raw_thesis.get("id") if isinstance(raw_thesis, dict) else None, "reason": str(exc)})
+            continue
+        # Cross-poll thesis dedup: skip emission when a paper_open ticket already
+        # exists for this thesis, unless the fixture/thesis explicitly opts into
+        # holding multiple paper positions on the same thesis simultaneously.
+        allow_multi = fixture_allow_multi or bool(raw_thesis.get("allowMultiplePaperPositions", False))
+        if thesis.id in open_paper_ids and not allow_multi:
+            rejections.append({
+                "thesisId": thesis.id,
+                "reason": "paper_open position already exists for this thesis; cross-poll dedup",
+                "openPaperThesisId": thesis.id,
+            })
             continue
         if not opportunities:
             rejections.append({"thesisId": thesis.id, "reason": "no generated structure passed gates"})
@@ -507,6 +521,38 @@ def mark_options_events_emitted(state: dict[str, Any], events: list[dict[str, An
 
 def is_thesis_search_fixture(fixture: dict[str, Any]) -> bool:
     return fixture.get("strategy") == "situational-awareness-ai-stack" or fixture.get("source") == "rime-forecasts/sa-thesis-scan"
+
+
+def paper_open_thesis_ids(ticket_dir: Path) -> set[str]:
+    """Return the set of thesis_id values that currently have a paper_open ticket.
+
+    Used as the cross-poll dedupe gate: when a thesis already has a live shadow
+    paper position, the daemon should not emit additional options_signal_candidate
+    wakes for the same thesis on subsequent polls just because a different strike
+    pair newly passes gates.
+    """
+    if not ticket_dir.exists():
+        return set()
+    open_ids: set[str] = set()
+    for path in ticket_dir.glob("*.json"):
+        try:
+            ticket = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(ticket, dict):
+            continue
+        if str(ticket.get("status") or "") != "paper_open":
+            continue
+        thesis_block = ticket.get("thesis") if isinstance(ticket.get("thesis"), dict) else {}
+        thesis_id = thesis_block.get("id")
+        if thesis_id:
+            open_ids.add(str(thesis_id))
+            continue
+        # Fall back to parsing thesis_id out of signal_id ("<thesis_id>:<...>")
+        signal_id = str(ticket.get("signal_id") or "")
+        if signal_id and ":" in signal_id:
+            open_ids.add(signal_id.split(":", 1)[0])
+    return open_ids
 
 
 def _parse_optional_ts(value: Any):
@@ -961,6 +1007,7 @@ def poll_once(args, *, session_id: str | None) -> int:
         max_quote_age_seconds=args.max_quote_age_seconds,
     )
     effective_session_id = session_id or "dry-run-session"
+    open_paper_thesis_ids = paper_open_thesis_ids(args.ticket_dir)
     events: list[dict[str, Any]] = []
     signal_events: list[dict[str, Any]] = []
     thesis_refresh_events: list[dict[str, Any]] = []
@@ -987,6 +1034,7 @@ def poll_once(args, *, session_id: str | None) -> int:
             max_loss_cap=args.max_loss_cap,
             max_events=args.max_events - len(events),
             max_signals_per_thesis=args.max_signals_per_thesis,
+            thesis_ids_with_open_paper=open_paper_thesis_ids,
         )
         events.extend(fixture_events)
         signal_events.extend(fixture_events)

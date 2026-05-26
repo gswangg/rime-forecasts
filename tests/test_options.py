@@ -825,6 +825,60 @@ class OptionsCoreTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
 
+    def test_options_daemon_cross_poll_thesis_dedup(self):
+        # When a paper_open ticket already exists for the same thesis, no signal
+        # emits on subsequent polls regardless of which strike pair is top-scored.
+        fixture = self.options_fixture()
+        fixture["signals"] = []
+        thesis_id = fixture["theses"][0]["id"]
+        events, rejections = options_daemon.generate_options_events(
+            fixture=fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.20,
+            min_probability_margin=0.05,
+            max_loss_cap=200.0,
+            max_events=10,
+            thesis_ids_with_open_paper={thesis_id},
+        )
+        self.assertEqual(events, [])
+        self.assertTrue(
+            any("paper_open position already exists" in str(r.get("reason", "")) for r in rejections),
+            f"expected cross-poll dedup rejection, got: {rejections}",
+        )
+        # Opt-out via fixture flag releases the gate (used for diagnostic sweeps).
+        opt_in_fixture = dict(fixture)
+        opt_in_fixture["allowMultiplePaperPositions"] = True
+        events_two, _ = options_daemon.generate_options_events(
+            fixture=opt_in_fixture,
+            now=dt("2026-05-19T03:25:00Z"),
+            session_id="session-123",
+            state={"emitted_signals": {}},
+            config=OptionQuoteFilterConfig(),
+            min_edge_pct_of_risk=0.20,
+            min_probability_margin=0.05,
+            max_loss_cap=200.0,
+            max_events=10,
+            thesis_ids_with_open_paper={thesis_id},
+        )
+        self.assertGreaterEqual(len(events_two), 1)
+
+    def test_paper_open_thesis_ids_reads_open_tickets(self):
+        ticket = self._sample_option_ticket()
+        ticket["status"] = "paper_open"
+        closed = dict(ticket)
+        closed["status"] = "paper_closed"
+        closed["ticket_id"] = ticket["ticket_id"] + "-closed"
+        with tempfile.TemporaryDirectory() as tmp:
+            write_option_ticket(ticket, tmp)
+            write_option_ticket(closed, tmp)
+            open_ids = options_daemon.paper_open_thesis_ids(Path(tmp))
+        # Both tickets share the same thesis id; only paper_open counts.
+        self.assertEqual(len(open_ids), 1)
+        self.assertIn("nvda-generated-upside", open_ids)
+
     def test_options_daemon_caps_emissions_per_thesis(self):
         # Multi-strike chain produces several passing debit verticals for the same thesis.
         fixture = {

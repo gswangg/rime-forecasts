@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.6 thesis-search lifecycle and per-thesis cap, 2026-05-21.
+Status: v0.7 cross-poll thesis dedup, 2026-05-26.
 
 ## Goal
 
@@ -22,6 +22,8 @@ v0.4 adds a thesis strategy layer for the Situational Awareness / AI-scaling sta
 v0.5 adds active thesis-search lifecycle review. The daemon continuously snapshots active Situational Awareness thesis fixtures against current spot, liquidity, expiry, and structure-search diagnostics, and emits `options_thesis_refresh_due` when a search is stale, near expiry, materially moved, liquidity-regressed, or structure availability changed.
 
 v0.6 caps how many candidate `options_signal_candidate` wakes a single thesis can emit per poll. The default is 1: the top-scored structure per thesis wins and alternative passing structures from the same thesis are suppressed (logged as `per-thesis cap reached`). This matches the shadow-paper convention of one representative position per thesis. Use `--max-signals-per-thesis N` to lift the cap for diagnostic sweeps. The ticket-id encoding was also widened so multiple structures from the same thesis no longer collide on disk when the cap is lifted.
+
+v0.7 adds cross-poll thesis dedup. The daemon scans `execution/options-tickets/` for `paper_open` tickets at the start of each poll and skips `options_signal_candidate` emission for any thesis_id that already has a live paper position. This closes the gap that produced four NVDA orphan tickets across 2026-05-21..2026-05-26 (the per-poll cap shipped in v0.6 only prevents intra-poll duplication, not re-emission of new strike pairs on subsequent polls). Opt-out: set `allowMultiplePaperPositions: true` at the fixture or thesis level for diagnostic sweeps that explicitly want multiple correlated paper positions.
 
 v0.7 makes live Tradier tape pulls a standing operational practice. `scripts/live-tape.py` is the canonical helper: any options thesis review, signal review, lifecycle refresh, CLV mark, exit/expiry mark, or human-requested status check must pull current quotes/intraday for the underlying and its read-through basket before judgment. Stale or wake-payload quotes are not substitutes when live tape is one command away.
 
