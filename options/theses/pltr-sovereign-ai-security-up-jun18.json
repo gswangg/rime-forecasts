@@ -1,68 +1,73 @@
 {
-  "active": true,
-  "underlying": "PLTR",
-  "strategy": "situational-awareness-ai-stack",
-  "theme": "sovereign_ai_security",
-  "source": "rime-forecasts/sa-thesis-scan",
-  "sourceCandidateId": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61-20260520T194752Z",
-  "reviewedAt": "2026-05-21T15:42:00Z",
-  "notes": "Re-reviewed on options_signal_candidate (155/157.5 Jun18 call debit vertical, ratio 1.54x vs implied). Rejected: target move 15.5% over 28d exceeds implied 10.1% (1.54x), no known catalyst in window, short-leg OI thin (103), and enterprise/sovereign-AI sector being actively distributed today (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol). PLTR holding +0.12% relative strength but no sector tailwind. Thesis intact; tightened gates so the daemon emits only on materially better setups while the sector is being sold and no catalyst is scheduled.",
+  "active": false,
+  "notes": "Re-reviewed on options_signal_candidate (155/157.5 Jun18 call debit vertical, ratio 1.54x vs implied). Rejected: target move 15.5% over 28d exceeds implied 10.1% (1.54x), no known catalyst in window, short-leg OI thin (103), and enterprise/sovereign-AI sector being actively distributed today (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol). PLTR holding +0.12% relative strength but no sector tailwind. Thesis intact; tightened gates so the daemon emits only on materially better setups while the sector is being sold and no catalyst is scheduled.\nAuto-deactivated 2026-05-25T12:00:00Z after canonical paper position closed via planned exit. Set autoDeactivateOnPlannedExit: false to disable this behavior. Reactivate manually when a new catalyst is identified.",
   "review": {
-    "status": "accepted_for_active_search",
-    "initialPrequalificationMode": "near_pass",
-    "initialBestStructure": "2026-06-18 150/155 call debit vertical",
-    "initialBestMaxLoss": 95.0,
-    "initialBestMaxGain": 405.0,
+    "history": [
+      {
+        "action": "rejected_signal_kept_thesis_active_tightened_gates",
+        "daysToExpiry": 28,
+        "passingStructureCount": 2,
+        "reasonForRejection": "target/implied ratio 1.54x with no catalyst in window; enterprise/sovereign AI sector being actively distributed (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol); short-leg OI 103",
+        "reasons": [
+          "structure_now_passes",
+          "signal_candidate_review_rejected"
+        ],
+        "signalConsidered": "2026-06-18 155/157.5 call debit vertical, $38 debit, 5.6 R/R, 65% edge",
+        "spot": 137.275,
+        "targetMoveVsImpliedRatio": 1.540433,
+        "ts": "2026-05-21T15:42:00Z"
+      },
+      {
+        "action": "noop_expected_after_gate_tightening",
+        "daysToExpiry": 28,
+        "note": "Transition from passing -> not-passing was caused by the prior tightening (minRewardRisk 3->4, minEdge 0.30->0.45, minProbMargin 0.08->0.12) in this review session. Best current structure shows edge 0.47 (above new 0.45) and rr 4.88 (above new 4.0) but probability margin 0.08 (below new 0.12). Exactly the marginal structure the tightening was meant to filter out.",
+        "passingStructureCount": 0,
+        "reasons": [
+          "structure_no_longer_passes"
+        ],
+        "spot": 137.615,
+        "targetMoveVsImpliedRatio": 1.518626,
+        "ts": "2026-05-21T15:55:00Z"
+      }
+    ],
     "initialBestEdgePctOfRisk": 0.31578947,
+    "initialBestMaxGain": 405.0,
+    "initialBestMaxLoss": 95.0,
     "initialBestProbabilityMargin": 0.06,
+    "initialBestStructure": "2026-06-18 150/155 call debit vertical",
     "initialBlockers": [
       "probability margin 0.060 below min 0.080"
     ],
+    "initialPrequalificationMode": "near_pass",
     "liveSubmitAllowed": false,
-    "history": [
-      {
-        "ts": "2026-05-21T15:42:00Z",
-        "reasons": ["structure_now_passes", "signal_candidate_review_rejected"],
-        "spot": 137.275,
-        "daysToExpiry": 28,
-        "passingStructureCount": 2,
-        "targetMoveVsImpliedRatio": 1.540433,
-        "action": "rejected_signal_kept_thesis_active_tightened_gates",
-        "signalConsidered": "2026-06-18 155/157.5 call debit vertical, $38 debit, 5.6 R/R, 65% edge",
-        "reasonForRejection": "target/implied ratio 1.54x with no catalyst in window; enterprise/sovereign AI sector being actively distributed (NOW -3.4% on 6.7x vol, CRM -3.1%, SNOW -2.4%, C3.AI -2.1% on 5.7x vol); short-leg OI 103"
-      },
-      {
-        "ts": "2026-05-21T15:55:00Z",
-        "reasons": ["structure_no_longer_passes"],
-        "spot": 137.615,
-        "daysToExpiry": 28,
-        "passingStructureCount": 0,
-        "targetMoveVsImpliedRatio": 1.518626,
-        "action": "noop_expected_after_gate_tightening",
-        "note": "Transition from passing -> not-passing was caused by the prior tightening (minRewardRisk 3->4, minEdge 0.30->0.45, minProbMargin 0.08->0.12) in this review session. Best current structure shows edge 0.47 (above new 0.45) and rr 4.88 (above new 4.0) but probability margin 0.08 (below new 0.12). Exactly the marginal structure the tightening was meant to filter out."
-      }
-    ]
+    "status": "accepted_for_active_search"
   },
+  "reviewedAt": "2026-05-21T15:42:00Z",
+  "source": "rime-forecasts/sa-thesis-scan",
+  "sourceCandidateId": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61-20260520T194752Z",
+  "strategy": "situational-awareness-ai-stack",
+  "theme": "sovereign_ai_security",
   "theses": [
     {
-      "id": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61",
-      "active": true,
-      "direction": "up",
-      "targetPrice": 158.61,
-      "targetProbability": 0.25,
-      "eventDate": "2026-06-18",
-      "optionExpiry": "2026-06-18",
-      "maxLossCap": 200.0,
-      "minRewardRisk": 4.0,
-      "minEdgePctOfRisk": 0.45,
-      "minProbabilityMargin": 0.12,
+      "active": false,
       "allowedStructures": [
         "debit_vertical"
       ],
-      "thesis": "If AI becomes national-security infrastructure, secure government and enterprise AI platforms can retain scarcity value. PLTR upside target is 158.61 by the 2026-06-18 option expiry if defense AI contracts, government AI policy, or enterprise AI deployment commentary validate the sovereign AI/security leg.",
       "catalyst": "defense AI contract, government AI policy, earnings, or enterprise AI deployment commentary inside the June 18 options window",
+      "direction": "up",
+      "eventDate": "2026-06-18",
+      "falsifier": "government/enterprise AI demand fails to convert into durable revenue, valuation already embeds the security premium, or option IV/spreads absorb the edge",
+      "id": "sa-pltr-sovereign_ai_security-up-2026-06-18-158.61",
+      "maxLossCap": 200.0,
+      "minEdgePctOfRisk": 0.45,
+      "minProbabilityMargin": 0.12,
+      "minRewardRisk": 4.0,
+      "optionExpiry": "2026-06-18",
       "plannedExit": "first liquid mark after catalyst or thesis invalidation; otherwise close before expiry week",
-      "falsifier": "government/enterprise AI demand fails to convert into durable revenue, valuation already embeds the security premium, or option IV/spreads absorb the edge"
+      "targetPrice": 158.61,
+      "targetProbability": 0.25,
+      "thesis": "If AI becomes national-security infrastructure, secure government and enterprise AI platforms can retain scarcity value. PLTR upside target is 158.61 by the 2026-06-18 option expiry if defense AI contracts, government AI policy, or enterprise AI deployment commentary validate the sovereign AI/security leg."
     }
-  ]
+  ],
+  "underlying": "PLTR"
 }

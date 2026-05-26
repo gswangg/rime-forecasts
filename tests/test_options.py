@@ -876,10 +876,17 @@ class OptionsCoreTests(unittest.TestCase):
         # CLI-level guard: poll_once rejects fixtures whose quote_ts is outside
         # US RTH or too old, unless --allow-stale-chain is set.
         with tempfile.TemporaryDirectory() as tmp:
-            fixture_path = Path(tmp) / "fixture.json"
+            tmp_dir = Path(tmp)
+            fixture_path = tmp_dir / "fixture.json"
+            empty_fixture_dir = tmp_dir / "empty-fixtures"
+            empty_fixture_dir.mkdir()
+            empty_ticket_dir = tmp_dir / "empty-tickets"
+            empty_ticket_dir.mkdir()
             fixture_path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
             args = options_daemon.build_parser().parse_args([
                 "--fixture", str(fixture_path),
+                "--fixture-dir", str(empty_fixture_dir),
+                "--ticket-dir", str(empty_ticket_dir),
                 "--dry-run",
                 "--now", "2026-05-25T12:00:00Z",  # Memorial Day weekend
                 "--no-ticket-events",
@@ -893,10 +900,17 @@ class OptionsCoreTests(unittest.TestCase):
         # --allow-stale-chain releases the guard. Use a 'now' before the
         # fixture's option expiry so DTE filters still pass.
         with tempfile.TemporaryDirectory() as tmp:
-            fixture_path = Path(tmp) / "fixture.json"
+            tmp_dir = Path(tmp)
+            fixture_path = tmp_dir / "fixture.json"
+            empty_fixture_dir = tmp_dir / "empty-fixtures"
+            empty_fixture_dir.mkdir()
+            empty_ticket_dir = tmp_dir / "empty-tickets"
+            empty_ticket_dir.mkdir()
             fixture_path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
             args = options_daemon.build_parser().parse_args([
                 "--fixture", str(fixture_path),
+                "--fixture-dir", str(empty_fixture_dir),
+                "--ticket-dir", str(empty_ticket_dir),
                 "--dry-run",
                 "--now", "2026-05-19T03:25:00Z",
                 "--no-ticket-events",
@@ -1428,9 +1442,13 @@ class OptionsCoreTests(unittest.TestCase):
             path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
             # Exercise parser/poll path without wake writes or state writes.
             parser = options_daemon.build_parser()
+            empty_fixture_dir = Path(tmp) / "empty-fixtures"
+            empty_fixture_dir.mkdir()
             args = parser.parse_args([
                 "--fixture",
                 str(path),
+                "--fixture-dir",
+                str(empty_fixture_dir),
                 "--dry-run",
                 "--now",
                 "2026-05-19T03:25:00Z",
