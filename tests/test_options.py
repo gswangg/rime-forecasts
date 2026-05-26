@@ -1235,6 +1235,54 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertEqual(payload["lifecycleEventCount"], 1)
         self.assertEqual(payload["events"][0]["type"], "options_clv_checkpoint_due")
 
+    def test_options_markout_cli_updates_ledger_in_place(self):
+        ticket = self._sample_option_ticket()
+        ticket["status"] = "paper_open"
+        with tempfile.TemporaryDirectory() as tmp:
+            ticket_path = write_option_ticket(ticket, tmp)
+            ledger = Path(tmp) / "ledger.md"
+            mark_chain = {
+                "underlying": "NVDA", "provider": "fixture",
+                "underlying_bid": 251.90, "underlying_ask": 252.10,
+                "quote_ts": "2026-05-19T04:25:00Z",
+                "contracts": [
+                    raw_contract(symbol="NVDA260522C00250000", strike=250, bid=5.90, ask=6.10, quote_ts="2026-05-19T04:25:00Z"),
+                    raw_contract(symbol="NVDA260522C00260000", strike=260, bid=1.90, ask=2.10, quote_ts="2026-05-19T04:25:00Z"),
+                ],
+            }
+            fixture_path = Path(tmp) / "chain.json"
+            fixture_path.write_text(json.dumps(mark_chain), encoding="utf-8")
+            import sys as _sys
+            old_argv = _sys.argv
+            try:
+                _sys.argv = [
+                    "options-markout.py",
+                    "--ticket", str(ticket_path),
+                    "--fixture", str(fixture_path),
+                    "--checkpoint", "1h",
+                    "--now", "2026-05-19T04:25:00Z",
+                    "--append-ledger",
+                    "--ledger", str(ledger),
+                ]
+                self.assertEqual(options_markout.main(), 0)
+                _sys.argv = [
+                    "options-markout.py",
+                    "--ticket", str(ticket_path),
+                    "--fixture", str(fixture_path),
+                    "--checkpoint", "6h",
+                    "--now", "2026-05-19T09:25:00Z",
+                    "--append-ledger",
+                    "--ledger", str(ledger),
+                ]
+                self.assertEqual(options_markout.main(), 0)
+            finally:
+                _sys.argv = old_argv
+            second_text = ledger.read_text(encoding="utf-8")
+        row_count = len([ln for ln in second_text.splitlines() if ln.startswith("|")])
+        self.assertEqual(row_count, 1, f"expected 1 row after in-place update, got {row_count}: {second_text}")
+        self.assertIn("$400.00", second_text)
+
+
     def test_mark_structure_value_from_chain_and_markout_cli(self):
         ticket = self._sample_option_ticket()
         mark_chain = {

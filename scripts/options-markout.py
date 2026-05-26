@@ -16,9 +16,56 @@ from automation.options import (
     load_option_chain_snapshot,
     mark_structure_value_from_chain,
     option_markout,
+    option_structure_label,
     options_ledger_row,
 )
 from automation.timeutil import parse_iso, utcnow
+
+
+def _ledger_row_identity(ticket: dict) -> tuple[str, str, str]:
+    """Return (date, underlying, structure_label) identifying a ticket's ledger row.
+
+    These three columns together uniquely identify a paper position in the
+    canonical ledger format. Used by --append-ledger to update-in-place
+    instead of duplicating rows.
+    """
+    created = str(ticket.get("created_at") or "")[:10]
+    underlying = str(ticket.get("underlying") or "")
+    structure_label = option_structure_label(
+        ticket.get("structure", {}) if isinstance(ticket.get("structure"), dict) else {}
+    )
+    return (created, underlying, structure_label)
+
+
+def _row_matches_identity(line: str, identity: tuple[str, str, str]) -> bool:
+    """True if a ledger markdown row matches the (date, underlying, structure) identity."""
+    if not line.startswith("|"):
+        return False
+    cols = [c.strip() for c in line.strip().strip("|").split("|")]
+    if len(cols) < 3:
+        return False
+    return (cols[0], cols[1], cols[2]) == identity
+
+
+def update_ledger_in_place(path: Path, ticket: dict, row: str) -> str:
+    """Replace the ledger row matching this ticket; append if no match exists.
+
+    Returns the action taken: 'replaced' or 'appended'.
+    """
+    identity = _ledger_row_identity(ticket)
+    if not path.exists():
+        path.write_text(row + "\n", encoding="utf-8")
+        return "appended"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for idx, line in enumerate(lines):
+        if _row_matches_identity(line, identity):
+            lines[idx] = row
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            return "replaced"
+    # No matching row: append at end
+    with path.open("a", encoding="utf-8") as f:
+        f.write(row + "\n")
+    return "appended"
 
 
 def load_ticket(path: Path) -> dict:
@@ -81,8 +128,8 @@ def main() -> int:
         args.ticket.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     row = options_ledger_row(updated)
     if args.append_ledger:
-        with args.ledger.open("a", encoding="utf-8") as f:
-            f.write(row + "\n")
+        action = update_ledger_in_place(args.ledger, updated, row)
+        print(f"# ledger: {action}")
     print(row)
     if args.print_json:
         print(json.dumps(updated, indent=2, sort_keys=True))
