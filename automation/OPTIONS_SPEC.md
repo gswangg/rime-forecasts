@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.7 cross-poll thesis dedup, 2026-05-26.
+Status: v0.8 chain freshness guard, 2026-05-26.
 
 ## Goal
 
@@ -24,6 +24,8 @@ v0.5 adds active thesis-search lifecycle review. The daemon continuously snapsho
 v0.6 caps how many candidate `options_signal_candidate` wakes a single thesis can emit per poll. The default is 1: the top-scored structure per thesis wins and alternative passing structures from the same thesis are suppressed (logged as `per-thesis cap reached`). This matches the shadow-paper convention of one representative position per thesis. Use `--max-signals-per-thesis N` to lift the cap for diagnostic sweeps. The ticket-id encoding was also widened so multiple structures from the same thesis no longer collide on disk when the cap is lifted.
 
 v0.7 adds cross-poll thesis dedup. The daemon scans `execution/options-tickets/` for `paper_open` tickets at the start of each poll and skips `options_signal_candidate` emission for any thesis_id that already has a live paper position. This closes the gap that produced four NVDA orphan tickets across 2026-05-21..2026-05-26 (the per-poll cap shipped in v0.6 only prevents intra-poll duplication, not re-emission of new strike pairs on subsequent polls). Opt-out: set `allowMultiplePaperPositions: true` at the fixture or thesis level for diagnostic sweeps that explicitly want multiple correlated paper positions.
+
+v0.8 adds a chain freshness guard on both the SA scanner and the options-daemon. `chain_quote_is_stale` rejects emission when the chain `quote_ts` is outside US regular trading hours (13:30-20:00 UTC weekdays, excluding the NYSE-observed holiday list through 2027) or older than `max_chain_quote_age_seconds` (default 14400 = 4h). This stops pre-market / weekend / holiday emissions that produced multiple malformed paired wakes on Memorial Day 2026. Opt-out for diagnostic runs: `--allow-stale-chain` on the daemon CLI or `allowStaleChain: true` at the fixture/entry level.
 
 v0.7 makes live Tradier tape pulls a standing operational practice. `scripts/live-tape.py` is the canonical helper: any options thesis review, signal review, lifecycle refresh, CLV mark, exit/expiry mark, or human-requested status check must pull current quotes/intraday for the underlying and its read-through basket before judgment. Stale or wake-payload quotes are not substitutes when live tape is one command away.
 

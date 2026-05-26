@@ -248,13 +248,14 @@ class SAThesisTests(unittest.TestCase):
     def test_scan_once_blocks_non_first_seen_unqualified_emission(self):
         # Build a sparse-chain snapshot that previously would emit unprequalified
         # liquidity_crossed_2 wakes (the MRVL/CRWV bug from operations).
+        # Tuesday RTH quote (must pass freshness guard).
         sparse_snapshot = parse_option_chain_snapshot({
             "underlying": "CBRS", "provider": "fixture",
             "underlying_bid": 330.0, "underlying_ask": 332.0,
-            "quote_ts": "2026-05-26T17:00:00Z",
+            "quote_ts": "2026-05-19T17:00:00Z",
             "contracts": [
-                raw_contract(symbol="CBRS260618P00300000", expiry="2026-06-18", right="put", strike=300, bid=27.80, ask=29.40, volume=408, open_interest=620),
-                raw_contract(symbol="CBRS260618P00280000", expiry="2026-06-18", right="put", strike=280, bid=15.30, ask=16.10, volume=412, open_interest=520),
+                raw_contract(symbol="CBRS260618P00300000", expiry="2026-06-18", right="put", strike=300, bid=27.80, ask=29.40, volume=408, open_interest=620, quote_ts="2026-05-19T17:00:00Z"),
+                raw_contract(symbol="CBRS260618P00280000", expiry="2026-06-18", right="put", strike=280, bid=15.30, ask=16.10, volume=412, open_interest=520, quote_ts="2026-05-19T17:00:00Z"),
             ],
         })
         provider = FixtureOptionProvider(snapshot=sparse_snapshot)
@@ -268,7 +269,7 @@ class SAThesisTests(unittest.TestCase):
             watchlist=watchlist_payload(),
             provider=provider,
             state=state,
-            now=dt("2026-05-26T17:00:00Z"),
+            now=dt("2026-05-19T17:05:00Z"),
             max_events=5,
         )
         # Up direction: 0 liquid calls -> prequalification fails -> no emit.

@@ -504,6 +504,61 @@ def days_to_expiry(expiry: date, *, now: datetime) -> int:
     return (expiry - now.astimezone(timezone.utc).date()).days
 
 
+# US market holidays through 2027 (NYSE-observed, full closures only).
+# Used by SA scanner / options-daemon emission guards. Updated annually as the
+# NYSE schedule is published.
+US_MARKET_HOLIDAYS: tuple[str, ...] = (
+    # 2026
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+    "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+    # 2027
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+    "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24",
+)
+
+
+def is_us_market_open_at(ts: datetime) -> bool:
+    """Approximate whether the US equity options market is open at ``ts``.
+
+    Returns True only for weekday RTH (13:30-20:00 UTC = 09:30-16:00 ET
+    ignoring DST) on non-holiday calendar dates. Half-day closes are still
+    reported as open here; the chain-staleness guard handles those cases
+    operationally.
+    """
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    ts = ts.astimezone(timezone.utc)
+    if ts.weekday() >= 5:
+        return False
+    if ts.date().isoformat() in US_MARKET_HOLIDAYS:
+        return False
+    minutes = ts.hour * 60 + ts.minute
+    # 13:30 UTC = 810 minutes, 20:00 UTC = 1200 minutes
+    return 13 * 60 + 30 <= minutes <= 20 * 60
+
+
+def chain_quote_is_stale(
+    snapshot: OptionChainSnapshot,
+    *,
+    now: datetime,
+    max_delay_seconds: int = 4 * 3600,
+) -> tuple[bool, str | None]:
+    """Return (is_stale, reason) for a chain snapshot.
+
+    Treats absent quote_ts, weekend/holiday timestamps, and any quote older than
+    ``max_delay_seconds`` as stale. The threshold default of 4h covers ordinary
+    intraday daemon polls without flagging routine overnight gaps.
+    """
+    if snapshot.quote_ts is None:
+        return True, "chain quote_ts missing"
+    if not is_us_market_open_at(snapshot.quote_ts):
+        return True, f"chain quote_ts {isoformat_z(snapshot.quote_ts)} is outside US RTH"
+    delay = (now - snapshot.quote_ts).total_seconds() if now.tzinfo else (now.replace(tzinfo=timezone.utc) - snapshot.quote_ts).total_seconds()
+    if delay > max_delay_seconds:
+        return True, f"chain quote_ts is {delay/3600:.1f}h old (max {max_delay_seconds/3600:.1f}h)"
+    return False, None
+
+
 def atm_straddle_implied_move(
     snapshot: OptionChainSnapshot,
     *,

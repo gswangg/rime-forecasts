@@ -1,6 +1,6 @@
 # Situational Awareness thesis-generation spec
 
-Status: v0.3 shadow discovery daemon, 2026-05-26.
+Status: v0.4 chain freshness guard, 2026-05-26.
 
 ## Goal
 
@@ -95,6 +95,7 @@ For each enabled entry, the scanner:
    - directional liquidity: enough liquid calls for upside or puts for downside within the target path;
    - options structure search: same quote filters and thesis gates used by `scripts/options-daemon.py`;
 7. emits triggered candidates only if they prequalify when `prequalifyEmissions: true` (default). The gate now applies to ALL non-force triggers — `first_seen`, `liquidity_crossed_*`, and `spot_move_*` — not just first-seen. A candidate prequalifies if at least one structure fully passes, or if a high-priority candidate has a near-pass structure inside configured edge/probability tolerances. First-seen emissions are additionally throttled by `maxFirstSeenCandidatesPerScan`. `force` triggers bypass all gates for operator sweeps. The legacy `prequalifyFirstSeen: false` flag remains accepted but now only carves out emissions whose sole trigger is `first_seen`; use `prequalifyEmissions: false` for the full opt-out.
+8. enforces a chain freshness guard via `chain_quote_is_stale`. Emission is suppressed when the chain `quote_ts` is outside US regular trading hours (13:30-20:00 UTC weekdays, excluding the NYSE-observed US holiday list) or older than 4h. `force` and per-entry `allowStaleChain: true` bypass the guard for diagnostic sweeps.
 
 Generated thesis fields:
 

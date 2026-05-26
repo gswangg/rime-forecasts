@@ -825,6 +825,89 @@ class OptionsCoreTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["ticket_id"], updated["ticket_id"])
 
+    def test_chain_quote_is_stale_detects_rth_and_age(self):
+        from automation.options import chain_quote_is_stale
+        rth_snapshot = parse_option_chain_snapshot({
+            "underlying": "NVDA", "provider": "fixture",
+            "underlying_bid": 220.0, "underlying_ask": 220.1,
+            "quote_ts": "2026-05-21T14:30:00Z",  # weekday RTH
+            "contracts": [
+                raw_contract(symbol="NVDA260618C00250000", expiry="2026-06-18", strike=250, quote_ts="2026-05-21T14:30:00Z"),
+            ],
+        })
+        ok, reason = chain_quote_is_stale(rth_snapshot, now=dt("2026-05-21T14:35:00Z"))
+        self.assertFalse(ok, reason)
+        weekend_snapshot = parse_option_chain_snapshot({
+            "underlying": "NVDA", "provider": "fixture",
+            "underlying_bid": 220.0, "underlying_ask": 220.1,
+            "quote_ts": "2026-05-24T18:00:00Z",  # Sunday
+            "contracts": [
+                raw_contract(symbol="NVDA260618C00250000", expiry="2026-06-18", strike=250, quote_ts="2026-05-24T18:00:00Z"),
+            ],
+        })
+        ok, reason = chain_quote_is_stale(weekend_snapshot, now=dt("2026-05-26T07:00:00Z"))
+        self.assertTrue(ok)
+        self.assertIn("outside US RTH", reason)
+        holiday_snapshot = parse_option_chain_snapshot({
+            "underlying": "NVDA", "provider": "fixture",
+            "underlying_bid": 220.0, "underlying_ask": 220.1,
+            "quote_ts": "2026-05-25T15:00:00Z",  # Memorial Day 2026
+            "contracts": [
+                raw_contract(symbol="NVDA260618C00250000", expiry="2026-06-18", strike=250, quote_ts="2026-05-25T15:00:00Z"),
+            ],
+        })
+        ok, reason = chain_quote_is_stale(holiday_snapshot, now=dt("2026-05-26T07:00:00Z"))
+        self.assertTrue(ok)
+        self.assertIn("outside US RTH", reason)
+        # Stale by age alone even on weekday RTH-stamped quote
+        stale_age = parse_option_chain_snapshot({
+            "underlying": "NVDA", "provider": "fixture",
+            "underlying_bid": 220.0, "underlying_ask": 220.1,
+            "quote_ts": "2026-05-21T14:30:00Z",
+            "contracts": [
+                raw_contract(symbol="NVDA260618C00250000", expiry="2026-06-18", strike=250, quote_ts="2026-05-21T14:30:00Z"),
+            ],
+        })
+        ok, reason = chain_quote_is_stale(stale_age, now=dt("2026-05-22T19:00:00Z"))
+        self.assertTrue(ok)
+        self.assertIn("h old", reason)
+
+    def test_options_daemon_cli_suppresses_emission_on_stale_chain(self):
+        # CLI-level guard: poll_once rejects fixtures whose quote_ts is outside
+        # US RTH or too old, unless --allow-stale-chain is set.
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_path = Path(tmp) / "fixture.json"
+            fixture_path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
+            args = options_daemon.build_parser().parse_args([
+                "--fixture", str(fixture_path),
+                "--dry-run",
+                "--now", "2026-05-25T12:00:00Z",  # Memorial Day weekend
+                "--no-ticket-events",
+            ])
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                options_daemon.poll_once(args, session_id=None)
+            payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["eventCount"], 0)
+        self.assertTrue(any("stale chain quote" in str(r.get("reason", "")) for r in payload["rejections"]))
+        # --allow-stale-chain releases the guard. Use a 'now' before the
+        # fixture's option expiry so DTE filters still pass.
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_path = Path(tmp) / "fixture.json"
+            fixture_path.write_text(json.dumps(self.options_fixture()), encoding="utf-8")
+            args = options_daemon.build_parser().parse_args([
+                "--fixture", str(fixture_path),
+                "--dry-run",
+                "--now", "2026-05-19T03:25:00Z",
+                "--no-ticket-events",
+                "--allow-stale-chain",
+            ])
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                options_daemon.poll_once(args, session_id=None)
+            payload = json.loads(stdout.getvalue())
+        self.assertGreaterEqual(payload["eventCount"], 1)
+
     def test_options_daemon_cross_poll_thesis_dedup(self):
         # When a paper_open ticket already exists for the same thesis, no signal
         # emits on subsequent polls regardless of which strike pair is top-scored.
@@ -1212,6 +1295,7 @@ class OptionsCoreTests(unittest.TestCase):
                 "--write-tickets",
                 "--ticket-dir",
                 str(ticket_dir),
+                "--allow-stale-chain",
             ])
             output = io.StringIO()
             with contextlib.redirect_stdout(output):

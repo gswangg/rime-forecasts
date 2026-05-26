@@ -28,6 +28,7 @@ from automation.options import (
     OptionQuoteFilterConfig,
     OptionStructure,
     atm_straddle_implied_move,
+    chain_quote_is_stale,
     build_credit_vertical,
     build_debit_vertical,
     build_long_option,
@@ -1023,6 +1024,20 @@ def poll_once(args, *, session_id: str | None) -> int:
         except Exception as exc:
             rejections.append({"fixture": fixture.get("_fixturePath"), "reason": str(exc)})
             continue
+        if not args.allow_stale_chain and not fixture.get("allowStaleChain", False):
+            mat_chain_raw = materialized_fixture.get("chain", materialized_fixture)
+            try:
+                mat_snapshot = parse_option_chain_snapshot(mat_chain_raw)
+            except Exception:
+                mat_snapshot = None
+            if mat_snapshot is not None:
+                is_stale, stale_reason = chain_quote_is_stale(mat_snapshot, now=now, max_delay_seconds=args.max_chain_quote_age_seconds)
+                if is_stale:
+                    rejections.append({
+                        "fixture": fixture.get("_fixturePath") or fixture.get("underlying"),
+                        "reason": f"stale chain quote ({stale_reason}); pre-market / weekend / holiday emission suppressed",
+                    })
+                    continue
         fixture_events, fixture_rejections = generate_options_events(
             fixture=materialized_fixture,
             now=now,
@@ -1171,6 +1186,10 @@ def build_parser() -> argparse.ArgumentParser:
     edge.add_argument("--min-probability-margin", type=float, default=0.05)
     edge.add_argument("--max-loss-cap", type=float, default=100.0)
     edge.add_argument("--max-signals-per-thesis", type=int, default=1, help="cap on candidate signals emitted per thesis per poll; top-scored wins (default: 1, shadow-paper convention)")
+
+    chain_guard = parser.add_argument_group("chain freshness guard")
+    chain_guard.add_argument("--allow-stale-chain", action="store_true", help="skip the pre-market / weekend / holiday / stale-quote suppression guard (diagnostic sweeps only)")
+    chain_guard.add_argument("--max-chain-quote-age-seconds", type=int, default=4 * 3600, help="reject emission when chain quote_ts is older than this many seconds (default: 14400 = 4h)")
     return parser
 
 

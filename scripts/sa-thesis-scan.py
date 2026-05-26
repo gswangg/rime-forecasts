@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from automation.config import DEFAULT_WAKE_ROOT, require_session_id
-from automation.options import FixtureOptionProvider, OptionChainProvider
+from automation.options import FixtureOptionProvider, OptionChainProvider, chain_quote_is_stale
 from automation.options_providers import TradierOptionProvider
 from automation.sa_thesis import (
     SAThesisCandidate,
@@ -153,6 +153,14 @@ def scan_once(
                 rejections.append({"underlying": underlying, "reason": "no expiry inside target window"})
                 continue
             snapshot = provider.fetch_chain(underlying, expiry)
+            if not entry.get("allowStaleChain", False):
+                is_stale, stale_reason = chain_quote_is_stale(snapshot, now=now)
+                if is_stale and not force:
+                    rejections.append({
+                        "underlying": underlying,
+                        "reason": f"stale chain quote ({stale_reason}); SA scanner emission suppressed",
+                    })
+                    continue
             spot = spot_mid(snapshot)
             if spot is None or spot <= 0:
                 rejections.append({"underlying": underlying, "reason": "missing underlying spot"})
