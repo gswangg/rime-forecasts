@@ -948,6 +948,68 @@ class OptionsCoreTests(unittest.TestCase):
         )
         self.assertGreaterEqual(len(events_two), 1)
 
+    def test_auto_deactivate_completed_thesis_fixtures(self):
+        ticket = self._sample_option_ticket()
+        ticket["status"] = "paper_closed"
+        with tempfile.TemporaryDirectory() as tmp:
+            tickets_dir = Path(tmp) / "tickets"
+            fixtures_dir = Path(tmp) / "theses"
+            tickets_dir.mkdir()
+            fixtures_dir.mkdir()
+            write_option_ticket(ticket, tickets_dir)
+            fixture_path = fixtures_dir / "nvda.json"
+            fixture = {
+                "active": True,
+                "underlying": "NVDA",
+                "strategy": "situational-awareness-ai-stack",
+                "source": "rime-forecasts/sa-thesis-scan",
+                "theses": [
+                    {"id": "nvda-generated-upside", "active": True, "direction": "up", "targetPrice": 260, "targetProbability": 0.35, "optionExpiry": "2026-05-22", "allowedStructures": ["debit_vertical"]},
+                ],
+            }
+            fixture_path.write_text(json.dumps(fixture, indent=2), encoding="utf-8")
+            audit = options_daemon.auto_deactivate_completed_thesis_fixtures(
+                fixture_paths=[fixture_path],
+                open_thesis_ids=set(),
+                closed_thesis_ids={"nvda-generated-upside"},
+                now=dt("2026-05-27T15:00:00Z"),
+            )
+            self.assertEqual(len(audit), 1)
+            reloaded = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertFalse(reloaded["active"])
+        self.assertFalse(reloaded["theses"][0]["active"])
+        self.assertIn("Auto-deactivated", reloaded["notes"])
+        # Idempotent: second call doesn't re-deactivate
+        audit_two = options_daemon.auto_deactivate_completed_thesis_fixtures(
+            fixture_paths=[fixture_path],
+            open_thesis_ids=set(),
+            closed_thesis_ids={"nvda-generated-upside"},
+            now=dt("2026-05-27T15:05:00Z"),
+        )
+        self.assertEqual(audit_two, [])
+        # Open-paper override: if a paper_open ticket exists, don't deactivate
+        with tempfile.TemporaryDirectory() as tmp:
+            fixtures_dir = Path(tmp) / "theses"
+            fixtures_dir.mkdir()
+            fixture_path = fixtures_dir / "nvda.json"
+            fixture = {
+                "active": True,
+                "underlying": "NVDA",
+                "strategy": "situational-awareness-ai-stack",
+                "source": "rime-forecasts/sa-thesis-scan",
+                "theses": [{"id": "nvda-generated-upside", "active": True, "direction": "up", "targetPrice": 260, "targetProbability": 0.35, "optionExpiry": "2026-05-22", "allowedStructures": ["debit_vertical"]}],
+            }
+            fixture_path.write_text(json.dumps(fixture, indent=2), encoding="utf-8")
+            audit = options_daemon.auto_deactivate_completed_thesis_fixtures(
+                fixture_paths=[fixture_path],
+                open_thesis_ids={"nvda-generated-upside"},
+                closed_thesis_ids={"nvda-generated-upside"},
+                now=dt("2026-05-27T15:00:00Z"),
+            )
+            self.assertEqual(audit, [])
+            reloaded = json.loads(fixture_path.read_text(encoding="utf-8"))
+            self.assertTrue(reloaded["active"])
+
     def test_paper_open_thesis_ids_reads_open_tickets(self):
         ticket = self._sample_option_ticket()
         ticket["status"] = "paper_open"

@@ -524,6 +524,96 @@ def is_thesis_search_fixture(fixture: dict[str, Any]) -> bool:
     return fixture.get("strategy") == "situational-awareness-ai-stack" or fixture.get("source") == "rime-forecasts/sa-thesis-scan"
 
 
+def paper_closed_thesis_ids(ticket_dir: Path) -> set[str]:
+    """Return the set of thesis_id values whose canonical paper ticket has closed."""
+    if not ticket_dir.exists():
+        return set()
+    closed_ids: set[str] = set()
+    for path in ticket_dir.glob("*.json"):
+        try:
+            ticket = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(ticket, dict):
+            continue
+        if str(ticket.get("status") or "") != "paper_closed":
+            continue
+        thesis_block = ticket.get("thesis") if isinstance(ticket.get("thesis"), dict) else {}
+        thesis_id = thesis_block.get("id")
+        if thesis_id:
+            closed_ids.add(str(thesis_id))
+            continue
+        signal_id = str(ticket.get("signal_id") or "")
+        if signal_id and ":" in signal_id:
+            closed_ids.add(signal_id.split(":", 1)[0])
+    return closed_ids
+
+
+def auto_deactivate_completed_thesis_fixtures(
+    *,
+    fixture_paths: list[Path],
+    open_thesis_ids: set[str],
+    closed_thesis_ids: set[str],
+    now,
+) -> list[dict[str, Any]]:
+    """Flip ``active`` to false for any fixture whose canonical thesis already closed via planned exit.
+
+    Idempotent (skips fixtures already inactive). Returns a list of audit
+    entries describing each deactivation so the daemon can journal them.
+
+    A fixture qualifies for auto-deactivation when:
+      - it is currently active at the fixture level;
+      - it is a thesis-search fixture (Situational Awareness stack);
+      - ``autoDeactivateOnPlannedExit`` is not explicitly false;
+      - all of its active inner theses have a paper_closed ticket and no
+        currently paper_open ticket.
+    """
+    audit: list[dict[str, Any]] = []
+    closed_only = closed_thesis_ids - open_thesis_ids
+    if not closed_only:
+        return audit
+    for path in fixture_paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        if not is_active(data):
+            continue
+        if not is_thesis_search_fixture(data):
+            continue
+        if data.get("autoDeactivateOnPlannedExit") is False:
+            continue
+        theses = data.get("theses") if isinstance(data.get("theses"), list) else []
+        active_theses = [t for t in theses if isinstance(t, dict) and is_active(t)]
+        if not active_theses:
+            continue
+        active_ids = {str(t.get("id")) for t in active_theses if t.get("id")}
+        if not active_ids or not active_ids.issubset(closed_only):
+            continue
+        data["active"] = False
+        for t in theses:
+            if isinstance(t, dict) and str(t.get("id") or "") in active_ids:
+                t["active"] = False
+        existing_notes = data.get("notes") or ""
+        deactivation_note = (
+            f"Auto-deactivated {isoformat_z(now)} after canonical paper position closed via planned exit. "
+            "Set autoDeactivateOnPlannedExit: false to disable this behavior. Reactivate manually when a "
+            "new catalyst is identified."
+        )
+        data["notes"] = (existing_notes + ("\n" if existing_notes else "") + deactivation_note).strip()
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        tmp.replace(path)
+        audit.append({
+            "fixturePath": str(path),
+            "deactivatedThesisIds": sorted(active_ids),
+            "ts": isoformat_z(now),
+        })
+    return audit
+
+
 def paper_open_thesis_ids(ticket_dir: Path) -> set[str]:
     """Return the set of thesis_id values that currently have a paper_open ticket.
 
@@ -1017,6 +1107,19 @@ def poll_once(args, *, session_id: str | None) -> int:
     )
     effective_session_id = session_id or "dry-run-session"
     open_paper_thesis_ids = paper_open_thesis_ids(args.ticket_dir)
+    closed_paper_thesis_ids = paper_closed_thesis_ids(args.ticket_dir)
+    # Auto-deactivate any fixture whose canonical thesis has closed via
+    # planned exit. Idempotent; runs before fixture loading so the new state
+    # is the one we iterate.
+    if not args.no_auto_deactivate:
+        deactivation_audit = auto_deactivate_completed_thesis_fixtures(
+            fixture_paths=sorted((args.fixture_dir or Path("options/theses")).glob("*.json")) if args.fixture_dir else [],
+            open_thesis_ids=open_paper_thesis_ids,
+            closed_thesis_ids=closed_paper_thesis_ids,
+            now=now,
+        )
+    else:
+        deactivation_audit = []
     events: list[dict[str, Any]] = []
     signal_events: list[dict[str, Any]] = []
     thesis_refresh_events: list[dict[str, Any]] = []
@@ -1126,6 +1229,7 @@ def poll_once(args, *, session_id: str | None) -> int:
                     "candidateEventCount": len(signal_events),
                     "thesisRefreshEventCount": len(thesis_refresh_events),
                     "lifecycleEventCount": len(lifecycle_events),
+                    "autoDeactivated": deactivation_audit,
                 },
                 indent=2,
                 sort_keys=True,
@@ -1207,6 +1311,7 @@ def build_parser() -> argparse.ArgumentParser:
     chain_guard = parser.add_argument_group("chain freshness guard")
     chain_guard.add_argument("--allow-stale-chain", action="store_true", help="skip the pre-market / weekend / holiday / stale-quote suppression guard (diagnostic sweeps only)")
     chain_guard.add_argument("--max-chain-quote-age-seconds", type=int, default=4 * 3600, help="reject emission when chain quote_ts is older than this many seconds (default: 14400 = 4h)")
+    parser.add_argument("--no-auto-deactivate", action="store_true", help="skip the auto-deactivation of fixtures whose canonical paper position has closed via planned exit")
     return parser
 
 

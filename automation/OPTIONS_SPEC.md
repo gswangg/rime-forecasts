@@ -1,6 +1,6 @@
 # rime-forecasts options spec
 
-Status: v0.9 refresh suppression on signal-same-poll, 2026-05-26.
+Status: v0.10 auto-deactivate fixtures on planned-exit close, 2026-05-26.
 
 ## Goal
 
@@ -28,6 +28,8 @@ v0.7 adds cross-poll thesis dedup. The daemon scans `execution/options-tickets/`
 v0.8 adds a chain freshness guard on both the SA scanner and the options-daemon. `chain_quote_is_stale` rejects emission when the chain `quote_ts` is outside US regular trading hours (13:30-20:00 UTC weekdays, excluding the NYSE-observed holiday list through 2027) or older than `max_chain_quote_age_seconds` (default 14400 = 4h). This stops pre-market / weekend / holiday emissions that produced multiple malformed paired wakes on Memorial Day 2026. Opt-out for diagnostic runs: `--allow-stale-chain` on the daemon CLI or `allowStaleChain: true` at the fixture/entry level.
 
 v0.9 suppresses `options_thesis_refresh_due` for any thesis that emits an `options_signal_candidate` in the same poll. The signal review pulls live tape, applies vol-crush/positioning/rotation framework, and (if accepted) updates the fixture and ledger; a refresh review for the same thesis at the same poll would be a duplicate. The suppression is automatic; refresh wakes still fire for theses with no signal that poll.
+
+v0.10 auto-deactivates a Situational Awareness thesis fixture when all of its active inner theses have a `paper_closed` ticket and no currently `paper_open` ticket. The deactivation happens at the start of each poll, before fixture iteration, and writes the fixture file with `active: false` and a clear audit note documenting the timestamp and reason. Idempotent. Opt-out per fixture: set `autoDeactivateOnPlannedExit: false`. CLI opt-out: `--no-auto-deactivate`. This closes the noise loop that emitted four NVDA orphan signals after the canonical paper position closed on 2026-05-22.
 
 v0.7 makes live Tradier tape pulls a standing operational practice. `scripts/live-tape.py` is the canonical helper: any options thesis review, signal review, lifecycle refresh, CLV mark, exit/expiry mark, or human-requested status check must pull current quotes/intraday for the underlying and its read-through basket before judgment. Stale or wake-payload quotes are not substitutes when live tape is one command away.
 
