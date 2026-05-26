@@ -1,14 +1,14 @@
 {
-  "active": true,
+  "active": false,
   "underlying": "NVDA",
   "strategy": "situational-awareness-ai-stack",
   "theme": "frontier_compute",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-nvda-frontier_compute-up-2026-06-18-250.22-20260520T194752Z",
-  "reviewedAt": "2026-05-21T14:30:00Z",
-  "notes": "Re-reviewed on options_thesis_refresh_due (structure_now_passes) after Q1 FY27 print. Thesis intact. Catalyst hit: revenue $81.6B beat, Q2 guide $91B excluding China, GM stable at 75%, $80B incremental buyback, dividend 25x, DC networking +199% Y/Y. Spot dipped ~1% to $221.56 but IV crushed on the back month (~45%) which allowed Jun18 240/250 call debit vertical to clear gates as a shadow paper position. Keep gates and target intact; do not chase tighter strikes from the same poll.",
+  "reviewedAt": "2026-05-26T07:15:00Z",
+  "notes": "DEACTIVATED 2026-05-26 after 4th cross-poll orphan emission. The Q1 FY27 catalyst (revenue $81.6B beat, Q2 guide $91B ex-China, $80B buyback, dividend 25x, DC networking +199% Y/Y) fired on 2026-05-20 and exhausted via rotation; NVDA was the funding leg into AI-scaling read-throughs (ANET, MRVL, VRT, MU, AMD, SMH). Canonical paper position (240/250 call debit vertical) closed 2026-05-22 at -$57.50 (-34.2% of max risk) per planned exit. Three subsequent orphan emissions (242.5/250, 245/250, 247.5/250, 237.5/250, 235/250) reflect the cross-poll dedupe gap rather than new conviction. Spot has continued lower ($217.50 close 2026-05-22 -> $214.29 today). Reactivate when: (a) a new specific catalyst is scheduled inside an option window (e.g., the next earnings, a Vera Rubin launch event, an export-control policy update, a hyperscaler capex revision); (b) tape shows NVDA decoupling from the AI-scaling read-throughs in the bullish direction (NVDA up while peers flat/down); or (c) implied move expands materially without spot collapsing (catalyst expectations building). Until reactivation, the SA scanner dedupe stops re-emission and the options daemon will skip the fixture as inactive.",
   "review": {
-    "status": "signal_open",
+    "status": "closed_paper_thesis_deactivated",
     "initialPrequalificationMode": "near_pass",
     "initialBestStructure": "2026-06-18 245/250 call debit vertical",
     "initialBestMaxLoss": 105.0,
@@ -36,7 +36,7 @@
   "theses": [
     {
       "id": "sa-nvda-frontier_compute-up-2026-06-18-250.22",
-      "active": true,
+      "active": false,
       "direction": "up",
       "targetPrice": 250.22,
       "targetProbability": 0.27,
