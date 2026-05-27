@@ -5,8 +5,8 @@
   "theme": "datacenter_conversion",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-corz-datacenter_conversion-up-2026-06-18-29.13-20260520T184533Z",
-  "reviewedAt": "2026-05-22T20:00:00Z",
-  "notes": "Re-reviewed on options_thesis_refresh_due (liquidity_drop_-54%, 28 -> 13 liquid contracts). Thesis intact: CORZ +1.64% on day 2 (relative strength vs basket profit-taking: APLD -4.55%, IREN -2.38%, CRWV -1.97%; CIFR +2.23%, HUT +0.71%, RIOT +0.27%). Key inflection: chain implied move to 2026-06-18 now equals target move at 15.5% (targetMoveVsImpliedRatio = 1.0). The chain has caught up to our target probability distribution — no directional mispricing to exploit. Liquidity drop is normal 24h post-event decay, not thesis-breaking. No action: gates intact (tightening moot since nothing passes), fixture active for continued lifecycle monitoring. Re-review trigger: spot moves substantially while implied move stays lower (ratio < 0.8) OR specific catalyst surfaces inside the expiry window.",
+  "reviewedAt": "2026-05-27T13:42:00Z",
+  "notes": "Re-reviewed on options_thesis_refresh_due (liquidity_drop_-52%, 21 -> 10 liquid contracts; early-session intraday volume). Thesis FAVORABLY SHIFTED since prior check: spot $25.22 -> $26.13 (+3.6%), target distance 15.5% -> 11.5%, implied move 15.5% -> 16.5% (IV expansion), targetMoveVsImpliedRatio 1.0 -> 0.70. The ratio < 0.8 trigger from the prior note is hit. The chain is now pricing a bigger move than the thesis target requires — structurally favorable. However, 0 structures pass under existing gates because intraday spreads widened: most ATM/OTM calls have 14-40% spreads (vs 15% filter), and the few that pass can't build a vertical satisfying both maxLossCap $200 AND minRewardRisk 3.0 (e.g., 25/30 vertical costs $210 over cap; 24/27 vertical R/R only 0.56). Chain microstructure issue, not thesis. No action: spreads will likely tighten as session matures and volume comes in. Re-review trigger: structure search starts passing, spot moves further toward target, or IV/spreads normalize.",
   "review": {
     "status": "accepted_for_active_search",
     "initialPrequalificationMode": "near_pass",
@@ -32,6 +32,21 @@
         "passingStructureCount": 0,
         "action": "no_change_thesis_intact_wait_for_better_setup",
         "note": "ratio=1.0 inflection: chain now prices exactly the target move. No directional edge available. Liquidity drop reflects normal 24h post-catalyst decay rather than thesis invalidation. CORZ +1.64% day 2 = relative strength vs APLD/IREN/CRWV profit-taking."
+      },
+      {
+        "ts": "2026-05-27T13:42:00Z",
+        "reasons": ["liquidity_drop_-52%"],
+        "spot": 26.125,
+        "spotPriorCheck": 25.215,
+        "liquidContractsNow": 10,
+        "liquidContractsPrior": 21,
+        "daysToExpiry": 22,
+        "targetMoveVsImpliedRatio": 0.7,
+        "impliedMovePct": 0.16459,
+        "targetMovePct": 0.11502,
+        "passingStructureCount": 0,
+        "action": "thesis_intact_and_improving_but_chain_microstructure_blocked",
+        "note": "Spot moved +3.6% toward target over 5d (25.22 -> 26.13); IV expanded slightly (15.5% -> 16.5%); ratio dropped from 1.0 to 0.7 — directionally favorable. 0 structures pass under existing gates because intraday spreads are 14-40% of mid on most calls (vs 15% filter), and verticals from the few tight-spread strikes hit maxLossCap or fail R/R. Chain microstructure issue, not thesis. Hold; expect spreads to tighten as session matures."
       }
     ]
   },
