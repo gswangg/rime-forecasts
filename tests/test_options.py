@@ -1181,6 +1181,49 @@ class OptionsCoreTests(unittest.TestCase):
         self.assertIn("00240000", ticket_a)
         self.assertIn("00245000", ticket_b)
 
+    def test_thesis_refresh_liquidity_drop_floor_suppresses_oscillation(self):
+        # Liquid count oscillates 28 -> 13 (>50% drop) but 13 is well above the
+        # actionable floor of 8, so no liquidity_drop refresh should fire.
+        fixture = self.options_fixture()
+        fixture["signals"] = []
+        fixture["strategy"] = "situational-awareness-ai-stack"
+        fixture["source"] = "rime-forecasts/sa-thesis-scan"
+        fixture["reviewedAt"] = "2026-05-19T00:00:00Z"  # fresh enough to avoid stale trigger
+        thesis_id = fixture["theses"][0]["id"]
+        # 3 liquid contracts in the fixture chain (250c, 260c pass; lottery fails)
+        # Force a high prior so the % drop is large but absolute stays above floor.
+        state = {
+            "emitted_signals": {},
+            "thesis_refresh_events": {},
+            "thesis_refresh_status": {
+                thesis_id: {"last_spot": 224.4, "last_liquid_contracts": 28, "last_passing_structure_count": 0},
+            },
+        }
+        # The fixture's own liquid count is small (~2-3) which IS below floor 8,
+        # so to test the suppression we set the floor low and assert non-firing
+        # only when the count is above it. Use floor=1 to confirm firing path,
+        # then floor=50 to confirm suppression.
+        events_fire, _ = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T16:00:00Z"),
+            session_id="s",
+            state=dict(state, thesis_refresh_status=dict(state["thesis_refresh_status"])),
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+            liquidity_floor_contracts=50,  # count below floor -> drop is actionable
+        )
+        self.assertTrue(any("liquidity_drop" in str(r) for ev in events_fire for r in ev["payload"]["reasons"]))
+        events_suppressed, _ = options_daemon.generate_thesis_refresh_events(
+            fixture=fixture,
+            now=dt("2026-05-19T16:00:00Z"),
+            session_id="s",
+            state=dict(state, thesis_refresh_status=dict(state["thesis_refresh_status"])),
+            config=OptionQuoteFilterConfig(),
+            max_events=5,
+            liquidity_floor_contracts=1,  # count above floor -> drop is noise
+        )
+        self.assertFalse(any("liquidity_drop" in str(r) for ev in events_suppressed for r in ev["payload"]["reasons"]))
+
     def test_thesis_refresh_suppressed_when_signal_fires_same_poll(self):
         fixture = self.options_fixture()
         fixture["signals"] = []

@@ -804,6 +804,7 @@ def generate_thesis_refresh_events(
     expiry_review_days: int = 7,
     spot_move_pct: float = 0.08,
     liquidity_drop_pct: float = 0.50,
+    liquidity_floor_contracts: int = 8,
     suppress_thesis_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_events <= 0 or not is_thesis_search_fixture(fixture):
@@ -870,8 +871,12 @@ def generate_thesis_refresh_events(
                 previous_liquid = int(last_liquid)
                 if previous_liquid > 0:
                     liquidity_change = liquid_contracts / previous_liquid - 1
-                    if liquidity_change <= -abs(liquidity_drop_pct):
-                        reasons.append(f"liquidity_drop_{liquidity_change:+.0%}")
+                    # Only treat a liquidity drop as actionable when it brings the
+                    # liquid-contract count to/below the floor. Low-volume small-caps
+                    # oscillate +/-50% day to day well above the actionable floor;
+                    # that oscillation is noise, not a tradeability threat.
+                    if liquidity_change <= -abs(liquidity_drop_pct) and liquid_contracts <= liquidity_floor_contracts:
+                        reasons.append(f"liquidity_drop_{liquidity_change:+.0%}_to_{liquid_contracts}")
             except Exception:
                 pass
         previous_passing = int(status.get("last_passing_structure_count", 0) or 0)
@@ -1186,6 +1191,7 @@ def poll_once(args, *, session_id: str | None) -> int:
                 expiry_review_days=args.thesis_expiry_review_days,
                 spot_move_pct=args.thesis_spot_move_pct,
                 liquidity_drop_pct=args.thesis_liquidity_drop_pct,
+                liquidity_floor_contracts=args.thesis_liquidity_floor_contracts,
                 suppress_thesis_ids=fixture_signal_thesis_ids,
             )
             events.extend(refresh_events)
@@ -1290,6 +1296,7 @@ def build_parser() -> argparse.ArgumentParser:
     thesis_refresh.add_argument("--thesis-expiry-review-days", type=int, default=7, help="emit refresh when option expiry is within this many days (default: 7)")
     thesis_refresh.add_argument("--thesis-spot-move-pct", type=float, default=0.08, help="emit refresh when underlying spot moves this fraction from last thesis check (default: 0.08)")
     thesis_refresh.add_argument("--thesis-liquidity-drop-pct", type=float, default=0.50, help="emit refresh when liquid contract count drops by this fraction from last thesis check (default: 0.50)")
+    thesis_refresh.add_argument("--thesis-liquidity-floor-contracts", type=int, default=8, help="only treat a liquidity drop as actionable when it brings the liquid-contract count to/below this floor; above it, day-to-day oscillation is ignored (default: 8)")
 
     filters = parser.add_argument_group("quote filters")
     filters.add_argument("--allow-underlying", action="append", help="allow only this underlying; repeatable")
