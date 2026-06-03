@@ -1,14 +1,14 @@
 {
-  "active": true,
+  "active": false,
   "underlying": "CORZ",
   "strategy": "situational-awareness-ai-stack",
   "theme": "datacenter_conversion",
   "source": "rime-forecasts/sa-thesis-scan",
   "sourceCandidateId": "sa-corz-datacenter_conversion-up-2026-06-18-29.13-20260520T184533Z",
-  "reviewedAt": "2026-05-29T13:42:00Z",
+  "reviewedAt": "2026-06-03T13:47:00Z",
   "notes": "Re-reviewed on options_thesis_refresh_due (liquidity_drop_-52%, 21 -> 10 liquid contracts; early-session intraday volume). Thesis FAVORABLY SHIFTED since prior check: spot $25.22 -> $26.13 (+3.6%), target distance 15.5% -> 11.5%, implied move 15.5% -> 16.5% (IV expansion), targetMoveVsImpliedRatio 1.0 -> 0.70. The ratio < 0.8 trigger from the prior note is hit. The chain is now pricing a bigger move than the thesis target requires — structurally favorable. However, 0 structures pass under existing gates because intraday spreads widened: most ATM/OTM calls have 14-40% spreads (vs 15% filter), and the few that pass can't build a vertical satisfying both maxLossCap $200 AND minRewardRisk 3.0 (e.g., 25/30 vertical costs $210 over cap; 24/27 vertical R/R only 0.56). Chain microstructure issue, not thesis. No action: spreads will likely tighten as session matures and volume comes in. Re-review trigger: structure search starts passing, spot moves further toward target, or IV/spreads normalize.",
   "review": {
-    "status": "accepted_for_active_search",
+    "status": "thesis_achieved_no_paper_capture",
     "initialPrequalificationMode": "near_pass",
     "initialBestStructure": "2026-06-18 28/29 call debit vertical",
     "initialBestMaxLoss": 19.0,
@@ -62,13 +62,29 @@
         "passingStructureCount": 0,
         "action": "thesis_working_directionally_no_tradeable_structure_captured",
         "note": "CORZ has rallied +8.7% over the week (25.22 -> 27.52); now only 5.85% from the $29.13 target with ratio 0.41 (very favorable). The thesis is playing out but we never captured a tradeable structure because gates/spreads blocked entry the whole way up. This is the 3rd liquidity_drop refresh in a week; the trigger is firing on day-to-day liquid-contract oscillation (13 contracts is well above the actionable floor of 2). Fixing the liquidity_drop trigger in the same session to require the drop to bring liquidity near the actionable floor."
+      },
+      {
+        "ts": "2026-06-03T13:47:00Z",
+        "reasons": ["liquidity_drop_-69%_to_8", "target_achieved"],
+        "spot": 28.88,
+        "spotIntradayHigh": 29.70,
+        "spotPriorCheck": 27.52,
+        "liquidContractsNow": 8,
+        "liquidContractsPrior": 13,
+        "daysToExpiry": 15,
+        "targetMoveVsImpliedRatio": 0.067,
+        "impliedMovePct": 0.12864,
+        "targetMovePct": 0.00866,
+        "passingStructureCount": 0,
+        "action": "thesis_achieved_deactivate_no_paper_capture",
+        "note": "THESIS ACHIEVED: CORZ printed through the $29.13 target intraday (high $29.70 in the first 15-min bar), settled at $28.86 — 0.94% from target. Total move from initial fixture spot $23.30 (2026-05-20) to today's $28.86: +23.9% in 14 days. Original target $29.13 represented +25.0% from initial spot. Move basically complete. Deactivating the fixture: thesis played out per spec, ratio is now 0.067 (chain prices a 12.9% move vs we need 0.87% — no meaningful directional edge left to harvest). Never held a paper position because gates/spreads blocked entry the entire run-up; the structural protection that helped on NVDA cost us the CORZ winner. Estimated opportunity cost of a missed 25/27 vertical entered around 2026-05-22 spot $25.22: roughly 5-10x return on debit, dollar value depends on contracts sized. New thesis on CORZ would require a fresh setup; do not just bump this target."
       }
     ]
   },
   "theses": [
     {
       "id": "sa-corz-datacenter_conversion-up-2026-06-18-29.13",
-      "active": true,
+      "active": false,
       "direction": "up",
       "targetPrice": 29.13,
       "targetProbability": 0.26,
