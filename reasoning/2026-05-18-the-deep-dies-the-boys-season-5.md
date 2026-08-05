@@ -81,3 +81,13 @@ A price-move wake then took YES back up to **78.5%** from the 71.5% checkpoint. 
 Search review surfaced no official finale result. It did surface more spoiler/recap ecology in the same direction: MEAWW's May 14 piece quotes Chace Crawford joking on TODAY about Polymarket wagers and refusing to confirm/deny, while noting the in-show setup that sea creatures threatened to kill him if he entered the ocean; VvipTimes' May 17 finale-leak piece explicitly says `The Deep Dies Immediately and Pathetically` / killed off very early. I treat those as derivative entertainment-spoiler evidence, not source finality. The useful update is mostly market-based: after the brief +6h dip, traders pushed back toward the death-leak thesis ahead of the limited 4DX / Prime finale window.
 
 *(Resolution section added below after the market resolves, never editing above.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Polymarket/Gamma shows outcome prices `1/0` (YES/NO), `umaResolutionStatus=resolved`, closed time **2026-05-20T15:04:26Z**. The Deep died in The Boys Season 5 and the market resolved YES on the finale window. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **88% YES**. Outcome: **YES**. Brier: **0.0144**. The Polymarket entry at 74.5% YES had Brier **0.0650**, so the forecast beat the market (+0.0506).
+
+Post-mortem: the spoiler-ecology read was right, and the 13.5pp premium over the market was captured. The pre-resolution caveat — that the edge source was entertainment-spoiler interpretation rather than official source math — remains fair; this class of edge is real but lower-conviction than source-math trades like Hormuz or Target, and sizing it small was correct discipline even though the outcome was a win.

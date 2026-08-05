@@ -92,3 +92,13 @@ Recorded after v2 methodology added the dual-venue shadow requirement. Frozen re
 ---
 
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Manifold resolved YES on **2026-07-01T00:08Z**. Messi played in the 2026 World Cup. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **93% YES**. Outcome: **YES**. Brier: **0.0049**. The Manifold entry at 88% YES had Brier **0.0144**, so the forecast beat the market (+0.0095).
+
+Post-mortem: the base-rate calculation (declared intent + fitness trajectory + Argentina qualification lock) held, and the 93% landed within 0.5pp of Polymarket's real-money 92.5% — cross-venue validation at writing, vindicated at resolution. Manifold's 88% carried excess tail-risk premium on the injury scenario.

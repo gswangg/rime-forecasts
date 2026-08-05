@@ -98,3 +98,13 @@ If capital were live, this would be tradeable size-limited by market liquidity a
 ---
 
 *(Resolution section added below after the market resolves. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma shows outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, closed time **2026-05-24T20:16:17Z**. Tottenham survived the 2025-26 relegation battle; the market resolved NO at season end. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep; no CLV checkpoints were captured because the Polymarket daemon went down 2026-05-19.)*
+
+Forecast: **50% YES**. Outcome: **NO**. Brier: **0.2500**. The Polymarket entry at 32.05% YES had Brier **0.1027**, so the market beat the forecast decisively. This is the portfolio's clearest real-money loss.
+
+Post-mortem: this prediction hugged Manifold (51%/49.5%) against Polymarket (32.05%) on an 18.95pp cross-venue spread — and the real-money venue was right. The table state at writing (Spurs 18th, two points behind West Ham, four matches left) supported genuine uncertainty, but Polymarket's deeper liquidity aggregated match-schedule and form information better than my table-arithmetic did. Paired with the Patel result (where Polymarket's implied ~94%-stays was also the best signal on the board), the two largest cross-venue divergences in the portfolio both resolved in favor of the real-money venue. The lesson from the cycle-30 enrichment — treat a large Manifold-vs-Polymarket spread as a signal to anchor toward Polymarket, not as an invitation to average — is now empirically supported twice.

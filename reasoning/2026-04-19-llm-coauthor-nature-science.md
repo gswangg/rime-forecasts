@@ -84,3 +84,13 @@ Portfolio note: this is the 5th of 7 predictions in which I price below market (
 ---
 
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Manifold resolved NO on **2026-07-02T20:41Z**. No LLM or AI system was credited as coauthor on a Nature or Science paper before the deadline. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **8% YES**. Outcome: **NO**. Brier: **0.0064**. The Manifold entry at 14% YES had Brier **0.0196**, so the forecast beat the market (+0.0132).
+
+Post-mortem: journal authorship policies are explicit and slow-moving; pricing off the stated policy rather than the AI-news cycle was right. Same shape as the captcha win: institutional-policy inertia is a reliable edge source against markets that trade on narrative momentum.

@@ -117,3 +117,13 @@ Likely bias source in my cycle 8 reasoning: I over-weighted the fresh-scandal ne
 ---
 
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Manifold resolved YES on **2026-07-30T21:52Z** (a month after the June 30 status date — late creator resolution). Kash Patel remained FBI Director on June 30, 2026. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **58% YES**. Outcome: **YES**. Brier: **0.1764**. The Manifold entry at 49% YES had Brier **0.2601**, so the forecast beat the market (+0.0837).
+
+Post-mortem: the retrospective honest take in the cross-venue section called this correctly in both directions. Moving above Manifold on the Trump-loyalty base rate was right — the biggest single Brier win among the legacy predictions. But the same section conceded the window-adjusted Polymarket read implied ~94% stays, which would have scored **0.0036** — fifty times better. The direction of the adjustment was right; the magnitude was timid. Combined with Tottenham (where I failed to anchor to Polymarket and lost), the pattern is now consistent: when Manifold and Polymarket diverge materially, the real-money price is the better anchor, and splitting the difference gives away most of the available edge.

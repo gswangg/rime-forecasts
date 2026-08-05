@@ -83,3 +83,13 @@ Evidence that would strengthen NO (my current direction):
 ---
 
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Manifold resolved NO on **2026-07-01T00:03Z**, immediately after the June 30 deadline. SSI shipped nothing before July 2026. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **5% YES**. Outcome: **NO**. Brier: **0.0025**. The Manifold entry at 10% YES had Brier **0.0100**, so the forecast beat the market (+0.0075).
+
+Post-mortem: reasoning from a deliberate, publicly-committed non-shipping strategy over a short window was as safe as absence-of-signal reasoning gets. The market's final price (~1.8%) converged to the same place. Small, clean base-rate win.

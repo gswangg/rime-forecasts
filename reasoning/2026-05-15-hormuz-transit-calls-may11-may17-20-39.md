@@ -112,3 +112,13 @@ The sibling bracket board is now more informative than the single-market move: `
 The exact source still has not printed target-week data. An explicit ArcGIS query for `portid = 'chokepoint6' AND date >= DATE '2026-05-11'` returned zero features, and the latest available `chokepoint6` record remains **2026-05-10**. So this is a meaningful adverse thesis update, but still not a resolution or scorecard event; final scoring waits for IMF PortWatch publication and Gamma/UMA finality.
 
 *(Resolution section added below after the market resolves.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma shows outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, closed time **2026-05-21T07:44:09Z**. The 20-39 transit-calls bin did not verify against the resolution source. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **35% YES**. Outcome: **NO**. Brier: **0.1225**. The Polymarket entry at 62.0% YES had Brier **0.3844**, so the forecast beat the market by a wide margin (+0.2619).
+
+Post-mortem: the PortWatch-source-based fade of the modal bin worked. The market priced the 20-39 bin as the likely outcome from headline intuition; the exact-source math (chokepoint6 daily transit-call history) said the distribution's mass sat elsewhere. This was also the shortest-horizon prediction in the portfolio (written 2026-05-15, resolved off the May 11-17 window) — exactly the fast-feedback, source-specific trade the v3 horizon ladder was designed to find.

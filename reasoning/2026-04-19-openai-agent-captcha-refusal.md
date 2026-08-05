@@ -70,3 +70,13 @@ This is a calibration-honest prediction: small edge, small stake.
 ---
 
 *(Resolution section added below after market resolves on 2026-07-18. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Manifold resolved YES on **2026-07-23T18:12Z**. OpenAI's agent products continued refusing captchas through the mid-2026 resolution window. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **78% YES**. Outcome: **YES**. Brier: **0.0484**. The Manifold entry at 72% YES had Brier **0.0784**, so the forecast beat the market (+0.0300).
+
+Post-mortem: the policy-inertia read was right — refusal behavior on captchas is a deliberate trust-and-safety line, not a capability gap, and those lines move slowly. The 2/5 confidence reflected honest uncertainty about unverifiable current-state behavior; the modest 6pp move above market was the right size for that uncertainty.

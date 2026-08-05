@@ -97,3 +97,13 @@ This is the kind of prediction that would be taken aggressively if a real-money 
 ---
 
 *(Resolution section added below after market resolves on 2026-05-31. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Manifold resolved NO on **2026-06-03T02:54Z**. WTI never approached $150/barrel before June 2026. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **5% YES**. Outcome: **NO**. Brier: **0.0025**. The Manifold entry at 20.5% YES had Brier **0.0420**, so the forecast beat the market (+0.0395).
+
+Post-mortem: the 4/5-confidence structural read — $150 requires a supply shock far outside the observed futures curve and options surface, and Manifold's 20.5% was mostly tail-risk theater — was correct. The largest single edge among the legacy resolutions relative to confidence. Commodity price-target markets on play-money venues appear systematically overpriced on the tail; worth remembering if the real-money venues ever list equivalents.

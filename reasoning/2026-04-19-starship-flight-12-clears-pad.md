@@ -111,3 +111,13 @@ Trying to back out an implied pad-clearance probability from these:
 ---
 
 *(Resolution section added below after market resolves on 2026-06-30. The above is frozen.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **YES**.
+
+Manifold resolved YES on **2026-05-24T13:53Z** — Flight 12 launched and cleared the pad more than a month before the June 30 deadline. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **85% YES**. Outcome: **YES**. Brier: **0.0225**. The Manifold entry at 93% YES had Brier **0.0049**, so the market beat the forecast (-0.0176).
+
+Post-mortem: the pre-commitment in the confidence section said it plainly: "If it launches on schedule (the high-probability outcome), market modestly beats me." It launched on schedule. The slippage-history fade of a thin market (4 bettors, $341 volume) was a reasonable expected-value bet that lost its modal outcome — the loss is within the anticipated envelope, but it is also a data point that thin-market fades need the slippage to actually materialize, and SpaceX's V3 cadence in spring 2026 was faster than the historical base rate implied.

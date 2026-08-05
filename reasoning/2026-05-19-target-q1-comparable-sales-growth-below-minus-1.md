@@ -85,3 +85,13 @@ The +1h checkpoint was flat: daemon payload and live Gamma both showed **65.5% Y
 No new source evidence surfaced in the checkpoint window. This is neutral fast feedback: the market has not immediately validated the revenue/guidance fade, but it also has not pushed further toward the weak-2025-history / `<-1%` side before earnings.
 
 *(Resolution section added below after the market resolves.)*
+
+## Resolution (added after market resolves, never editing above)
+
+Resolved **NO**.
+
+Polymarket/Gamma shows outcome prices `0/1` (YES/NO), `umaResolutionStatus=resolved`, closed time **2026-05-20T22:49:17Z**. Target's Q1 comparable sales did not come in below -1%. *(Resolution recorded retroactively on 2026-08-05 during the post-dormancy sweep.)*
+
+Forecast: **30% YES**. Outcome: **NO**. Brier: **0.0900**. The Polymarket entry at 65.5% YES had Brier **0.4290**, so the forecast beat the market by the second-largest margin in the resolved real-money book (+0.3390).
+
+Post-mortem: the guidance-plus-revenue-estimate math said the market's 65.5% for `<-1%` comps was materially too pessimistic, and the print confirmed it. This is the cleanest validation of the fixed-strike/official-guidance playbook since Sonos and Running Point: when a market prices a threshold event against the company's own arithmetic and there is no fresher contradicting data, fade it. The 3/5 confidence (no published comps consensus in hand) was honest; the outcome would have justified 4/5 in hindsight but the discipline was right.
